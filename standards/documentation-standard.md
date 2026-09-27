@@ -1,8 +1,5 @@
 Actúa como arquitecto de documentación, consultor funcional SAP senior y arquitecto de conocimiento para agentes de IA.
 
-Genera desde cero:
-
-standards/documentation-standard.md
 
 Este será el estándar maestro de documentación de agenteSAP.
 
