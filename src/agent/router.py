@@ -11,6 +11,7 @@ from src.tools.generate_document import GeneratedDocument, generate_document
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.search_knowledge import SearchResult, search_knowledge
+from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
 
 
 class IntentRoutingError(ValueError):
@@ -94,6 +95,13 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("generate_document",),
         )
 
+    if any(term in lowered for term in ("sap standard", "sap estándar", "sap standard knowledge", "help portal")):
+        return AgentPlan(
+            intent="search_sap_standard",
+            ticket_id=ticket_id,
+            capabilities=("search_sap_standard",),
+        )
+
     if "relacion" in lowered or "relacionado" in lowered:
         if not ticket_id:
             raise IntentRoutingError(
@@ -136,6 +144,8 @@ def run_agent(
         result = get_ticket(client, plan.ticket_id or "", ref=ref)
     elif plan.intent == "get_related_knowledge":
         result = get_related_knowledge(client, "TICKET", plan.ticket_id or "", ref=ref)
+    elif plan.intent == "search_sap_standard":
+        result = search_sap_standard(client, request, ref=ref)
     elif plan.intent == "search_knowledge":
         result = search_knowledge(client, request, ref=ref)
     elif plan.intent == "generate_document":
