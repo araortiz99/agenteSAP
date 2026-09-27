@@ -259,3 +259,49 @@ Secrets must be supplied through the runtime environment or secret manager, neve
 New capabilities must be documented here before being treated as part of the agent contract.
 
 Each new capability must define its purpose, inputs, outputs, access level, source restrictions, validation rules, and failure behavior.
+
+
+## 12. Orchestration and Intent Routing
+
+The MVP exposes an orchestration layer that receives a natural-language request and selects the minimum capability chain required to fulfill it.
+
+The orchestration flow is:
+
+```
+USER REQUEST
+    ↓
+INTENT ROUTING
+    ↓
+AGENT PLAN
+    ↓
+CAPABILITY EXECUTION
+    ↓
+RESULT
+```
+
+The router must:
+
+- identify the primary intent;
+- resolve an explicit ticket identifier when present;
+- select only supported capabilities;
+- reject ambiguous requests when a required identifier or document type is missing;
+- execute capabilities in the required order;
+- return the result together with the selected plan.
+
+For example, a request such as "Analizá el ticket 31426" is routed to:
+
+```
+get_ticket
+    ↓
+get_related_knowledge
+    ↓
+analyze
+```
+
+The user does not need to invoke these capabilities individually.
+
+The orchestration layer is deterministic in the MVP. It does not use an LLM to select tools and does not execute SAP actions.
+
+### Orchestration access
+
+The orchestration layer remains read-only. It can retrieve repository content and construct an in-memory result, but it does not modify SAP or persist repository changes.
