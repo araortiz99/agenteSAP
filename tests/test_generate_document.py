@@ -94,7 +94,10 @@ ticket_id: "31426"
 
     assert result.document_type == "functional-specification"
     assert "Información pendiente" in result.content
-    assert result.source_paths == ("templates/functional-specification.md",)
+    assert result.source_paths == (
+        "templates/functional-specification.md",
+        "tickets/31426/ticket.md",
+    )
 
 
 def test_generate_all_supported_document_types_with_complete_structure():
