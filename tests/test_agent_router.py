@@ -8,6 +8,7 @@ from src.tools.get_ticket import TicketContext
 from src.tools.get_related_knowledge import RelatedKnowledge
 from src.tools.search_knowledge import SearchResult
 from src.tools.search_sap_standard import SAPStandardResult
+from src.tools.search_unified import UnifiedSearchResult
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -164,3 +165,19 @@ def test_run_agent_sap_standard_search():
     assert isinstance(response.result, list)
     assert isinstance(response.result[0], SAPStandardResult)
     assert response.result[0].path.endswith("material-master.md")
+
+
+def test_route_unified_sap_and_internal_search():
+    plan = route_intent("Compará SAP Standard y nuestra implementación sobre material master")
+    assert plan.intent == "search_unified"
+    assert plan.capabilities == ("search_unified",)
+
+
+def test_run_agent_unified_search():
+    client = AgentFakeGitHubClient()
+    response = run_agent(
+        client,
+        "Compará SAP Standard y nuestra implementación sobre ZMM_IMX_0004",
+    )
+    assert response.plan.intent == "search_unified"
+    assert isinstance(response.result, UnifiedSearchResult)
