@@ -1,0 +1,96 @@
+"""Unified retrieval across SAP Standard and internal Knowledge."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from src.github.client import GitHubClient
+from src.tools.search_knowledge import SearchResult, _parse_front_matter, search_knowledge
+from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
+
+
+@dataclass(frozen=True)
+class UnifiedResult:
+    path: str
+    score: float
+    matched_terms: tuple[str, ...]
+    content: str
+    source_layer: str
+    match_type: str
+    source_id: str | None
+    knowledge_type: str
+    knowledge_scope: str
+    certainty: str
+
+
+@dataclass(frozen=True)
+class UnifiedSearchResult:
+    query: str
+    results: tuple[UnifiedResult, ...]
+    sap_standard: tuple[UnifiedResult, ...]
+    internal: tuple[UnifiedResult, ...]
+
+
+def _internal_result(result: SearchResult) -> UnifiedResult:
+    metadata = _parse_front_matter(result.content)
+    return UnifiedResult(
+        path=result.path,
+        score=result.score,
+        matched_terms=result.matched_terms,
+        content=result.content,
+        source_layer="internal",
+        match_type=result.match_type,
+        source_id=metadata.get("source_id"),
+        knowledge_type=metadata.get("knowledge_type", "unknown"),
+        knowledge_scope=metadata.get("knowledge_scope", "unknown"),
+        certainty=metadata.get("certainty", "unknown"),
+    )
+
+
+def _standard_result(result: SAPStandardResult) -> UnifiedResult:
+    metadata = _parse_front_matter(result.content)
+    return UnifiedResult(
+        path=result.path,
+        score=result.score,
+        matched_terms=result.matched_terms,
+        content=result.content,
+        source_layer="sap_standard",
+        match_type="content",
+        source_id=metadata.get("source_id"),
+        knowledge_type=metadata.get("knowledge_type", "standard"),
+        knowledge_scope=metadata.get("knowledge_scope", "global"),
+        certainty=metadata.get("certainty", "unknown"),
+    )
+
+
+def search_unified(
+    client: GitHubClient,
+    query: str,
+    *,
+    max_results: int = 10,
+    ref: str = "main",
+) -> UnifiedSearchResult:
+    """Retrieve from both layers without merging their evidentiary meaning."""
+    if not query or not query.strip():
+        raise ValueError("query must not be empty")
+    if max_results < 1:
+        raise ValueError("max_results must be greater than zero")
+
+    standard = [_standard_result(x) for x in search_sap_standard(
+        client, query, max_results=max_results, ref=ref
+    )]
+    internal = [_internal_result(x) for x in search_knowledge(
+        client, query, max_results=max_results, ref=ref
+    )]
+
+    combined = sorted(
+        standard + internal,
+        key=lambda x: (-x.score, 0 if x.source_layer == "sap_standard" else 1, x.path),
+    )[:max_results]
+
+    return UnifiedSearchResult(
+        query=query.strip(),
+        results=tuple(combined),
+        sap_standard=tuple(standard),
+        internal=tuple(internal),
+    )
