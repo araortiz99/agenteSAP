@@ -132,3 +132,15 @@ def test_realistic_multi_step_request_routes_to_analysis_chain():
     assert result.hypotheses == ()
     assert result.missing_information == ()
     assert "must not be inferred" in result.conclusion
+
+
+def test_route_sap_standard_search():
+    plan = route_intent("Buscá SAP Standard sobre material master")
+    assert plan.intent == "search_sap_standard"
+    assert plan.capabilities == ("search_sap_standard",)
+
+
+def test_run_agent_sap_standard_search():
+    client = FakeGitHubClient(FIXTURES)
+    response = run_agent(client, "Buscá SAP Standard sobre ZMM_IMX_0004")
+    assert response.plan.intent == "search_sap_standard"
