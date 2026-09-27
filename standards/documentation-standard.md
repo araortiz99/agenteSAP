@@ -1,65 +1,115 @@
-# agenteSAP — Documentation Standard
+Actúa como arquitecto de conocimiento, consultor funcional SAP senior y especialista en documentación técnica/funcional.
 
-## 1. Propósito
+Debes crear el archivo:
 
-Este documento define el estándar para la creación, actualización y mantenimiento de la documentación funcional utilizada como fuente de conocimiento para agenteSAP.
+standards/documentation-standard.md
 
-El objetivo es que la documentación sea:
+para el repositorio `agenteSAP`.
 
-- clara;
-- consistente;
-- trazable;
-- versionable;
-- reutilizable;
-- comprensible para analistas funcionales y técnicos;
-- apta para extracción de conocimiento;
-- apta para relacionarse con tickets, objetos SAP, procesos y reglas de negocio.
+## CONTEXTO DEL PROYECTO
 
-La documentación debe priorizar:
+`agenteSAP` será una base de conocimiento para un agente de IA que actuará como asistente de consultoría funcional SAP.
+
+El agente no debe ejecutar ni modificar SAP inicialmente.
+
+Su función principal será:
+
+- leer documentación;
+- analizar información;
+- relacionar conocimiento;
+- identificar antecedentes;
+- analizar incidentes y mejoras;
+- apoyar actividades de consultoría;
+- analizar debugging;
+- generar documentación funcional;
+- generar pruebas funcionales;
+- identificar información faltante;
+- mantener trazabilidad;
+- reutilizar conocimiento existente.
+
+La calidad del agente dependerá directamente de la calidad y estructura de la documentación almacenada en el repositorio.
+
+Por este motivo, este documento debe funcionar como el ESTÁNDAR DOCUMENTAL CENTRAL del proyecto.
+
+---
+
+# PRINCIPIO FUNDAMENTAL
+
+La documentación debe permitir que una persona o un agente que no participó originalmente del análisis pueda comprender:
+
+1. qué ocurrió;
+2. qué se necesitaba;
+3. qué se analizó;
+4. qué evidencia se obtuvo;
+5. qué se determinó;
+6. qué solución se definió;
+7. cómo se validó;
+8. qué conocimiento puede reutilizarse posteriormente.
+
+La documentación no debe depender exclusivamente del conocimiento tácito del analista que realizó el trabajo.
+
+Priorizar:
 
 1. precisión;
 2. trazabilidad;
 3. claridad;
-4. reutilización.
+4. contexto;
+5. reutilización.
 
-No se debe agregar información únicamente para aumentar el volumen documental.
+No agregar información únicamente para aumentar el volumen documental.
 
 ---
 
-# 2. Identificador transversal
+# 1. IDENTIFICADOR TRANSVERSAL
 
 El elemento principal de trazabilidad es:
 
 `ticket_id`
 
-Todo documento relacionado con un incidente, mejora o actividad de consultoría debe identificar el `ticket_id` cuando exista.
+El `ticket_id` será el índice transversal de la documentación operativa.
 
-El `ticket_id` permite relacionar:
+Debe permitir relacionar:
 
 - requerimientos;
 - especificaciones funcionales;
 - pruebas funcionales;
 - análisis;
-- debug;
-- investigación;
+- debugging;
+- investigaciones;
 - objetos SAP;
 - procesos;
 - reglas de negocio;
-- tickets relacionados.
+- tickets relacionados;
+- actividades de consultoría.
+
+Un ticket puede representar:
+
+- incidente;
+- mejora;
+- requerimiento;
+- actividad de consultoría;
+- análisis;
+- investigación;
+- debugging;
+- validación.
+
+IMPORTANTE:
 
 El `ticket_id` es un índice de trazabilidad.
 
-No representa necesariamente la única entidad de conocimiento.
+No debe considerarse necesariamente la única entidad de conocimiento.
+
+Un mismo objeto SAP, proceso o regla de negocio puede estar relacionado con múltiples tickets.
 
 ---
 
-# 3. Categorías documentales
+# 2. MODELO DOCUMENTAL
 
-La documentación se divide en dos categorías.
+La documentación debe dividirse en dos categorías.
 
-## 3.1 Documentación oficial
+## DOCUMENTACIÓN OFICIAL
 
-Para incidentes y mejoras:
+Para incidentes y mejoras existen tres documentos base:
 
 ```text
 DOCUMENTACIÓN OFICIAL
