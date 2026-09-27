@@ -1,67 +1,37 @@
-Actúa como arquitecto de soluciones, especialista en SAP y documentación técnica.
+# agenteSAP
 
+Agente consultivo para conocimiento y documentación funcional SAP.
 
-El repositorio será utilizado como base de conocimiento para un agente de IA orientado a consultoría funcional SAP.
+## Estado
 
-El agente inicialmente tendrá capacidades de:
+MVP inicial en construcción.
 
-- lectura;
-- análisis;
-- relación de conocimiento;
-- generación de documentación;
-- análisis de incidentes;
-- análisis de mejoras;
-- análisis de debugging;
-- apoyo de consultoría.
+El primer vertical implementado es una capacidad de búsqueda read-only sobre el repositorio:
 
-No debe ejecutar ni modificar SAP.
+`search_knowledge()`
 
-El repositorio utiliza `ticket_id` como índice transversal de trazabilidad.
+## Arquitectura inicial
 
-La documentación oficial está compuesta por:
+```
+Usuario
+  ↓
+Agente
+  ↓
+Capabilities
+  ↓
+Tools
+  ↓
+GitHub repository
+  ↓
+knowledge / tickets / standards / templates
+```
 
-- Requerimiento;
-- Especificación Funcional;
-- Pruebas Funcionales.
+## Seguridad
 
-Las actividades de consultoría están compuestas por:
+El MVP no ejecuta SAP y no modifica SAP.
 
-- Análisis;
-- Debug;
-- Investigación.
+El código utiliza GitHub únicamente para lectura. Las credenciales, cuando sean necesarias, deben proporcionarse mediante variables de entorno y nunca almacenarse en el repositorio.
 
-Todos los documentos relevantes deben controlar:
+## Próximo paso
 
-- ticket_id;
-- version;
-- status;
-- date;
-- author.
-
-El repositorio debe priorizar:
-
-- trazabilidad;
-- precisión;
-- seguridad;
-- versionado;
-- reutilización;
-- conocimiento transversal.
-
-Explica la arquitectura actual del repositorio y el propósito de cada directorio.
-
-No inventes componentes que todavía no hayan sido implementados.
-
-Incluye:
-
-1. Propósito.
-2. Objetivo.
-3. Principios.
-4. Arquitectura.
-5. Estructura del repositorio.
-6. Modelo documental.
-7. Modelo de conocimiento.
-8. Seguridad.
-9. Versionado.
-10. Flujo de incorporación de conocimiento.
-11. Roadmap.
-12. Estado actual del proyecto.
+Implementar `get_ticket()` sobre el mismo contrato y agregar pruebas de integración contra el repositorio.
