@@ -163,6 +163,17 @@ An analysis following `templates/analysis.md` and the applicable standards.
 - Never invent SAP objects, technical implementations, or business rules.
 - Keep ticket context separate from reusable knowledge.
 
+### MVP behavior
+
+The implementation retrieves the ticket first and then retrieves explicit
+relationships for that ticket. It extracts only explicitly formatted ticket
+bullet items as MVP facts. It does not infer root causes, solutions, or
+business rules.
+
+Missing relationships or insufficient evidence are returned explicitly.
+Hypotheses remain empty unless a later implementation adds an evidence-backed
+hypothesis mechanism.
+
 ## 8. generate_document
 
 ### Purpose
