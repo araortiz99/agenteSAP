@@ -12,6 +12,7 @@ from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.search_knowledge import SearchResult, search_knowledge
 from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
+from src.tools.search_unified import UnifiedSearchResult, search_unified
 
 
 class IntentRoutingError(ValueError):
@@ -95,6 +96,24 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("generate_document",),
         )
 
+    if any(
+        phrase in lowered
+        for phrase in (
+            "sap standard y",
+            "sap estándar y",
+            "standard y custom",
+            "standard y nuestra",
+            "estándar y nuestra",
+            "compará sap",
+            "compara sap",
+        )
+    ):
+        return AgentPlan(
+            intent="search_unified",
+            ticket_id=ticket_id,
+            capabilities=("search_unified",),
+        )
+
     if any(term in lowered for term in ("sap standard", "sap estándar", "sap standard knowledge", "help portal")):
         return AgentPlan(
             intent="search_sap_standard",
@@ -146,6 +165,8 @@ def run_agent(
         result = get_related_knowledge(client, "TICKET", plan.ticket_id or "", ref=ref)
     elif plan.intent == "search_sap_standard":
         result = search_sap_standard(client, request, ref=ref)
+    elif plan.intent == "search_unified":
+        result = search_unified(client, request, ref=ref)
     elif plan.intent == "search_knowledge":
         result = search_knowledge(client, request, ref=ref)
     elif plan.intent == "generate_document":
