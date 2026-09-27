@@ -37,6 +37,10 @@ GitHub Knowledge Base
 | `analyze` | ✅ |
 | `generate_document` | ✅ |
 
+### Orquestación del agente
+
+El MVP incluye una capa determinística de intent routing. Una solicitud como `Analizá el ticket 31426` se transforma automáticamente en el plan `get_ticket → get_related_knowledge → analyze`, sin que el usuario tenga que invocar las capabilities individualmente.
+
 ### Generación documental
 
 El MVP materializa de forma segura:
