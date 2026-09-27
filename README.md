@@ -1,10 +1,5 @@
 Actúa como arquitecto de soluciones, especialista en SAP y documentación técnica.
 
-Genera el archivo:
-
-README.md
-
-para el repositorio `agenteSAP`.
 
 El repositorio será utilizado como base de conocimiento para un agente de IA orientado a consultoría funcional SAP.
 
