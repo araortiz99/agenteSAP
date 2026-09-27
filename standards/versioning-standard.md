@@ -1,8 +1,5 @@
 Actúa como arquitecto de conocimiento, consultor funcional SAP senior y especialista en gestión documental, versionado de conocimiento y control de cambios mediante Git.
 
-Tu tarea es generar el archivo:
-
-standards/versioning-standard.md
 
 Este archivo será el ESTÁNDAR MAESTRO DE VERSIONADO del repositorio agenteSAP.
 
