@@ -113,16 +113,18 @@ def promote_candidate(
     fields = _validate_candidate(content, registry)
 
     body = content.split("\n---\n", 1)[1]
-    body = body.replace("> **CANDIDATE — REQUIRES VALIDATION**\n\n", "", 1)
+    marker = "> **CANDIDATE — REQUIRES VALIDATION**\n\n"
+    if not body.startswith("\n\n# ") and marker not in body:
+        raise PromotionError("candidate body is malformed")
+    body = body.replace(marker, "", 1)
 
-    checksum = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    source_text = body
+    if "\n\n" in body:
+        source_text = body.split("\n\n", 1)[1]
+
+    checksum = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
     if checksum != fields["checksum_sha256"]:
-        # The ingestion checksum covers parsed source text, not the rendered Markdown body.
-        # Recompute from the source text marker instead of silently accepting a mismatch.
-        source_text = body.split("\n\n", 1)[1] if "\n\n" in body else body
-        source_checksum = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
-        if source_checksum != fields["checksum_sha256"]:
-            raise PromotionError("candidate checksum does not match its content")
+        raise PromotionError("candidate checksum does not match its source text")
 
     promoted = re.sub(
         r"^certainty: .*$",
