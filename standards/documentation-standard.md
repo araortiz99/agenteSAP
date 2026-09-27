@@ -1,38 +1,59 @@
-Actúa como arquitecto de conocimiento, consultor funcional SAP senior y especialista en diseño de bases de conocimiento para agentes de IA.
+Actúa como arquitecto de documentación, consultor funcional SAP senior y arquitecto de conocimiento para agentes de IA.
 
-Debes actualizar:
+Genera desde cero:
 
 standards/documentation-standard.md
 
-OBJETIVO DEL CAMBIO
+Este será el estándar maestro de documentación de agenteSAP.
 
-Incorporar al estándar documental una clasificación transversal que permita al agente distinguir:
+Debe ser autocontenido y definir cómo se documenta conocimiento, requerimientos, análisis, debug, investigación, pruebas y especificaciones.
 
-1. conocimiento SAP estándar;
-2. conocimiento SAP custom;
-3. conocimiento mixto;
-4. conocimiento cuyo origen todavía no está confirmado.
+Debe utilizar como autoridad de clasificación:
 
-IMPORTANTE
+standards/knowledge-classification-standard.md
 
-No elimines ninguna regla funcional existente.
+==================================================
+1. OBJETIVO
+==================================================
 
-No cambies los tipos oficiales de documentación.
+Definir un estándar único para crear documentación:
 
-No reemplaces ticket_id.
+- consistente;
+- trazable;
+- reutilizable;
+- versionable;
+- comprensible por humanos;
+- recuperable por agentes de IA.
 
-No conviertas knowledge_type en sustituto de document_type.
+==================================================
+2. PRINCIPIO TRANSVERSAL
+==================================================
 
---------------------------------------------------
-1. NUEVA METADATA OBLIGATORIA
---------------------------------------------------
+Todo documento debe distinguir:
 
-Todo documento de conocimiento o documentación funcional debe incorporar:
+document_type
 
-knowledge_type:
-knowledge_scope:
+de:
 
-La metadata base debe quedar conceptualmente:
+knowledge_type
+
+de:
+
+knowledge_scope.
+
+Definir:
+
+document_type = tipo documental.
+
+knowledge_type = naturaleza del conocimiento.
+
+knowledge_scope = ámbito de aplicación.
+
+==================================================
+3. METADATA OBLIGATORIA
+==================================================
+
+Todo documento debe contemplar:
 
 ---
 ticket_id: ""
@@ -45,191 +66,239 @@ date: ""
 author: ""
 ---
 
-Cuando un documento no esté asociado a ticket:
+Si no existe ticket:
 
 ticket_id: "N/A"
 
---------------------------------------------------
-2. KNOWLEDGE_TYPE
---------------------------------------------------
+==================================================
+4. DOCUMENT TYPES
+==================================================
 
-Definir exclusivamente:
+Definir como documentación oficial:
 
-standard
-custom
-mixed
-unknown
+- requirement
+- functional-specification
+- functional-test
 
-STANDARD
+Definir como actividades de consultoría:
 
-Utilizar cuando el contenido documentado representa comportamiento, proceso, regla o funcionalidad SAP estándar y existe evidencia suficiente.
-
-CUSTOM
-
-Utilizar cuando el contenido representa comportamiento específico de una organización, desarrollo Z/Y, integración propia, configuración particular o implementación específica.
-
-MIXED
-
-Utilizar cuando el documento contiene conocimiento estándar y custom de manera relevante.
-
-UNKNOWN
-
-Utilizar cuando no existe evidencia suficiente para determinar el origen.
-
---------------------------------------------------
-3. REGLAS DE CLASIFICACIÓN
---------------------------------------------------
-
-El agente debe:
-
-- no clasificar como STANDARD solamente porque el objeto se utiliza dentro de SAP;
-- no clasificar como CUSTOM solamente porque el comportamiento observado sea diferente;
-- no convertir un nombre técnico en evidencia suficiente;
-- utilizar evidencia disponible;
-- conservar UNKNOWN cuando no pueda determinar el origen;
-- utilizar MIXED cuando el documento combine conocimiento estándar y custom.
-
-Los nombres Z o Y pueden utilizarse como indicio de desarrollo personalizado, pero no deben considerarse por sí solos evidencia definitiva.
-
---------------------------------------------------
-4. KNOWLEDGE_SCOPE
---------------------------------------------------
+- analysis
+- debug
+- investigation
 
 Definir:
 
-global
-organization
-country
-company
-plant
-process
-project
 ticket
-unknown
 
-Explicar el significado de cada valor.
+como entidad de contexto y trazabilidad.
 
-knowledge_scope determina el ámbito de aplicación del conocimiento.
+==================================================
+5. KNOWLEDGE_TYPE
+==================================================
 
-No utilizar knowledge_scope para indicar si algo es estándar o custom.
+Utilizar únicamente:
 
-Ejemplo:
+- standard
+- custom
+- mixed
+- unknown
 
-knowledge_type: custom
-knowledge_scope: company
+La definición completa debe referenciar:
 
---------------------------------------------------
-5. STANDARD VS CUSTOM
---------------------------------------------------
+standards/knowledge-classification-standard.md
 
-Incorporar una sección normativa que establezca:
+==================================================
+6. KNOWLEDGE_SCOPE
+==================================================
 
-SAP STANDARD
-=
-funcionalidad o comportamiento proporcionado por SAP.
+Utilizar:
 
-SAP CUSTOM
-=
-desarrollo, configuración, extensión, integración o comportamiento específico de la organización.
+- global
+- organization
+- country
+- company
+- plant
+- process
+- project
+- ticket
+- unknown
 
-El agente debe distinguir entre:
+==================================================
+7. STATUS DOCUMENTAL
+==================================================
 
-- objeto SAP estándar;
-- configuración de SAP estándar;
-- desarrollo Z/Y;
-- enhancement;
-- integración;
-- comportamiento específico de la organización.
+Definir:
 
---------------------------------------------------
-6. REGLA DE NO GENERALIZACIÓN
---------------------------------------------------
+- draft
+- in_review
+- approved
+- implemented
+- validated
+- obsolete
 
-Nunca convertir:
+Aclarar que status documental no equivale al lifecycle del Knowledge.
 
-comportamiento observado localmente
+==================================================
+8. CICLO DOCUMENTAL
+==================================================
 
-en:
+Definir:
 
-comportamiento estándar SAP.
+Need
+↓
+Requirement
+↓
+Functional Specification
+↓
+Implementation
+↓
+Functional Tests
+↓
+Validation
 
-Ejemplo conceptual:
+Analysis, Debug e Investigation pueden aparecer transversalmente.
 
-MIGO es estándar SAP.
+==================================================
+9. CLASIFICACIÓN DE HECHOS
+==================================================
 
-Un comportamiento observado en MIGO dentro de PY44 no debe atribuirse automáticamente a SAP estándar.
+Todo análisis relevante debe distinguir:
 
-Debe distinguirse:
+HECHO
+HIPÓTESIS
+INFORMACIÓN FALTANTE
+CONCLUSIÓN
 
-SAP STANDARD
-+
-CONFIGURACIÓN LOCAL
-+
-CUSTOM
-+
-EVIDENCIA.
+==================================================
+10. STANDARD VS CUSTOM
+==================================================
 
---------------------------------------------------
-7. DOCUMENTOS MIXTOS
---------------------------------------------------
+Definir reglas:
 
-Definir explícitamente que un documento puede ser:
+- nunca atribuir comportamiento local a SAP Standard sin evidencia;
+- distinguir configuración;
+- distinguir enhancement;
+- distinguir desarrollo Z/Y;
+- distinguir integración;
+- utilizar mixed cuando corresponda;
+- utilizar unknown cuando no pueda determinarse.
 
-knowledge_type: mixed
+==================================================
+11. TICKET_ID
+==================================================
 
-cuando describa simultáneamente:
+ticket_id es el identificador transversal que permite conectar:
 
-- funcionalidad SAP estándar;
-- configuración local;
-- desarrollos Z;
-- integraciones;
-- reglas propias.
-
---------------------------------------------------
-8. COMPATIBILIDAD
---------------------------------------------------
-
-La clasificación debe ser compatible con:
-
-- requirement;
-- functional-specification;
-- functional-test;
-- analysis;
+- requerimiento;
+- especificación;
+- análisis;
 - debug;
-- investigation;
-- ticket;
-- SAP Object;
-- Process;
-- Business Rule;
-- Relationship;
-- Source.
+- investigación;
+- pruebas;
+- decisiones;
+- evidencias.
 
-No inventar nuevos tipos de documentos.
+No utilizar ticket_id como sustituto de los IDs de Knowledge.
 
---------------------------------------------------
-9. IA
---------------------------------------------------
+==================================================
+12. DOCUMENTACIÓN RELACIONADA
+==================================================
 
-El agente debe utilizar knowledge_type y knowledge_scope durante la recuperación.
+Cada documento debe permitir referencias a:
 
-Debe poder responder separando:
+- otros documentos;
+- tickets;
+- objetos;
+- procesos;
+- reglas;
+- relaciones;
+- fuentes.
 
-SAP STANDARD
+==================================================
+13. REGLA DE NO DUPLICACIÓN
+==================================================
+
+Antes de crear documentación:
+
+buscar si existe documentación equivalente.
+
+No duplicar conocimiento.
+
+Actualizar cuando corresponda.
+
+==================================================
+14. VERSIONADO
+==================================================
+
+Distinguir:
+
+document version
 
 de:
 
-CUSTOM
+Git history.
 
-y:
+Utilizar MAJOR.MINOR.PATCH:
 
-IMPLEMENTACIÓN LOCAL.
+PATCH:
+correcciones editoriales.
 
-No mezclar ambos como una única fuente de verdad.
+MINOR:
+información adicional sin cambio funcional.
 
-Mantener trazabilidad hacia las fuentes.
+MAJOR:
+cambio funcional relevante.
 
-No inventar clasificaciones.
+==================================================
+15. SEGURIDAD
+==================================================
 
-Entrega únicamente el contenido completo actualizado de:
+No almacenar:
 
-standards/documentation-standard.md
+- passwords;
+- tokens;
+- API keys;
+- credenciales;
+- claves privadas;
+- secretos.
+
+Sanitizar:
+
+- screenshots;
+- logs;
+- dumps;
+- datos productivos;
+- información personal innecesaria.
+
+==================================================
+16. REGLAS PARA IA
+==================================================
+
+El agente debe:
+
+- buscar antes de crear;
+- leer metadata;
+- respetar knowledge_type;
+- respetar knowledge_scope;
+- mantener incertidumbre;
+- conservar trazabilidad;
+- no inventar;
+- no generalizar.
+
+==================================================
+17. QUALITY CHECKLIST
+==================================================
+
+Incluir checklist para validar:
+
+- metadata;
+- clasificación;
+- ticket_id;
+- evidencia;
+- fuentes;
+- trazabilidad;
+- seguridad;
+- versionado;
+- documentación relacionada;
+- información pendiente.
+
