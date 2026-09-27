@@ -1,383 +1,285 @@
-# agenteSAP — Repository Instructions
+Actúa como arquitecto de repositorios de conocimiento y especialista en agentes de IA.
 
-## 1. Propósito del repositorio
+Genera desde cero:
 
-Este repositorio contiene la base de conocimiento y los estándares documentales de un agente orientado a la consultoría funcional SAP.
+.github/copilot-instructions.md
 
-El objetivo es permitir:
+Estas instrucciones deben gobernar el trabajo realizado sobre el repositorio `agenteSAP`.
 
-- análisis funcional de incidentes;
-- análisis funcional de mejoras;
-- comprensión de procesos SAP;
-- análisis de requerimientos;
-- identificación de impactos;
-- análisis de objetos SAP;
-- análisis de evidencias técnicas;
-- documentación de actividades de consultoría;
-- generación y mantenimiento de documentación funcional;
-- identificación de relaciones entre tickets, procesos, objetos y reglas de negocio.
+==================================================
+1. PROPÓSITO DEL REPOSITORIO
+==================================================
 
-El repositorio es una fuente de conocimiento y trazabilidad.
+`agenteSAP` es una base de conocimiento estructurada para un agente de consultoría funcional SAP.
 
-No debe utilizarse como mecanismo para ejecutar o modificar procesos SAP.
+El repositorio debe priorizar:
 
----
-
-## 2. Principio de trazabilidad
-
-El `ticket_id` es el índice transversal de la documentación operativa.
-
-Todo documento relacionado con un incidente, mejora o actividad de consultoría debe identificar claramente su `ticket_id` cuando exista.
-
-El `ticket_id` permite relacionar:
-
-- requerimientos;
-- especificaciones funcionales;
-- pruebas funcionales;
-- análisis;
-- debugging;
-- investigaciones;
-- objetos SAP;
-- reglas de negocio;
-- otros tickets relacionados.
-
-El `ticket_id` es un índice de trazabilidad y no necesariamente la única entidad de conocimiento.
-
----
-
-## 3. Estándar documental
-
-Existen dos categorías principales de información.
-
-### Documentación oficial
-
-Para incidentes y mejoras se utilizan tres documentos base:
-
-1. Requerimiento
-2. Especificación Funcional
-3. Pruebas Funcionales
-
-### Actividades de consultoría
-
-Las actividades de apoyo pueden documentarse como:
-
-1. Análisis
-2. Debug
-3. Investigación
-
-Las actividades de consultoría constituyen evidencia o conocimiento de apoyo y no deben confundirse automáticamente con documentación funcional aprobada.
-
----
-
-## 4. Requerimiento
-
-El requerimiento describe la necesidad funcional.
-
-Debe responder, cuando corresponda:
-
-- qué ocurre;
-- qué se necesita;
-- por qué se necesita;
-- objetivo;
-- alcance;
-- fuera de alcance;
-- impacto funcional;
-- criterios de aceptación.
-
-El requerimiento debe expresar la necesidad de negocio y no debe confundirse con una solución técnica.
-
----
-
-## 5. Especificación Funcional
-
-La especificación funcional describe el comportamiento esperado de la solución.
-
-Debe diferenciar claramente:
-
-- requerimiento funcional;
-- solución funcional;
-- consideraciones técnicas.
-
-Cuando corresponda, debe documentar:
-
-- antecedente;
-- motivo;
-- objetivo;
-- alcance;
-- solución funcional;
-- flujo;
-- reglas de negocio;
-- validaciones;
-- escenarios;
-- datos involucrados;
-- objetos SAP relacionados;
-- integraciones;
-- impactos;
-- dependencias;
-- riesgos;
-- criterios de aceptación.
-
-No inventar configuraciones, comportamientos SAP, relaciones entre objetos ni reglas de negocio.
-
----
-
-## 6. Pruebas Funcionales
-
-Las pruebas funcionales deben validar el comportamiento definido en la especificación funcional.
-
-Cuando corresponda, documentar:
-
-- ticket_id;
-- versión de la especificación;
-- escenario;
-- precondiciones;
-- datos;
-- pasos;
-- resultado esperado;
-- resultado obtenido;
-- estado;
+- trazabilidad;
 - evidencia;
-- ambiente;
-- fecha;
-- ejecutor.
+- reutilización;
+- consistencia;
+- seguridad;
+- separación Standard/Custom.
 
-Las pruebas deben mantener trazabilidad con los criterios de aceptación.
+==================================================
+2. ESTRUCTURA
+==================================================
 
----
+standards/
+=
+reglas.
 
-## 7. Actividades de Consultoría
+templates/
+=
+estructuras.
 
-### Análisis
+knowledge/
+=
+Knowledge reusable.
 
-Documentar razonamiento funcional, análisis de escenarios, impactos, dependencias, antecedentes e hipótesis.
+tickets/
+=
+contexto histórico.
 
-Distinguir:
+agent/
+=
+comportamiento.
 
-- hechos;
-- evidencia;
-- hipótesis;
-- información faltante;
-- conclusión.
+==================================================
+3. CLASIFICACIÓN
+==================================================
 
-### Debug
+Consultar:
 
-Documentar evidencia obtenida mediante debugging o análisis técnico.
+standards/knowledge-classification-standard.md
 
-Cuando corresponda registrar:
+Antes de crear o modificar conocimiento.
 
-- ticket_id;
-- fecha;
-- ambiente;
-- programa, clase o función;
-- parámetros relevantes;
-- tablas o estructuras;
-- valores observados;
-- condiciones;
-- flujo;
-- punto donde aparece el comportamiento;
-- resultado;
-- hipótesis;
-- conclusión.
+==================================================
+4. DOCUMENT METADATA
+==================================================
 
-El resultado de un debug constituye evidencia técnica y no necesariamente una especificación funcional.
+Los documentos deben utilizar:
 
-### Investigación
+ticket_id
+document_type
+knowledge_type
+knowledge_scope
+version
+status
+date
+author
 
-Documentar investigaciones sobre:
+==================================================
+5. KNOWLEDGE_TYPE
+==================================================
 
-- SAP estándar;
-- procesos;
-- configuraciones;
-- desarrollos Z;
-- integraciones;
-- objetos SAP;
-- antecedentes;
-- incidentes relacionados;
-- reglas de negocio.
+Valores permitidos:
 
----
+standard
+custom
+mixed
+unknown
 
-## 8. Versionado
+==================================================
+6. KNOWLEDGE_SCOPE
+==================================================
 
-Todo documento debe controlar, cuando corresponda:
+Valores:
 
-- `ticket_id`;
-- `version`;
-- `status`;
-- `date`;
-- `author`.
+global
+organization
+country
+company
+plant
+process
+project
+ticket
+unknown
 
-Git constituye el historial técnico de cambios.
+==================================================
+7. SAP OBJECT
+==================================================
 
-La versión documental representa el estado funcional del documento.
+Utilizar:
 
-No mezclar información de versiones diferentes sin verificar cuál es la versión vigente.
+origin
 
-Cuando existan contradicciones entre versiones:
+y:
 
-1. identificar las versiones;
-2. identificar fechas;
-3. identificar estados;
-4. determinar la versión vigente;
-5. conservar la trazabilidad histórica.
+implementation_type.
 
----
+origin:
 
-## 9. Hechos e hipótesis
+standard
+custom
+unknown
 
-Toda respuesta o documentación debe diferenciar:
+implementation_type:
 
-### HECHO
+standard
+configuration
+enhancement
+z_development
+integration
+unknown
 
-Información respaldada por documentación, evidencia, código, configuración o prueba.
+==================================================
+8. REGLAS
+==================================================
 
-### HIPÓTESIS
+No inferir Standard/Custom solamente por:
 
-Explicación posible que requiere validación.
+- nombre;
+- módulo;
+- transacción;
+- prefijo;
+- apariencia.
 
-### INFORMACIÓN FALTANTE
+Z/Y es indicio, no evidencia absoluta.
 
-Dato necesario para confirmar o descartar una hipótesis.
+==================================================
+9. MIXED
+==================================================
 
-### CONCLUSIÓN
+Utilizar:
 
-Resultado sustentado por la evidencia disponible.
+mixed
 
-Nunca presentar una hipótesis como un hecho.
+cuando una pieza de conocimiento combine de manera relevante:
 
----
+SAP Standard
++
+Configuración
++
+Custom
++
+Integración.
 
-## 10. No inventar información
+==================================================
+10. UNKNOWN
+==================================================
 
-No inventar:
+Utilizar:
 
-- configuraciones SAP;
-- tablas;
-- campos;
-- movimientos;
-- programas;
-- funciones;
-- clases;
-- relaciones;
-- reglas de negocio;
-- resultados de pruebas;
-- causas raíz;
-- comportamientos técnicos.
+unknown
 
-Si la información no está disponible, indicarlo explícitamente.
+cuando no exista evidencia suficiente.
 
----
+Nunca rellenar unknown con una suposición.
 
-## 11. Conocimiento transversal
+==================================================
+11. SOURCE
+==================================================
 
-El conocimiento debe poder relacionarse mediante:
+Utilizar:
 
-- `ticket_id`;
-- objetos SAP;
-- procesos;
-- reglas de negocio;
-- integraciones;
-- otros tickets;
-- documentos relacionados.
+source_id
 
-Una relación no debe asumirse únicamente porque dos documentos mencionen el mismo elemento.
+cuando exista una fuente documentada.
 
-Cuando una relación sea inferida y no esté documentada, indicarla como hipótesis o relación pendiente de validación.
+Las fuentes deben permitir rastrear el origen de las afirmaciones.
 
----
+==================================================
+12. RELATIONSHIPS
+==================================================
 
-## 12. Fuentes y trazabilidad
+No crear relaciones por simple co-ocurrencia.
 
-El conocimiento derivado debe conservar referencia a sus fuentes cuando sea posible.
+Una relación debe tener:
 
-Una afirmación importante debe poder rastrearse hasta:
+source
+relation
+target
 
-- ticket;
-- documento;
-- versión;
-- actividad de consultoría;
-- evidencia;
-- fecha.
+y evidencia cuando corresponda.
 
-La trazabilidad tiene prioridad sobre la inferencia.
+==================================================
+13. DUPLICACIÓN
+==================================================
 
----
+Antes de crear:
 
-## 13. Seguridad y sanitización
+- Object;
+- Process;
+- Business Rule;
+- Relationship;
+- Source;
 
-El repositorio debe contener únicamente información necesaria para el conocimiento funcional.
+buscar si ya existe.
 
-No incorporar información sensible innecesaria, incluyendo:
+No crear duplicados.
 
-- contraseñas;
+==================================================
+14. SEGURIDAD
+==================================================
+
+No almacenar:
+
+- passwords;
 - tokens;
+- API keys;
 - credenciales;
-- claves API;
-- datos personales;
-- información financiera sensible;
-- información productiva innecesaria;
-- datos de usuarios;
-- información confidencial que no aporte al conocimiento funcional.
+- secretos;
+- claves privadas.
 
-La documentación original debe ser revisada y sanitizada antes de incorporarse al Knowledge Layer.
+Sanitizar información productiva innecesaria.
 
-Preferir:
+==================================================
+15. RETRIEVAL
+==================================================
 
-Documento original
-→ sanitización
-→ extracción de conocimiento
-→ documentación estandarizada
-→ repositorio
+El agente debe recuperar conocimiento leyendo directorios y archivos relevantes.
 
-Nunca almacenar secretos en el repositorio.
+No asumir que promptMaestro contiene conocimiento SAP.
 
----
+==================================================
+16. STANDARD VS CUSTOM
+==================================================
 
-## 14. Principio de mínima exposición
+Siempre diferenciar:
 
-El agente debe recibir únicamente la información necesaria para resolver la consulta.
+SAP Standard
+Configuración
+Enhancement
+Z Development
+Integration
+Unknown
 
-No asumir que un documento completo debe ser utilizado si solamente una parte contiene información relevante.
+==================================================
+17. CAMBIOS
+==================================================
 
-Priorizar:
+Al modificar conocimiento:
 
-1. información estructurada;
-2. metadatos;
-3. relaciones;
-4. evidencia relevante;
-5. documento fuente cuando sea necesario.
+- preservar trazabilidad;
+- incrementar versión cuando corresponda;
+- no eliminar información confirmada sin justificación;
+- mantener referencias;
+- revisar relaciones afectadas.
 
----
+==================================================
+18. REGLA FINAL
+==================================================
 
-## 15. Rol del agente
+NO INVENTAR.
 
-El agente debe actuar como apoyo al criterio del analista funcional.
+NO DUPLICAR.
 
-Debe ayudar a identificar:
+NO GENERALIZAR.
 
-- información faltante;
-- dependencias;
-- impactos;
-- riesgos;
-- inconsistencias;
-- escenarios no contemplados;
-- relaciones con desarrollos existentes;
-- antecedentes;
-- posibles regresiones.
+NO CONFUNDIR STANDARD CON CUSTOM.
 
-El agente no debe reemplazar la validación funcional del analista.
+NO CONFUNDIR CONFIGURACIÓN CON DESARROLLO.
 
----
+NO CREAR RELACIONES SIN EVIDENCIA.
 
-## 16. Prioridades
+NO CONVERTIR INFERENCIAS EN HECHOS.
 
-Ante cualquier análisis, priorizar:
+MANTENER TRAZABILIDAD.
 
-1. Trazabilidad
-2. Precisión
-3. Evidencia
-4. Contexto
-5. Consistencia documental
-6. Inferencia
+MANTENER SEGURIDAD.
 
-Nunca sacrificar trazabilidad o precisión para producir una respuesta aparentemente completa.
+Entrega únicamente el contenido completo final de:
+
+.github/copilot-instructions.md
