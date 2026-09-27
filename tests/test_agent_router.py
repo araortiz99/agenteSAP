@@ -101,3 +101,34 @@ def test_run_agent_retrieves_explicit_ticket_relationships():
 def test_route_rejects_empty_request():
     with pytest.raises(IntentRoutingError):
         route_intent("   ")
+
+
+def test_realistic_multi_step_request_routes_to_analysis_chain():
+    client = AgentFakeGitHubClient()
+    request = (
+        "Revisá el ticket 31426, buscá qué objetos SAP están relacionados "
+        "y preparame un análisis indicando qué está confirmado y qué información falta."
+    )
+
+    response = run_agent(client, request)
+
+    assert response.plan.intent == "analyze_ticket"
+    assert response.plan.ticket_id == "31426"
+    assert response.plan.capabilities == (
+        "get_ticket",
+        "get_related_knowledge",
+        "analyze",
+    )
+
+    result = response.result
+    assert isinstance(result, AnalysisResult)
+    assert result.ticket_id == "31426"
+    assert result.facts
+    assert result.relationships.relationships
+    assert any(
+        relation.target_id == "ZMM_IMX_0004"
+        for relation in result.relationships.relationships
+    )
+    assert result.hypotheses == ()
+    assert result.missing_information == ()
+    assert "must not be inferred" in result.conclusion
