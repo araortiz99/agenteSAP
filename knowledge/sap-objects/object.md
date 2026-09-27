@@ -1,21 +1,22 @@
-Actúa como arquitecto de conocimiento SAP.
+Este archivo será la plantilla maestra para documentar cualquier SAP Object.
 
-Actualiza:
+==================================================
+1. OBJETIVO
+==================================================
 
-knowledge/sap-objects/object.md
+Documentar objetos SAP de forma:
 
-Mantén toda la estructura existente y agrega una clasificación técnica formal para diferenciar SAP Standard de SAP Custom.
+- estructurada;
+- reutilizable;
+- trazable;
+- diferenciando SAP Standard de Custom;
+- utilizable por agentes de IA.
 
---------------------------------------------------
-1. NUEVA METADATA
---------------------------------------------------
+==================================================
+2. METADATA
+==================================================
 
-El YAML debe incorporar:
-
-origin:
-implementation_type:
-
-La estructura debe quedar:
+Utilizar:
 
 ---
 object_id: ""
@@ -25,39 +26,51 @@ technical_name: ""
 module: ""
 origin: ""
 implementation_type: ""
+knowledge_type: ""
+knowledge_scope: ""
 version: "1.0"
 status: "draft"
 date: ""
 author: ""
 ---
 
---------------------------------------------------
-2. ORIGIN
---------------------------------------------------
+==================================================
+3. IDENTIFICADOR
+==================================================
 
-Valores permitidos:
+Utilizar:
+
+OBJ-0001
+OBJ-0002
+...
+
+El object_id debe ser estable.
+
+No cambiarlo cuando el objeto sea actualizado.
+
+==================================================
+4. ORIGIN
+==================================================
+
+Valores:
 
 standard
 custom
 unknown
 
-STANDARD
+Definir:
 
-Objeto proporcionado por SAP.
+standard = proporcionado por SAP.
 
-CUSTOM
+custom = desarrollado específicamente por la organización.
 
-Objeto desarrollado o implementado específicamente por la organización.
+unknown = no confirmado.
 
-UNKNOWN
+==================================================
+5. IMPLEMENTATION_TYPE
+==================================================
 
-No existe evidencia suficiente.
-
---------------------------------------------------
-3. IMPLEMENTATION_TYPE
---------------------------------------------------
-
-Valores permitidos:
+Valores:
 
 standard
 configuration
@@ -66,85 +79,59 @@ z_development
 integration
 unknown
 
-STANDARD
+Explicar cada valor.
 
-Funcionalidad SAP estándar sin evidencia de modificación específica.
+==================================================
+6. DIFERENCIA
+==================================================
 
-CONFIGURATION
+Explicar:
 
-Comportamiento producido o condicionado mediante configuración SAP.
+origin
 
-ENHANCEMENT
+responde:
 
-Extensión de funcionalidad estándar mediante enhancement, BAdI, exit u mecanismo equivalente.
+"¿De dónde proviene el objeto?"
 
-Z_DEVELOPMENT
+implementation_type
 
-Desarrollo propio identificado mediante evidencia.
+responde:
 
-INTEGRATION
+"¿Cómo está implementado o qué tipo de implementación representa?"
 
-Objeto o componente cuya función principal es integrar SAP con otro sistema.
-
-UNKNOWN
-
-No existe evidencia suficiente.
-
---------------------------------------------------
-4. REGLAS
---------------------------------------------------
-
-No asumir que todo objeto Z/Y es custom únicamente por el prefijo.
-
-Puede utilizarse como indicio.
-
-La clasificación definitiva debe basarse en evidencia.
-
-Nunca clasificar como STANDARD un objeto cuyo origen custom esté confirmado.
-
-Nunca clasificar como CUSTOM un objeto estándar solamente porque haya sido configurado localmente.
-
-Distinguir:
-
-ORIGEN DEL OBJETO
-
-de:
-
-FORMA EN QUE ESTÁ IMPLEMENTADO.
-
---------------------------------------------------
-5. EJEMPLOS CONCEPTUALES
---------------------------------------------------
-
-MIGO:
-
-origin: standard
-implementation_type: standard
-
-Una configuración estándar que afecta MIGO:
+Ejemplo conceptual:
 
 origin: standard
 implementation_type: configuration
 
-ZMM_IM_0002:
+Es válido.
 
-origin: custom
-implementation_type: z_development
+==================================================
+7. KNOWLEDGE_TYPE
+==================================================
 
-Una integración:
+Valores:
 
-origin: custom
-implementation_type: integration
+standard
+custom
+mixed
+unknown
 
-No crear objetos reales adicionales.
+Aclarar que:
 
---------------------------------------------------
-6. KNOWLEDGE_SCOPE
---------------------------------------------------
+knowledge_type
 
-Agregar:
+clasifica el conocimiento documentado sobre el objeto.
 
-knowledge_scope:
+No necesariamente debe coincidir con:
+
+origin.
+
+Un objeto estándar puede tener documentación sobre una implementación local.
+
+==================================================
+8. KNOWLEDGE_SCOPE
+==================================================
 
 Valores:
 
@@ -158,30 +145,100 @@ project
 ticket
 unknown
 
-Explicar que indica el ámbito donde aplica el conocimiento documentado del objeto.
+==================================================
+9. ESTRUCTURA
+==================================================
 
---------------------------------------------------
-7. IA
---------------------------------------------------
+Crear:
 
-El agente debe utilizar origin e implementation_type antes de afirmar que un comportamiento es SAP estándar.
+# SAP Object
 
-Debe responder separando:
+## Metadata
 
-OBJETO STANDARD
+## 1. Identificación
 
-OBJETO CUSTOM
+## 2. Tipo de objeto
 
-CONFIGURACIÓN
+## 3. Descripción
 
-ENHANCEMENT
+## 4. Propósito
 
-DESARROLLO Z
+## 5. Comportamiento
 
-INTEGRACIÓN
+## 6. Datos involucrados
 
-No inferir relaciones o comportamientos sin evidencia.
+## 7. Relaciones con otros objetos
 
-Entrega únicamente el contenido actualizado de:
+## 8. Procesos relacionados
 
-knowledge/sap-objects/object.md
+## 9. Módulo SAP
+
+## 10. Clasificación Standard / Custom
+
+## 11. Configuración relacionada
+
+## 12. Integraciones
+
+## 13. Uso funcional
+
+## 14. Uso técnico
+
+## 15. Reglas de negocio relacionadas
+
+## 16. Evidencias
+
+## 17. Fuentes
+
+## 18. Estado del conocimiento
+
+## 19. Información pendiente
+
+## 20. Documentación relacionada
+
+==================================================
+10. REGLAS
+==================================================
+
+No inventar objetos.
+
+No inventar nombres técnicos.
+
+No asumir Standard por uso.
+
+No asumir Custom solamente por prefijo.
+
+Z/Y puede ser indicio, no prueba absoluta.
+
+No confundir configuración con desarrollo.
+
+No confundir objeto Standard con proceso Standard.
+
+==================================================
+11. IA
+==================================================
+
+El agente debe poder determinar:
+
+- qué objeto es;
+- qué tipo tiene;
+- si es Standard o Custom;
+- cómo está implementado;
+- dónde aplica;
+- qué procesos utiliza;
+- qué reglas aplica;
+- qué objetos relacionados existen;
+- qué evidencia respalda la información.
+
+==================================================
+12. DUPLICADOS
+==================================================
+
+Antes de crear un objeto:
+
+buscar por:
+
+- technical_name;
+- object_name;
+- object_id.
+
+No crear duplicados.
