@@ -7,6 +7,7 @@ from src.tools.analyze import AnalysisResult
 from src.tools.get_ticket import TicketContext
 from src.tools.get_related_knowledge import RelatedKnowledge
 from src.tools.search_knowledge import SearchResult
+from src.tools.search_sap_standard import SAPStandardResult
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -27,6 +28,22 @@ class AgentFakeGitHubClient:
             "templates/analysis.md": (FIXTURES / "ticket-31426.md").read_text(
                 encoding="utf-8"
             ),
+        }
+
+    def get_tree(self, ref="main"):
+        return [{"path": path, "type": "blob"} for path in self.files]
+
+    def get_file(self, path, ref="main"):
+        return self.files[path]
+
+
+class SAPStandardFakeClient:
+    def __init__(self):
+        self.files = {
+            "knowledge/sap-standard/mm/material-master.md": (
+                "# Material Master\\nSAP S/4HANA material master and product master."
+            ),
+            "knowledge/custom/local.md": "# Local\\nMaterial master custom process.",
         }
 
     def get_tree(self, ref="main"):
@@ -141,6 +158,9 @@ def test_route_sap_standard_search():
 
 
 def test_run_agent_sap_standard_search():
-    client = FakeGitHubClient(FIXTURES)
-    response = run_agent(client, "Buscá SAP Standard sobre ZMM_IMX_0004")
+    client = SAPStandardFakeClient()
+    response = run_agent(client, "Buscá SAP Standard sobre material master")
     assert response.plan.intent == "search_sap_standard"
+    assert isinstance(response.result, list)
+    assert isinstance(response.result[0], SAPStandardResult)
+    assert response.result[0].path.endswith("material-master.md")
