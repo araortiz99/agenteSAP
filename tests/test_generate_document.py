@@ -87,3 +87,46 @@ def test_generate_non_analysis_does_not_invent_content():
     assert result.document_type == "functional-specification"
     assert "Información pendiente" in result.content
     assert result.source_paths == ("templates/functional-specification.md",)
+
+
+def test_generate_all_supported_document_types_with_complete_structure():
+    client = FakeGitHubClient(
+        {
+            "templates/requirement.md": "# Requerimiento",
+            "templates/functional-specification.md": "# Especificación Funcional",
+            "templates/functional-tests.md": "# Pruebas Funcionales",
+            "templates/investigation.md": "# Investigación",
+        }
+    )
+
+    expected_headings = {
+        "requirement": "## 10. Documentación relacionada",
+        "functional-specification": "## 19. Documentación relacionada",
+        "functional-test": "## 12. Documentación relacionada",
+        "investigation": "## 9. Documentación relacionada",
+    }
+
+    for document_type, final_heading in expected_headings.items():
+        result = generate_document(
+            client,
+            document_type,
+            "Generá el documento MVP.",
+            "31426",
+        )
+        assert result.document_type == document_type
+        assert result.ticket_id == "31426"
+        assert result.status == "draft"
+        assert "## Metadata" in result.content
+        assert final_heading in result.content
+        assert "Información pendiente de validar." in result.content
+
+
+def test_generate_document_rejects_empty_request():
+    client = FakeGitHubClient({"templates/analysis.md": "# Análisis"})
+
+    try:
+        generate_document(client, "analysis", "   ", "31426")
+    except ValueError as exc:
+        assert "request must not be empty" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
