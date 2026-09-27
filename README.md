@@ -141,7 +141,7 @@ Siguientes incrementos:
 2. extracción/chunking de documentación;
 3. deduplicación y actualización por release;
 4. retrieval semántico/híbrido;
-5. promoción controlada de conocimiento;
+5. ~~promoción controlada de conocimiento~~ → implementada en MVP 2.2;
 6. persistencia mediante Pull Requests;
 7. integración con un LLM.
 
@@ -168,3 +168,18 @@ python -m src.sap.cli --source-id SAP-HELP-S4-MM-2025-GOODS-MOVEMENT
 
 Output is staged under `staging/sap-standard/` and remains `candidate / under_validation` until explicitly validated.
 
+
+
+### Knowledge Promotion
+
+MVP 2.2 adds an explicit promotion boundary from SAP candidate staging to reusable SAP Standard Knowledge.
+
+The promotion engine validates source registration, metadata, release context, classification, source-text checksum and duplicate destinations. Successful promotion changes `candidate / under_validation` to `validated / confirmed`.
+
+Promotion never overwrites existing Knowledge automatically.
+
+Example:
+
+```bash
+python -m src.sap.promote_cli staging/sap-standard/<candidate>.md
+```
