@@ -63,3 +63,22 @@ SAP Standard Knowledge must never be used as proof of customer-specific configur
 6. semantic indexing;
 7. scheduled refresh;
 8. change detection.
+
+
+## Candidate lifecycle
+
+A retrieved page is initially staged as:
+
+`status: candidate`
+`certainty: under_validation`
+
+Only after human or automated validation against the source may it be promoted to reusable Standard Knowledge with:
+
+`status: validated`
+`certainty: confirmed`
+
+The ingestor records a SHA-256 checksum so repeated retrievals can be compared without relying on URL identity alone.
+
+## Network safety
+
+The collector currently permits only HTTPS URLs hosted on `help.sap.com`, applies a bounded response size, uses no credentials, and does not execute downloaded content.
