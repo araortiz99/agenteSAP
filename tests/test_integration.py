@@ -127,9 +127,10 @@ def test_end_to_end_does_not_infer_relationships_from_cooccurrence():
 
     relationships = get_related_knowledge(client, "SAP_OBJECT", "ZMM_IMX_0004")
 
-    target_ids = {r.target_id for r in relationships.relationships}
-    source_ids = {r.source_id for r in relationships.relationships}
-
-    assert "ZMM_IMX_0004" not in target_ids
-    assert "ZMM_IMX_0004" in source_ids or "ZMM_IMX_0004" in target_ids
-    assert all(r.relation_type for r in relationships.relationships)
+    assert len(relationships.relationships) == 1
+    relationship = relationships.relationships[0]
+    assert relationship.source_id == "ZMM_IMX_0004"
+    assert relationship.source_type == "SAP_OBJECT"
+    assert relationship.relation_type == "participa_en"
+    assert relationship.target_id == "SNC_LOGISTICO"
+    assert relationship.target_type == "PROCESS"
