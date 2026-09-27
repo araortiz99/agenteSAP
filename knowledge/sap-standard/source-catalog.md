@@ -15,7 +15,18 @@
 
 | Source ID | Product | Module | Release | Status |
 |---|---|---|---|---|
-| SAP-HELP-S4-MM-2025 | SAP S/4HANA | MM | 2025 | planned |
+| SAP-HELP-S4-MM-2025 | SAP S/4HANA | MM | 2025 FPS01 | active |
+| SAP-HELP-S4-MM-2025-GOODS-MOVEMENT | SAP S/4HANA | MM-IM | 2025 FPS01 | active |
+| SAP-HELP-S4-MM-2025-MATERIAL-MASTER | SAP S/4HANA | MM | 2025 FPS01 | active |
+| SAP-HELP-S4-MM-2025-INVENTORY-PRINCIPLES | SAP S/4HANA | MM-IM | 2025 FPS01 | active |
+
+## Registered documents
+
+| Source ID | Knowledge document |
+|---|---|
+| SAP-HELP-S4-MM-2025-GOODS-MOVEMENT | `knowledge/sap-standard/mm/goods-movements.md` |
+| SAP-HELP-S4-MM-2025-MATERIAL-MASTER | `knowledge/sap-standard/mm/material-master.md` |
+| SAP-HELP-S4-MM-2025-INVENTORY-PRINCIPLES | `knowledge/sap-standard/mm/inventory-management-principles.md` |
 
 ## Source policy
 
