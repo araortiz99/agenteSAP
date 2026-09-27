@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from src.github.client import GitHubClient
@@ -67,8 +68,23 @@ def _metadata_block(
     )
 
 
-def _section(title: str, body: str = "Información pendiente de validar.") -> str:
-    return f"## {title}\n\n{body}\n"
+def _pending() -> str:
+    return "Información pendiente de validar."
+
+
+def _bullet_lines(items: tuple[str, ...] | list[str]) -> str:
+    return "\n".join(f"- {item}" for item in items) if items else _pending()
+
+
+def _relationship_lines(analysis_result: AnalysisResult) -> str:
+    relationships = analysis_result.relationships.relationships
+    if not relationships:
+        return "No existen relaciones explícitamente documentadas."
+    return "\n".join(
+        f"- {r.source_type} {r.source_id} {r.relation_type} "
+        f"{r.target_type} {r.target_id}"
+        for r in relationships
+    )
 
 
 def _analysis_document(
@@ -77,80 +93,209 @@ def _analysis_document(
     date: str,
     author: str,
 ) -> str:
-    facts = (
-        "\n".join(f"- {fact}" for fact in analysis_result.facts)
-        if analysis_result.facts
-        else "Información pendiente de validar."
-    )
-    missing = (
-        "\n".join(f"- {item}" for item in analysis_result.missing_information)
-        if analysis_result.missing_information
-        else "No se identificaron faltantes en la recuperación inicial."
+    sections = {
+        "1. Objetivo del análisis": analysis_result.request,
+        "2. Contexto": f"Ticket {analysis_result.ticket_id}.",
+        "3. Información disponible": (
+            f"Se recuperaron {len(analysis_result.context.documents)} "
+            "documentos del ticket."
+        ),
+        "4. Hechos identificados": _bullet_lines(analysis_result.facts),
+        "5. Evidencias": _relationship_lines(analysis_result),
+        "6. Análisis funcional": (
+            "El MVP recuperó y estructuró evidencia. La interpretación "
+            "funcional detallada requiere revisión de las evidencias recuperadas."
+        ),
+        "7. Hipótesis": "No se generan hipótesis automáticamente en este MVP.",
+        "8. Información faltante": _bullet_lines(
+            analysis_result.missing_information
+        ),
+        "9. Impactos identificados": _pending(),
+        "10. Dependencias": _pending(),
+        "11. Conclusión": analysis_result.conclusion,
+        "12. Próximos pasos": (
+            "Revisar las evidencias recuperadas y completar la información pendiente."
+        ),
+        "13. Documentación relacionada": _bullet_lines(
+            [document.path for document in analysis_result.context.documents]
+        ),
+    }
+    return _render_document(
+        "Análisis",
+        "analysis",
+        analysis_result.ticket_id,
+        sections,
+        date=date,
+        author=author,
     )
 
-    relationships = (
-        "\n".join(
-            f"- {r.source_type} {r.source_id} "
-            f"{r.relation_type} {r.target_type} {r.target_id}"
-            for r in analysis_result.relationships.relationships
+
+def _render_document(
+    title: str,
+    document_type: str,
+    ticket_id: str | None,
+    sections: dict[str, str],
+    *,
+    date: str,
+    author: str,
+) -> str:
+    output = [
+        f"# {title}",
+        "",
+        "## Metadata",
+        "",
+        _metadata_block(document_type, ticket_id, date=date, author=author),
+        "",
+    ]
+    for heading, body in sections.items():
+        output.extend([f"## {heading}", "", body or _pending(), ""])
+    return "\n".join(output).rstrip() + "\n"
+
+
+def _build_sections(
+    document_type: str,
+    ticket_id: str | None,
+    analysis_result: AnalysisResult | None,
+) -> tuple[str, dict[str, str]]:
+    if analysis_result is None:
+        facts: tuple[str, ...] = ()
+        relationships = "No existen relaciones explícitamente documentadas."
+        documents = "Información pendiente de validar."
+        request = "Información pendiente de validar."
+        conclusion = "No existe evidencia de ticket recuperada para este documento."
+    else:
+        facts = analysis_result.facts
+        relationships = _relationship_lines(analysis_result)
+        documents = _bullet_lines(
+            [document.path for document in analysis_result.context.documents]
         )
-        if analysis_result.relationships.relationships
-        else "No existen relaciones explícitamente documentadas."
-    )
+        request = analysis_result.request
+        conclusion = analysis_result.conclusion
 
-    return "\n".join(
-        [
-            "# Análisis",
-            "",
-            "## Metadata",
-            "",
-            _metadata_block(
-                "analysis",
-                analysis_result.ticket_id,
-                date=date,
-                author=author,
-            ),
-            "",
-            _section("1. Objetivo del análisis", analysis_result.request),
-            _section("2. Contexto", f"Ticket {analysis_result.ticket_id}."),
-            _section(
-                "3. Información disponible",
-                f"Se recuperaron {len(analysis_result.context.documents)} documentos del ticket.",
-            ),
-            _section("4. Hechos identificados", facts),
-            _section("5. Evidencias", relationships),
-            _section(
-                "6. Análisis funcional",
-                "El MVP recuperó y estructuró evidencia. La interpretación funcional "
-                "detallada requiere revisión de las evidencias recuperadas.",
-            ),
-            _section(
-                "7. Hipótesis",
-                "No se generan hipótesis automáticamente en este MVP.",
-            ),
-            _section("8. Información faltante", missing),
-            _section(
-                "9. Impactos identificados",
-                "Información pendiente de validar.",
-            ),
-            _section(
-                "10. Dependencias",
-                "Información pendiente de validar.",
-            ),
-            _section("11. Conclusión", analysis_result.conclusion),
-            _section(
-                "12. Próximos pasos",
-                "Revisar las evidencias recuperadas y completar la información pendiente.",
-            ),
-            _section(
-                "13. Documentación relacionada",
-                "\n".join(
-                    f"- {document.path}"
-                    for document in analysis_result.context.documents
+    common = {
+        "requirement": (
+            "Requerimiento",
+            {
+                "1. Antecedente": documents,
+                "2. Situación actual": _bullet_lines(facts),
+                "3. Necesidad / Problema": request,
+                "4. Objetivo": request,
+                "5. Alcance": _pending(),
+                "6. Fuera de alcance": _pending(),
+                "7. Impacto funcional": _pending(),
+                "8. Criterios de aceptación": _pending(),
+                "9. Información adicional": relationships,
+                "10. Documentación relacionada": documents,
+            },
+        ),
+        "functional-specification": (
+            "Especificación Funcional",
+            {
+                "1. Antecedente": documents,
+                "2. Motivo": request,
+                "3. Objetivo": request,
+                "4. Alcance": _pending(),
+                "5. Situación actual": _bullet_lines(facts),
+                "6. Solución funcional propuesta": _pending(),
+                "7. Flujo funcional": _pending(),
+                "8. Reglas de negocio": _pending(),
+                "9. Validaciones": _pending(),
+                "10. Escenarios": _pending(),
+                "11. Datos involucrados": _pending(),
+                "12. Objetos SAP relacionados": relationships,
+                "13. Integraciones": _pending(),
+                "14. Impactos": _pending(),
+                "15. Dependencias": _pending(),
+                "16. Riesgos": _pending(),
+                "17. Criterios de aceptación": _pending(),
+                "18. Consideraciones para pruebas": _pending(),
+                "19. Documentación relacionada": documents,
+            },
+        ),
+        "functional-test": (
+            "Pruebas Funcionales",
+            {
+                "1. Objetivo": request,
+                "2. Versión funcional validada": _pending(),
+                "3. Ambiente": _pending(),
+                "4. Precondiciones": _pending(),
+                "5. Datos de prueba": _pending(),
+                "6. Casos de prueba": (
+                    "No se generan casos ni resultados de prueba automáticamente. "
+                    "Deben completarse con datos, pasos, resultado esperado, "
+                    "resultado obtenido, estado y evidencia."
                 ),
-            ),
-        ]
-    )
+                "7. Pruebas negativas": _pending(),
+                "8. Pruebas de regresión": _pending(),
+                "9. Resultado general": _pending(),
+                "10. Incidencias encontradas": _pending(),
+                "11. Evidencias": relationships,
+                "12. Documentación relacionada": documents,
+            },
+        ),
+        "investigation": (
+            "Investigación",
+            {
+                "1. Objetivo": request,
+                "2. Pregunta de investigación": request,
+                "3. Fuentes consultadas": documents,
+                "4. Información encontrada": _bullet_lines(facts),
+                "5. Análisis": conclusion,
+                "6. Relaciones identificadas": relationships,
+                "7. Conclusiones": conclusion,
+                "8. Información pendiente de validar": _pending(),
+                "9. Documentación relacionada": documents,
+            },
+        ),
+    }
+
+    return common[document_type]
+
+
+def _validate_generated(
+    document_type: str,
+    content: str,
+    template: str,
+) -> None:
+    """Validate the generated structure without requiring semantic inference."""
+    required = {
+        "requirement": [
+            "## Metadata",
+            "## 1. Antecedente",
+            "## 10. Documentación relacionada",
+        ],
+        "analysis": [
+            "## Metadata",
+            "## 1. Objetivo del análisis",
+            "## 13. Documentación relacionada",
+        ],
+        "functional-specification": [
+            "## Metadata",
+            "## 1. Antecedente",
+            "## 19. Documentación relacionada",
+        ],
+        "functional-test": [
+            "## Metadata",
+            "## 1. Objetivo",
+            "## 12. Documentación relacionada",
+        ],
+        "investigation": [
+            "## Metadata",
+            "## 1. Objetivo",
+            "## 9. Documentación relacionada",
+        ],
+    }[document_type]
+
+    missing = [heading for heading in required if heading not in content]
+    if missing:
+        raise DocumentGenerationError(
+            f"Generated document is structurally incomplete: {missing}"
+        )
+
+    # A real template may be a detailed specification. Its presence is part
+    # of the generation contract even when the MVP uses an equivalent renderer.
+    if not template.strip():
+        raise DocumentGenerationError("Official template is empty")
 
 
 def generate_document(
@@ -163,12 +308,7 @@ def generate_document(
     date: str = "",
     author: str = "",
 ) -> GeneratedDocument:
-    """Generate a safe document instance from repository evidence.
-
-    The MVP fully materializes the analysis document. Other document types
-    return their official template structure with explicit pending fields.
-    """
-
+    """Generate a safe document instance from repository evidence."""
     normalized_type = document_type.strip().lower()
     if not request.strip():
         raise ValueError("request must not be empty")
@@ -176,12 +316,8 @@ def generate_document(
     template_path = _template_path(normalized_type)
     template = client.get_file(template_path, ref=ref)
 
-    if normalized_type == "analysis":
-        if not ticket_id:
-            raise DocumentGenerationError(
-                "analysis generation requires ticket_id in the MVP"
-            )
-
+    analysis_result: AnalysisResult | None = None
+    if ticket_id:
         analysis_result = analyze(
             client,
             request,
@@ -189,51 +325,42 @@ def generate_document(
             ref=ref,
         )
 
+    if normalized_type == "analysis":
+        if not ticket_id:
+            raise DocumentGenerationError(
+                "analysis generation requires ticket_id in the MVP"
+            )
         content = _analysis_document(
             analysis_result,
             date=date,
             author=author,
         )
-
-        return GeneratedDocument(
-            document_type=normalized_type,
-            ticket_id=analysis_result.ticket_id,
-            version="1.0",
-            status="draft",
-            content=content,
-            source_paths=(
-                template_path,
-                *(document.path for document in analysis_result.context.documents),
-                *(relationship.path for relationship in analysis_result.relationships.relationships),
-            ),
+    else:
+        title, sections = _build_sections(
+            normalized_type,
+            ticket_id,
+            analysis_result,
+        )
+        content = _render_document(
+            title,
+            normalized_type,
+            ticket_id,
+            sections,
+            date=date,
+            author=author,
         )
 
-    # For the remaining document types, use the template as the structural
-    # contract and make missing content explicit instead of inventing it.
-    content = "\n".join(
-        [
-            f"# {normalized_type}",
-            "",
-            "## Metadata",
-            "",
-            _metadata_block(
-                normalized_type,
-                ticket_id,
-                date=date,
-                author=author,
-            ),
-            "",
-            "## Generation status",
-            "",
-            "Documento generado en modo MVP. El template oficial fue recuperado:",
-            f"- {template_path}",
-            "",
-            "## Información pendiente",
-            "",
-            "El MVP todavía no materializa contenido específico para este tipo "
-            "documental. No se inventó información.",
-        ]
-    )
+    _validate_generated(normalized_type, content, template)
+
+    source_paths = [template_path]
+    if analysis_result is not None:
+        source_paths.extend(
+            document.path for document in analysis_result.context.documents
+        )
+        source_paths.extend(
+            relationship.path
+            for relationship in analysis_result.relationships.relationships
+        )
 
     return GeneratedDocument(
         document_type=normalized_type,
@@ -241,5 +368,5 @@ def generate_document(
         version="1.0",
         status="draft",
         content=content,
-        source_paths=(template_path,),
+        source_paths=tuple(dict.fromkeys(source_paths)),
     )
