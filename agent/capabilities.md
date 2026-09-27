@@ -202,6 +202,17 @@ A validated document instance.
 - Validate before delivery.
 - Do not automatically promote generated content to reusable Knowledge.
 
+### MVP behavior
+
+The implementation loads the requested official template before generating.
+For `analysis`, it retrieves the ticket and documented relationships through
+the analysis capability and materializes a draft with explicit evidence and
+pending information.
+
+Other document types currently produce a structural draft with explicit
+pending content rather than inventing facts. Repository writes are not
+performed by this capability.
+
 ## 9. Access Levels
 
 ### read
