@@ -110,3 +110,38 @@ python -m src.sap.cli --source-id SAP-HELP-S4-MM-2025-GOODS-MOVEMENT
 The default output is `staging/sap-standard/`.
 
 The staging output is a candidate and must not be treated as validated Knowledge automatically.
+
+
+## Promotion engine
+
+The promotion engine is an explicit validation boundary between staging and reusable Knowledge.
+
+Validation checks include:
+
+1. complete required metadata;
+2. registered and active source;
+3. canonical URL match;
+4. product/module/release/language match;
+5. SAP Standard classification;
+6. candidate status and under-validation certainty;
+7. title and candidate marker;
+8. source-text checksum;
+9. duplicate destination detection.
+
+A successful promotion changes:
+
+`status: candidate` → `status: validated`
+
+and:
+
+`certainty: under_validation` → `certainty: confirmed`
+
+Promotion never overwrites an existing Knowledge document automatically.
+
+### CLI
+
+```bash
+python -m src.sap.promote_cli staging/sap-standard/<candidate>.md
+```
+
+The destination defaults to `knowledge/sap-standard/mm/`.
