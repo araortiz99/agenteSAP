@@ -74,6 +74,14 @@ def test_generate_non_analysis_does_not_invent_content():
     client = FakeGitHubClient(
         {
             "templates/functional-specification.md": "# Especificación Funcional template",
+            "tickets/31426/ticket.md": """---
+ticket_id: "31426"
+---
+
+# Ticket 31426
+
+- El objeto funcional mencionado es ZMM_IMX_0004.
+""",
         }
     )
 
@@ -93,6 +101,14 @@ def test_generate_all_supported_document_types_with_complete_structure():
     client = FakeGitHubClient(
         {
             "templates/requirement.md": "# Requerimiento",
+            "tickets/31426/ticket.md": """---
+ticket_id: "31426"
+---
+
+# Ticket 31426
+
+- El objeto funcional mencionado es ZMM_IMX_0004.
+""",
             "templates/functional-specification.md": "# Especificación Funcional",
             "templates/functional-tests.md": "# Pruebas Funcionales",
             "templates/investigation.md": "# Investigación",
