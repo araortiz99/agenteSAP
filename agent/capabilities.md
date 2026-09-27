@@ -128,6 +128,15 @@ Related:
 - Preserve certainty and source information.
 - Distinguish direct relationships from broader search matches.
 
+### MVP behavior
+
+The implementation reads only Markdown relationship records under
+`knowledge/relationships/`. An entity matches when it is the documented
+source or target of a relationship. Co-occurrence in tickets, documents, or
+other files is not treated as a relationship.
+
+A result may be empty when no explicit relationship has been documented.
+
 ## 7. analyze
 
 ### Purpose
