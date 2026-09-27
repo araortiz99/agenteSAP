@@ -82,3 +82,31 @@ The ingestor records a SHA-256 checksum so repeated retrievals can be compared w
 ## Network safety
 
 The collector currently permits only HTTPS URLs hosted on `help.sap.com`, applies a bounded response size, uses no credentials, and does not execute downloaded content.
+
+
+## Source registry
+
+The source registry is the allowlist for ingestion. A CLI run requires an existing `source_id`.
+
+The registry records:
+
+- canonical URL;
+- product;
+- module;
+- release;
+- language;
+- status.
+
+A CLI URL override is rejected when it differs from the registered URL. This prevents ingestion from silently switching to an unregistered source.
+
+## CLI
+
+Controlled ingestion can be invoked with:
+
+```bash
+python -m src.sap.cli --source-id SAP-HELP-S4-MM-2025-GOODS-MOVEMENT
+```
+
+The default output is `staging/sap-standard/`.
+
+The staging output is a candidate and must not be treated as validated Knowledge automatically.
