@@ -1,24 +1,38 @@
 Actúa como arquitecto de repositorios de conocimiento y especialista en gestión documental para agentes de IA orientados a SAP.
 
-Necesito generar el archivo:
 
-standards/output-structure-standard.md
-
-Este documento debe definir de manera normativa cómo se almacenan, identifican, nombran, versionan y relacionan los documentos generados por el agente SAP.
-
-IMPORTANTE:
-
-- No generar documentos funcionales concretos.
-- No generar tickets reales.
-- No inventar información SAP.
-- No modificar la arquitectura conceptual existente.
-- No reemplazar documentation-standard.md.
-- No reemplazar versioning-standard.md.
-- No reemplazar los templates.
-- Este archivo debe definir únicamente la estructura física y las convenciones de salida.
+Este archivo debe definir de forma normativa dónde y cómo se almacenan los documentos generados por el agente SAP.
 
 ==================================================
-ARQUITECTURA ACTUAL
+OBJETIVO PRINCIPAL
+==================================================
+
+La regla fundamental del repositorio es:
+
+Todo documento generado asociado a un ticket debe almacenarse dentro de:
+
+tickets/<ticket_id>/
+
+El ticket_id es el identificador transversal del caso.
+
+Por lo tanto, la estructura física principal será:
+
+tickets/
+└── <ticket_id>/
+    ├── ticket.md
+    ├── requirement.md
+    ├── analysis.md
+    ├── debug.md
+    ├── investigation.md
+    ├── functional-specification.md
+    └── functional-tests.md
+
+Los documentos son opcionales según las necesidades del ticket.
+
+No todos los tickets deben contener todos los tipos documentales.
+
+==================================================
+ARQUITECTURA EXISTENTE
 ==================================================
 
 El repositorio contiene:
@@ -51,227 +65,312 @@ agent/
 ├── agent.md
 └── generation.md
 
-El ticket_id será el identificador transversal para los casos asociados a tickets.
+promptMaestro
+
+El archivo output-structure-standard.md debe complementar estos documentos y no reemplazarlos.
 
 ==================================================
-OBJETIVO
+RESPONSABILIDAD DE ESTE STANDARD
 ==================================================
 
-Definir exactamente cómo debe estructurarse:
+Este archivo debe definir exclusivamente:
 
-tickets/<ticket_id>/
+1. dónde se almacenan los documentos;
+2. cómo se estructura cada ticket;
+3. cómo se nombran los archivos;
+4. qué documentos puede contener un ticket;
+5. cómo se relacionan los documentos con ticket_id;
+6. cómo se actualizan los documentos existentes;
+7. cómo se manejan las versiones;
+8. cómo se mantiene la trazabilidad;
+9. cómo se actualiza tickets/index.md;
+10. cómo se referencian Knowledge y Sources.
 
-y cómo se almacenan dentro los documentos generados.
+No debe definir nuevamente:
+
+- el contenido de cada documento;
+- la estructura interna de requirement.md;
+- la estructura interna de analysis.md;
+- la estructura interna de debug.md;
+- las reglas generales de documentación;
+- las reglas generales de clasificación;
+- las reglas generales de versionado.
+
+Estas responsabilidades pertenecen respectivamente a:
+
+templates/
+standards/documentation-standard.md
+standards/knowledge-classification-standard.md
+standards/versioning-standard.md
 
 ==================================================
-ESTRUCTURA BASE
+ESTRUCTURA FÍSICA OBLIGATORIA
 ==================================================
 
-La estructura propuesta debe ser:
+La estructura de tickets debe ser:
 
 tickets/
 ├── index.md
-├── ticket.md
 ├── <ticket_id>/
 │   ├── ticket.md
 │   ├── requirement.md
 │   ├── analysis.md
-│   ├── investigation.md
 │   ├── debug.md
+│   ├── investigation.md
 │   ├── functional-specification.md
 │   └── functional-tests.md
 
-Sin embargo, analizar esta estructura y determinar si:
+Reglas:
 
-- ticket.md debe existir siempre;
-- los documentos deben tener nombres fijos;
-- los documentos deben ser opcionales;
-- un ticket puede contener varios documentos del mismo tipo;
-- debe existir un identificador documental adicional;
-- cómo manejar múltiples versiones;
-- cómo manejar documentos históricos.
+1. Cada ticket debe tener su propio directorio.
 
-No asumir automáticamente que la estructura propuesta es definitiva.
+2. El nombre del directorio debe ser exactamente el ticket_id.
 
-==================================================
-DOCUMENT TYPES
-==================================================
+3. ticket.md representa el contexto principal del ticket.
 
-Los tipos documentales actuales son:
+4. Los demás documentos representan documentación especializada asociada al ticket.
 
-- requirement
-- analysis
-- debug
-- investigation
-- functional-specification
-- functional-tests
+5. Los documentos especializados son opcionales.
 
-Definir:
+6. El agente solamente debe crear un documento cuando exista una necesidad documental correspondiente.
 
-1. nombre canónico;
-2. nombre del archivo;
-3. ubicación;
-4. relación con ticket_id;
-5. posibilidad de múltiples documentos del mismo tipo.
+7. No deben crearse archivos vacíos para completar la estructura.
 
-Utilizar nombres de archivo consistentes y en lowercase-kebab-case o lowercase con guiones, seleccionando una única convención y justificándola.
+8. No deben crearse documentos duplicados.
+
+9. No deben almacenarse documentos de tickets fuera de su directorio correspondiente.
 
 ==================================================
-TICKET
+NOMENCLATURA DE ARCHIVOS
 ==================================================
 
-Definir la estructura:
+Utilizar nombres de archivo determinísticos en lowercase-kebab-case.
 
-tickets/<ticket_id>/ticket.md
+Definir la correspondencia:
 
-El ticket debe funcionar como contexto principal del caso.
+requirement
+→ requirement.md
 
-Definir qué información debe vivir en ticket.md y qué información debe permanecer exclusivamente en documentos especializados.
+analysis
+→ analysis.md
 
-Evitar duplicación.
+debug
+→ debug.md
+
+investigation
+→ investigation.md
+
+functional-specification
+→ functional-specification.md
+
+functional-tests
+→ functional-tests.md
+
+ticket
+→ ticket.md
+
+La nomenclatura debe mantenerse estable.
+
+No utilizar nombres dinámicos como:
+
+analysis-v2.md
+analysis-final.md
+analysis-final-final.md
+nuevo-analysis.md
+
+La versión pertenece a la metadata del documento y al historial Git, no al nombre del archivo.
 
 ==================================================
-DOCUMENT ID
+DOCUMENTOS POR TICKET
 ==================================================
 
-Analizar si los documentos deben tener:
+Un ticket puede contener uno o varios de los siguientes documentos:
 
-document_id
+- ticket.md
+- requirement.md
+- analysis.md
+- debug.md
+- investigation.md
+- functional-specification.md
+- functional-tests.md
 
-además de:
+Definir que:
 
-ticket_id
+ticket.md
+= contexto principal del ticket.
 
-Evaluar la necesidad de document_id considerando:
+requirement.md
+= requerimiento funcional identificado.
 
-- trazabilidad;
-- relaciones;
-- referencias cruzadas;
-- versionado;
-- documentos históricos;
-- reutilización futura;
-- Knowledge Graph.
+analysis.md
+= análisis funcional o técnico realizado.
 
-Si se recomienda document_id, definir:
+debug.md
+= documentación de una actividad de debug.
 
-- formato;
-- reglas;
-- unicidad;
-- relación con ticket_id;
-- ejemplos conceptuales.
+investigation.md
+= investigación realizada para comprender un problema o comportamiento.
 
-No crear IDs reales.
+functional-specification.md
+= especificación funcional de una solución.
+
+functional-tests.md
+= pruebas funcionales y resultados.
+
+Un documento no debe utilizarse para almacenar información que corresponde naturalmente a otro tipo documental.
+
+==================================================
+GENERACIÓN DE DOCUMENTOS
+==================================================
+
+Cuando el agente recibe una solicitud de generación documental:
+
+1. identificar el ticket_id;
+2. localizar tickets/<ticket_id>/;
+3. identificar document_type;
+4. seleccionar el template correspondiente;
+5. verificar si ya existe el documento;
+6. recuperar contexto y Knowledge;
+7. generar o actualizar el documento;
+8. validar el documento;
+9. guardar el documento en tickets/<ticket_id>/;
+10. actualizar tickets/index.md cuando corresponda.
+
+La ubicación física del documento debe ser determinística.
+
+Ejemplo:
+
+ticket_id = 31426
+document_type = analysis
+
+Salida:
+
+tickets/31426/analysis.md
+
+==================================================
+ACTUALIZACIÓN DE DOCUMENTOS
+==================================================
+
+Si el documento correspondiente ya existe:
+
+NO crear otro archivo.
+
+El agente debe:
+
+1. localizar el documento;
+2. analizar su contenido actual;
+3. identificar nueva información;
+4. determinar el impacto del cambio;
+5. actualizar el documento;
+6. incrementar la versión según versioning-standard.md;
+7. mantener la trazabilidad.
+
+La existencia de un nuevo análisis no implica automáticamente crear:
+
+analysis-2.md
+analysis-v2.md
+analysis-new.md
 
 ==================================================
 VERSIONADO
 ==================================================
 
-Definir cómo se representa la versión.
+Las versiones documentales no deben formar parte del nombre físico del archivo.
 
-Distinguir:
+Ejemplo correcto:
 
-1. archivo actual;
-2. versión documental;
-3. historial Git;
-4. documentos obsoletos.
+tickets/31426/analysis.md
 
-Analizar si las versiones deben almacenarse:
+con metadata:
 
-A)
-en el mismo archivo mediante metadata e historial,
+version: "1.1"
 
-o
+No utilizar:
 
-B)
-como archivos separados,
+tickets/31426/analysis-v1.1.md
 
-o
+El historial de cambios debe mantenerse mediante:
 
-C)
-mediante Git exclusivamente.
+1. metadata del documento;
+2. historial definido por versioning-standard.md;
+3. historial Git.
 
-Seleccionar una estrategia coherente con versioning-standard.md.
-
-Evitar duplicación innecesaria de archivos.
+El standard debe evitar duplicación innecesaria de archivos.
 
 ==================================================
-NOMENCLATURA
+TICKET.MD
 ==================================================
 
-Definir reglas para:
+Cada ticket debe utilizar:
+
+tickets/<ticket_id>/ticket.md
+
+Este documento representa el contexto general del ticket.
+
+Debe contener o referenciar:
+
+- identificación del ticket;
+- título;
+- tipo;
+- módulo;
+- prioridad;
+- estado;
+- fechas;
+- clasificación;
+- contexto;
+- documentación relacionada;
+- Knowledge relacionado;
+- Sources;
+- estado actual;
+- conclusión o solución cuando corresponda.
+
+No debe duplicar completamente el contenido de:
+
+analysis.md
+debug.md
+functional-specification.md
+functional-tests.md
+
+Debe funcionar como punto de entrada del caso.
+
+==================================================
+TICKETS/INDEX.MD
+==================================================
+
+tickets/index.md funciona como índice general de tickets.
+
+No debe contener el contenido completo de cada ticket.
+
+Debe permitir localizar rápidamente:
 
 - ticket_id;
-- document_id;
-- nombres de archivo;
-- directorios;
-- extensiones;
-- metadata;
-- referencias internas.
+- título;
+- tipo;
+- módulo;
+- prioridad;
+- estado;
+- knowledge_type;
+- knowledge_scope;
+- fecha de apertura;
+- fecha de actualización;
+- fecha de cierre;
+- ruta.
 
-La nomenclatura debe ser:
+La ruta debe apuntar al directorio:
 
-- determinística;
-- legible;
-- estable;
-- compatible con Git;
-- fácil de recuperar por un agente de IA.
+tickets/<ticket_id>/
 
-==================================================
-DOCUMENTOS MÚLTIPLES
-==================================================
-
-Analizar casos como:
-
-- dos análisis diferentes;
-- varias investigaciones;
-- varias pruebas funcionales;
-- una especificación funcional revisada;
-- documentos complementarios.
-
-Definir cuándo:
-
-- actualizar el documento existente;
-- versionar;
-- crear un documento nuevo;
-- utilizar un documento relacionado.
-
-No permitir duplicación arbitraria.
-
-==================================================
-DOCUMENTOS SIN TICKET
-==================================================
-
-Definir qué ocurre cuando un documento no tiene ticket_id.
-
-Ejemplos:
-
-- investigación general;
-- documentación de proceso;
-- documentación de objeto SAP;
-- análisis transversal;
-- conocimiento general.
-
-Determinar si:
-
-- deben existir fuera de tickets;
-- deben vivir directamente en knowledge/;
-- deben tener otra estructura.
-
-La solución debe mantener clara la separación entre:
-
-DOCUMENTATION
-y
-REUSABLE KNOWLEDGE.
+El índice debe actualizarse cuando se cree o modifique un ticket de acuerdo con las reglas establecidas.
 
 ==================================================
 RELACIÓN CON KNOWLEDGE
 ==================================================
 
-Definir cómo un documento almacenado en:
+Los documentos almacenados en:
 
 tickets/<ticket_id>/
 
-puede referenciar:
+pueden referenciar Knowledge reusable ubicado en:
 
 knowledge/sap-objects/
 knowledge/processes/
@@ -279,148 +378,237 @@ knowledge/business-rules/
 knowledge/relationships/
 knowledge/sources/
 
-La referencia debe ser estable.
+El ticket NO debe copiar el contenido completo de Knowledge.
 
-No duplicar Knowledge dentro del ticket.
+Debe utilizar referencias estables.
+
+Ejemplo conceptual:
+
+analysis.md
+→ SAP Object: ZMM_IMX_0004
+→ Process: SNC Logístico
+→ Business Rule: ...
+→ Source: ...
+
+La documentación del ticket conserva el contexto específico del caso.
+
+Knowledge conserva conocimiento reusable.
 
 ==================================================
 RELACIÓN CON SOURCES
 ==================================================
 
-Definir cómo los documentos generados referencian las Sources utilizadas.
+Los documentos pueden utilizar Sources para respaldar información.
 
-Debe ser posible responder:
+Las referencias deben permitir identificar:
 
-- qué fuente fue utilizada;
-- qué evidencia aportó;
-- cuándo fue consultada;
-- qué parte del documento respalda.
+- qué Source fue utilizada;
+- qué información aporta;
+- qué documento utiliza esa Source;
+- cuándo fue utilizada cuando corresponda.
 
-==================================================
-INDEXACIÓN
-==================================================
-
-Definir el papel de:
-
-tickets/index.md
-
-Debe actuar como índice y no como copia de los contenidos de los tickets.
-
-Determinar qué columnas/campos debe contener.
-
-Como mínimo evaluar:
-
-- ticket_id;
-- title;
-- ticket_type;
-- module;
-- priority;
-- status;
-- knowledge_type;
-- knowledge_scope;
-- date_opened;
-- date_updated;
-- date_closed;
-- path.
+No duplicar innecesariamente el contenido de la Source.
 
 ==================================================
-ESTRUCTURA DE DIRECTORIOS
+SEPARACIÓN ENTRE DOCUMENTACIÓN Y KNOWLEDGE
 ==================================================
 
-Definir formalmente:
+Debe mantenerse estrictamente la separación:
 
 tickets/
-tickets/<ticket_id>/
-
-y, si corresponde:
+=
+documentación contextual e histórica.
 
 knowledge/
-knowledge/<knowledge_type>/
+=
+conocimiento reusable.
 
-No crear niveles de carpetas innecesarios.
+Un hecho descubierto durante un ticket no se convierte automáticamente en Knowledge reusable.
 
-La estructura debe facilitar:
+El flujo es:
 
-- navegación humana;
-- recuperación semántica;
-- recuperación determinística;
-- Git;
-- automatización futura;
-- relaciones entre entidades.
+DOCUMENTACIÓN
+→ DESCUBRIMIENTO
+→ CANDIDATE KNOWLEDGE
+→ VALIDACIÓN
+→ KNOWLEDGE REUSABLE
 
-==================================================
-REGLAS DE CREACIÓN
-==================================================
-
-Definir cuándo el agente:
-
-- crea un ticket;
-- crea un documento;
-- actualiza un documento;
-- crea una nueva versión;
-- crea un documento adicional;
-- actualiza tickets/index.md.
-
-El agente no debe crear archivos duplicados por cada interacción.
+Las reglas de promoción se encuentran en agent/generation.md.
 
 ==================================================
-REGLAS DE ACTUALIZACIÓN
+DOCUMENTOS SIN TICKET
 ==================================================
 
-Definir el flujo:
+No crear dentro de tickets documentos que no estén asociados a un ticket.
 
-DOCUMENTO EXISTENTE
-→ IDENTIFICAR
-→ COMPARAR
-→ DETERMINAR CAMBIO
-→ ACTUALIZAR
-→ VERSIONAR
-→ REGISTRAR TRAZABILIDAD
+Si una información constituye conocimiento reusable y no pertenece a un ticket específico, debe evaluarse su incorporación en:
 
-==================================================
-REGLAS DE ELIMINACIÓN
-==================================================
+knowledge/
 
-Definir si los documentos:
+según el tipo de Knowledge correspondiente.
 
-- pueden eliminarse;
-- deben marcarse obsolete;
-- deben conservarse por trazabilidad.
-
-Priorizar preservación histórica.
+No crear una estructura paralela de documentos fuera de tickets/ salvo que exista una decisión arquitectónica explícita posterior.
 
 ==================================================
-REFERENCIAS INTERNAS
+REFERENCIAS
 ==================================================
 
-Definir cómo referenciar:
+Las referencias internas deben utilizar identificadores estables.
 
-- ticket;
-- documento;
+Cuando exista un identificador formal, utilizarlo en lugar de depender exclusivamente del nombre o texto libre.
+
+Las referencias pueden incluir:
+
+- ticket_id;
+- document_id si posteriormente se define;
 - SAP Object;
 - Process;
 - Business Rule;
 - Relationship;
 - Source.
 
-Las referencias deben ser estables y no depender de texto libre cuando exista un identificador formal.
+No introducir document_id como requisito obligatorio si no está definido formalmente por la arquitectura vigente.
 
 ==================================================
-ESTRUCTURA DEL DOCUMENTO GENERADO
+DOCUMENT_ID
 ==================================================
 
-Definir metadata mínima que debe aparecer al inicio de cada documento.
+No crear document_id como requisito de almacenamiento físico en esta etapa.
 
-Como mínimo evaluar:
+El documento se identifica mínimamente mediante:
 
-```yaml
-document_id: ""
-document_type: ""
-ticket_id: ""
-title: ""
-version: "1.0"
-status: ""
-knowledge_type: ""
-knowledge_scope: ""
-date: ""
-author: ""
+ticket_id + document_type
+
+Ejemplo:
+
+31426 + analysis
+
+→ tickets/31426/analysis.md
+
+Si en una fase posterior el modelo de Knowledge Graph requiere un identificador formal para DOCUMENT, document_id podrá incorporarse mediante una modificación arquitectónica explícita.
+
+==================================================
+DOCUMENTOS MÚLTIPLES DEL MISMO TIPO
+==================================================
+
+Por defecto, un ticket tendrá como máximo un documento activo por tipo documental.
+
+Ejemplo:
+
+tickets/31426/analysis.md
+
+Si el análisis cambia:
+
+→ actualizar y versionar analysis.md.
+
+No crear múltiples análisis independientes salvo que exista una razón documental explícita.
+
+Si realmente existen documentos conceptualmente distintos, deben evaluarse como documentos relacionados y no como duplicados del mismo tipo.
+
+==================================================
+ELIMINACIÓN Y OBSOLESCENCIA
+==================================================
+
+No eliminar documentos únicamente porque fueron reemplazados.
+
+La preservación histórica debe priorizarse.
+
+Cuando un documento deje de ser aplicable:
+
+- utilizar el estado correspondiente;
+- registrar su obsolescencia;
+- mantener el historial Git;
+- conservar trazabilidad.
+
+La eliminación física debe ser excepcional y estar sujeta a las reglas de documentación y seguridad.
+
+==================================================
+VALIDACIÓN DE SALIDA
+==================================================
+
+Antes de considerar generado un documento, verificar:
+
+[ ] Existe ticket_id válido.
+[ ] Existe tickets/<ticket_id>/.
+[ ] El document_type es válido.
+[ ] El nombre del archivo es correcto.
+[ ] El documento utiliza el template correspondiente.
+[ ] No existe un documento duplicado.
+[ ] La metadata es válida.
+[ ] La versión es correcta.
+[ ] Las referencias son trazables.
+[ ] Knowledge no fue duplicado.
+[ ] Sources están correctamente referenciadas.
+[ ] No existen secretos o información sensible.
+[ ] El documento cumple documentation-standard.md.
+[ ] El documento cumple knowledge-classification-standard.md.
+[ ] El documento cumple versioning-standard.md.
+
+==================================================
+ESTRUCTURA FINAL DEL STANDARD
+==================================================
+
+El archivo generado debe contener únicamente las siguientes secciones:
+
+# Output Structure Standard
+
+## 1. Purpose
+
+## 2. Scope
+
+## 3. Repository Output Model
+
+## 4. Ticket Directory Structure
+
+## 5. Document Types
+
+## 6. File Naming Convention
+
+## 7. Ticket.md
+
+## 8. Document Generation Output
+
+## 9. Document Update and Versioning
+
+## 10. Ticket Index
+
+## 11. Knowledge References
+
+## 12. Source References
+
+## 13. Separation Between Documentation and Knowledge
+
+## 14. Multiple Documents
+
+## 15. Obsolescence and Preservation
+
+## 16. Output Validation
+
+## 17. Final Rules
+
+==================================================
+REGLAS FINALES
+==================================================
+
+El resultado debe ser simple, determinístico y operativo.
+
+La regla principal debe quedar inequívocamente establecida:
+
+DOCUMENT GENERATED FOR TICKET
+→ tickets/<ticket_id>/<document_type>.md
+
+No generar una arquitectura alternativa.
+
+No crear estructuras paralelas innecesarias.
+
+No duplicar contenido de Knowledge.
+
+No utilizar versiones en los nombres de archivo.
+
+No crear archivos duplicados por cada interacción.
+
+No inventar entidades.
+
+No introducir document_id como requisito obligatorio en esta etapa.
+
+El objetivo del standard es que cualquier agente o persona pueda determinar exactamente dónde debe quedar almacenado un documento generado.
