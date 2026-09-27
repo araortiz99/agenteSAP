@@ -17,6 +17,7 @@ class SAPSourceMetadata:
     language: str
     retrieved_at: str
     checksum_sha256: str
+    source_text: str = ""
     status: str = "candidate"
     knowledge_type: str = "standard"
     knowledge_scope: str = "global"
@@ -63,6 +64,7 @@ status: {metadata.status}
 source_url: {metadata.url}
 retrieved_at: {metadata.retrieved_at}
 checksum_sha256: {metadata.checksum_sha256}
+source_text_sha256: {metadata.checksum_sha256}
 ---
 
 # {title or metadata.source_id}
