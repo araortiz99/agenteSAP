@@ -145,3 +145,26 @@ Siguientes incrementos:
 6. persistencia mediante Pull Requests;
 7. integración con un LLM.
 
+
+
+### SAP Help ingestion
+
+The repository now includes a controlled SAP Help ingestion MVP:
+
+- allowlisted source registry;
+- official SAP Help HTTPS validation;
+- HTML parsing;
+- release/module/source metadata;
+- SHA-256 content checksum;
+- candidate staging;
+- CLI invocation;
+- tests for registry and URL safety.
+
+Example:
+
+```bash
+python -m src.sap.cli --source-id SAP-HELP-S4-MM-2025-GOODS-MOVEMENT
+```
+
+Output is staged under `staging/sap-standard/` and remains `candidate / under_validation` until explicitly validated.
+
