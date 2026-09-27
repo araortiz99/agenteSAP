@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {
+      "source_id": "SAP-HELP-S4-MM-2025-GOODS-MOVEMENT",
+      "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/742e46e570984d9aa74e468838f6e1ff.html",
+      "product": "SAP S/4HANA",
+      "module": "MM-IM",
+      "release": "2025 FPS01",
+      "language": "en",
+      "status": "active"
+    },
+    {
+      "source_id": "SAP-HELP-S4-MM-2025-MATERIAL-MASTER",
+      "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/b724ba53422bb54ce10000000a174cb4.html",
+      "product": "SAP S/4HANA",
+      "module": "MM",
+      "release": "2025 FPS01",
+      "language": "en",
+      "status": "active"
+    },
+    {
+      "source_id": "SAP-HELP-S4-MM-2025-INVENTORY-PRINCIPLES",
+      "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/9905622a5c1f49ba84e9076fc83a9c2c/269bc7536e8e2a4be10000000a174cb4.html",
+      "product": "SAP S/4HANA",
+      "module": "MM-IM",
+      "release": "2025 FPS01",
+      "language": "en",
+      "status": "active"
+    }
+  ]
+}
