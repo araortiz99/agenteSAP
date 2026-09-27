@@ -15,11 +15,14 @@ Usuario
   ↓
 Agente SAP
   ↓
-Capabilities
+Intent Router
+  ├── SAP Standard Retrieval
+  └── Internal Knowledge Retrieval
   ↓
-Tools
+Capabilities / Tools
   ↓
 GitHub Knowledge Base
+  ├── knowledge/sap-standard
   ├── knowledge
   ├── tickets
   ├── standards
@@ -32,14 +35,41 @@ GitHub Knowledge Base
 | Capability | Estado |
 |---|---|
 | `search_knowledge` | ✅ |
+| `search_sap_standard` | ✅ |
 | `get_ticket` | ✅ |
 | `get_related_knowledge` | ✅ |
 | `analyze` | ✅ |
 | `generate_document` | ✅ |
 
+### SAP Standard Knowledge
+
+El repositorio ya contiene una primera capa de **SAP Standard Knowledge** basada exclusivamente en documentación oficial de SAP Help Portal.
+
+MVP inicial:
+
+- SAP S/4HANA
+- Materials Management / Inventory Management
+- release 2025 FPS01
+- retrieval léxico determinístico
+- fuentes trazables mediante URL y `source_id`
+
+Los primeros documentos curados cubren:
+
+- Goods Movement
+- Material Master / Product Master
+- Inventory Management: Basic Principles
+
+La documentación oficial de SAP describe, por ejemplo, Goods Movement como el proceso para planificar, ingresar y documentar movimientos de stock; y describe el material/product master como fuente central de información específica de materiales. citeturn0search0turn0search14
+
 ### Orquestación del agente
 
-El MVP incluye una capa determinística de intent routing. Una solicitud como `Analizá el ticket 31426` se transforma automáticamente en el plan `get_ticket → get_related_knowledge → analyze`, sin que el usuario tenga que invocar las capabilities individualmente.
+El MVP incluye intent routing determinístico.
+
+Ejemplos:
+
+- `Analizá el ticket 31426` → `get_ticket → get_related_knowledge → analyze`
+- `Buscá SAP Standard sobre material master` → `search_sap_standard`
+- `Buscá conocimiento sobre SNC` → `search_knowledge`
 
 ### Generación documental
 
@@ -59,11 +89,13 @@ Los documentos se generan respetando el contrato de generación y dejando explí
 
 La búsqueda actual es determinística y léxica.
 
-La relevancia prioriza:
+La búsqueda general prioriza:
 
 1. identificadores de entidad;
 2. títulos;
 3. contenido.
+
+La búsqueda SAP Standard está deliberadamente restringida a `knowledge/sap-standard/`.
 
 Las relaciones se recuperan únicamente cuando están documentadas explícitamente en `knowledge/relationships/`. La coocurrencia de términos no crea relaciones.
 
@@ -71,13 +103,14 @@ Las relaciones se recuperan únicamente cuando están documentadas explícitamen
 
 El repositorio separa:
 
-- `knowledge/` → conocimiento reutilizable;
+- `knowledge/sap-standard/` → conocimiento reutilizable de SAP Standard;
+- `knowledge/` → conocimiento reutilizable de la organización;
 - `tickets/` → contexto histórico;
 - `templates/` → contratos de estructura documental;
 - `standards/` → reglas normativas;
 - `agent/` → comportamiento y contratos del agente.
 
-La clasificación utiliza `knowledge_type`, `knowledge_scope`, certeza y clasificación Standard/Custom según la evidencia disponible.
+SAP Standard Knowledge nunca debe utilizarse como evidencia de configuración o desarrollo específico del cliente.
 
 ## Seguridad
 
@@ -102,12 +135,13 @@ El baseline actual debe mantenerse verde antes de incorporar nuevas capacidades.
 
 ## Alcance pendiente
 
-El siguiente nivel posterior al MVP puede incorporar:
+Siguientes incrementos:
 
-- retrieval semántico;
-- mejor resolución de documentos existentes y versionado;
-- promoción controlada de Knowledge;
-- persistencia mediante Pull Requests;
-- integración con un LLM.
+1. ingestionador controlado desde SAP Help Portal;
+2. extracción/chunking de documentación;
+3. deduplicación y actualización por release;
+4. retrieval semántico/híbrido;
+5. promoción controlada de conocimiento;
+6. persistencia mediante Pull Requests;
+7. integración con un LLM.
 
-Estas capacidades no forman parte del MVP actual.
