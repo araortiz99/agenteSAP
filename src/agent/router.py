@@ -1,0 +1,170 @@
+"""Deterministic orchestration layer for the SAP agent MVP."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+
+from src.github.client import GitHubClient
+from src.tools.analyze import AnalysisResult, analyze
+from src.tools.generate_document import GeneratedDocument, generate_document
+from src.tools.get_ticket import TicketContext, get_ticket
+from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
+from src.tools.search_knowledge import SearchResult, search_knowledge
+
+
+class IntentRoutingError(ValueError):
+    """Raised when a user request cannot be mapped safely to an MVP intent."""
+
+
+@dataclass(frozen=True)
+class AgentPlan:
+    intent: str
+    ticket_id: str | None
+    capabilities: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class AgentResponse:
+    request: str
+    plan: AgentPlan
+    result: object
+
+
+_TICKET_PATTERNS = (
+    re.compile(r"\bticket\s*#?\s*(\d+)\b", re.IGNORECASE),
+    re.compile(r"\bincidente\s*#?\s*(\d+)\b", re.IGNORECASE),
+    re.compile(r"\b(?:analiz[aá]|analizar|analisis|análisis)\s+(?:el\s+)?(?:ticket|incidente)\s*#?\s*(\d+)\b", re.IGNORECASE),
+)
+
+
+def _extract_ticket_id(request: str) -> str | None:
+    for pattern in _TICKET_PATTERNS:
+        match = pattern.search(request)
+        if match:
+            return match.group(1)
+    return None
+
+
+def route_intent(request: str) -> AgentPlan:
+    """Classify a user request and produce a deterministic capability plan."""
+    text = request.strip()
+    if not text:
+        raise IntentRoutingError("request must not be empty")
+
+    lowered = text.lower()
+    ticket_id = _extract_ticket_id(text)
+
+    if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
+        if not ticket_id:
+            raise IntentRoutingError(
+                "No se pudo identificar ticket_id para la solicitud de análisis."
+            )
+        return AgentPlan(
+            intent="analyze_ticket",
+            ticket_id=ticket_id,
+            capabilities=(
+                "get_ticket",
+                "get_related_knowledge",
+                "analyze",
+            ),
+        )
+
+    if any(term in lowered for term in ("generá", "genera", "generar", "creá", "crear", "documentá", "documentar")):
+        document_type = None
+        if "requerimiento" in lowered:
+            document_type = "requirement"
+        elif "especificación funcional" in lowered or "especificacion funcional" in lowered:
+            document_type = "functional-specification"
+        elif "prueba funcional" in lowered or "pruebas funcionales" in lowered:
+            document_type = "functional-test"
+        elif "investigación" in lowered or "investigacion" in lowered:
+            document_type = "investigation"
+        elif "análisis" in lowered or "analisis" in lowered:
+            document_type = "analysis"
+
+        if not document_type:
+            raise IntentRoutingError(
+                "No se pudo identificar el tipo documental solicitado."
+            )
+
+        return AgentPlan(
+            intent="generate_document",
+            ticket_id=ticket_id,
+            capabilities=("generate_document",),
+        )
+
+    if "relacion" in lowered or "relacionado" in lowered:
+        if not ticket_id:
+            raise IntentRoutingError(
+                "No se pudo identificar la entidad para consultar relaciones."
+            )
+        return AgentPlan(
+            intent="get_related_knowledge",
+            ticket_id=ticket_id,
+            capabilities=("get_related_knowledge",),
+        )
+
+    if "ticket" in lowered and ticket_id:
+        return AgentPlan(
+            intent="get_ticket",
+            ticket_id=ticket_id,
+            capabilities=("get_ticket",),
+        )
+
+    return AgentPlan(
+        intent="search_knowledge",
+        ticket_id=ticket_id,
+        capabilities=("search_knowledge",),
+    )
+
+
+def run_agent(
+    client: GitHubClient,
+    request: str,
+    *,
+    ref: str = "main",
+    date: str = "",
+    author: str = "",
+) -> AgentResponse:
+    """Route and execute the minimum safe capability chain for a request."""
+    plan = route_intent(request)
+
+    if plan.intent == "analyze_ticket":
+        result = analyze(client, request, plan.ticket_id or "", ref=ref)
+    elif plan.intent == "get_ticket":
+        result = get_ticket(client, plan.ticket_id or "", ref=ref)
+    elif plan.intent == "get_related_knowledge":
+        result = get_related_knowledge(client, "TICKET", plan.ticket_id or "", ref=ref)
+    elif plan.intent == "search_knowledge":
+        result = search_knowledge(client, request, ref=ref)
+    elif plan.intent == "generate_document":
+        document_type = _document_type_from_request(request)
+        result = generate_document(
+            client,
+            document_type,
+            request,
+            plan.ticket_id,
+            ref=ref,
+            date=date,
+            author=author,
+        )
+    else:
+        raise IntentRoutingError(f"Unsupported intent: {plan.intent}")
+
+    return AgentResponse(request=request.strip(), plan=plan, result=result)
+
+
+def _document_type_from_request(request: str) -> str:
+    lowered = request.lower()
+    if "requerimiento" in lowered:
+        return "requirement"
+    if "especificación funcional" in lowered or "especificacion funcional" in lowered:
+        return "functional-specification"
+    if "prueba funcional" in lowered or "pruebas funcionales" in lowered:
+        return "functional-test"
+    if "investigación" in lowered or "investigacion" in lowered:
+        return "investigation"
+    if "análisis" in lowered or "analisis" in lowered:
+        return "analysis"
+    raise IntentRoutingError("No se pudo identificar el tipo documental solicitado.")
