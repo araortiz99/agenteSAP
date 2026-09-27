@@ -60,16 +60,20 @@ def test_search_finds_object_fixture():
 
     assert results
     assert results[0].path == "knowledge/test-fixtures/sap-object-zmm-imx-0004.md"
+    assert results[0].match_type == "identifier"
     assert "zmm_imx_0004" in results[0].matched_terms
 
 
-def test_search_finds_ticket_31426():
+def test_search_finds_ticket_31426_as_direct_entity_match():
     client = FakeGitHubClient(FIXTURES)
 
     results = search_knowledge(client, "31426")
 
-    assert len(results) == 1
+    assert results
     assert results[0].path == "knowledge/test-fixtures/ticket-31426.md"
+    assert results[0].match_type == "identifier"
+    assert "31426" in results[0].matched_terms
+    assert len(results) > 1
 
 
 def test_search_finds_snc_logistico_related_fixtures():
