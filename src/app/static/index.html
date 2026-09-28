@@ -201,7 +201,6 @@ async function consult(){
     if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
     renderWorkbench(data);
-    const result=data.result||data;
     const answer=normalizeAnswer(result.answer||"");
     $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
