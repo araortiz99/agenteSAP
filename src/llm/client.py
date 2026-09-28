@@ -42,11 +42,9 @@ class OpenAIResponsesClient:
     @classmethod
     def from_env(cls) -> "OpenAIResponsesClient":
         api_key = os.getenv("OPENAI_API_KEY")
-        model = os.getenv("OPENAI_MODEL")
+        model = os.getenv("OPENAI_MODEL", "gpt-5.6")
         if not api_key:
             raise LLMConfigurationError("OPENAI_API_KEY is not configured")
-        if not model:
-            raise LLMConfigurationError("OPENAI_MODEL is not configured")
         return cls(model=model, api_key=api_key)
 
     def generate(self, *, system_prompt: str, user_prompt: str) -> str:
