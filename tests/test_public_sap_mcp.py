@@ -54,3 +54,11 @@ def test_public_sap_read_rejects_unallowlisted_tool(monkeypatch):
 
     with pytest.raises(PermissionError, match="not allowlisted"):
         gateway.read_public("unknown_tool", {})
+
+
+def test_request_router_prefers_public_sap_mcp_when_enabled(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_PUBLIC_MCP_ENABLED", "true")
+    gateway = McpEvidenceGateway.for_request("¿Cómo funciona el material master en SAP?")
+    assert gateway is not None
+    assert gateway.target.provider == "sap_developer_public"
+    assert gateway.target.observation_type == "external_source"
