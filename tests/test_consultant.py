@@ -80,6 +80,38 @@ def test_consult_builds_traceable_context_and_calls_llm():
     assert result.uncited_evidence_ids
 
 
+def test_consult_consumes_optional_mcp_gateway(monkeypatch):
+    class FakeGateway:
+        def search_resources(self, query):
+            return (
+                UnifiedResult(
+                    path="mcp://sap_devs/search_resources",
+                    score=0.9,
+                    matched_terms=("material",),
+                    content="SAP developer context for material master.",
+                    source_layer="mcp",
+                    match_type="mcp",
+                    source_id="sap_devs:search_resources",
+                    knowledge_type="developer_context",
+                    knowledge_scope="external",
+                    certainty="external_source",
+                ),
+            )
+
+    monkeypatch.setattr(
+        "src.agent.consultant.McpEvidenceGateway.from_env",
+        lambda: FakeGateway(),
+    )
+    llm = FakeLLM()
+    result = consult(FakeClient(), "Consultá sobre material master", llm)
+
+    assert result.retrieval.mcp
+    assert result.retrieval.mcp[0].source_layer == "mcp"
+    assert result.retrieval.mcp[0].certainty == "external_source"
+    assert "SAP developer context for material master." in llm.user_prompt
+    assert "source_layer: mcp" in llm.user_prompt
+
+
 def test_build_context_contains_gaps_and_conflicts():
     evidence = UnifiedResult(
         path="x.md",
@@ -109,6 +141,7 @@ class InvalidStructureLLM(FakeLLM):
     def generate(self, *, system_prompt, user_prompt):
         return "Respuesta sin estructura requerida."
 
+
 class HallucinatingLLM(FakeLLM):
     def generate(self, *, system_prompt, user_prompt):
         return (
@@ -129,6 +162,7 @@ def test_consult_rejects_invalid_answer_structure():
 
     with pytest.raises(ConsultationFormatError, match="missing required section"):
         consult(FakeClient(), "Consultá sobre material master", InvalidStructureLLM())
+
 
 def test_consult_rejects_unknown_evidence_citation():
     import pytest
@@ -191,6 +225,7 @@ def test_consult_requires_ticket_reference_in_structured_answer():
 
     assert result.ticket_context
     assert result.ticket_context[0].reference_id in result.answer
+
 
 def test_consult_includes_ticket_context_and_relationships():
     class TicketAwareLLM(FakeLLM):
