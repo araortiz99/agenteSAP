@@ -135,11 +135,11 @@ def route_intent(request: str) -> AgentPlan:
             "evaluar evidencia",
             "analizá la evidencia",
             "analiza la evidencia",
-            "qué está confirmado",
-            "que esta confirmado",
-            "qué está confirmado y qué falta",
-            "que esta confirmado y que falta",
         )
+    ) or (
+        any(phrase in lowered for phrase in ("qué está confirmado", "que esta confirmado"))
+        and "evidencia" in lowered
+        and not any(phrase in lowered for phrase in ("consultá", "consulta", "consultar"))
     ):
         return AgentPlan(
             intent="evidence_reasoning",
