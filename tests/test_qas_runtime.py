@@ -96,3 +96,53 @@ def test_qas_runtime_config_rejects_non_readonly_scope(monkeypatch):
         assert "mcp_readonly scope" in str(exc)
     else:
         raise AssertionError("QAS runtime integration must require mcp_readonly")
+
+
+def test_qas_runtime_gateway_preflight_checks_allowlist_without_calling_tool(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv(
+        "AGENTESAP_SAP_RUNTIME_READ_TOOLS",
+        "verified_table_read,verified_ddic_read",
+    )
+
+    gateway = McpEvidenceGateway.from_qas_runtime_env()
+    assert gateway is not None
+
+    gateway._list_runtime_tools = lambda: None
+    gateway._list_runtime_tools = lambda: __import__("asyncio").sleep(
+        0, result=("verified_table_read", "verified_ddic_read", "other_read_tool")
+    )
+
+    available = gateway.preflight_runtime_tools()
+
+    assert available == (
+        "verified_table_read",
+        "verified_ddic_read",
+        "other_read_tool",
+    )
+
+
+def test_qas_runtime_gateway_preflight_rejects_missing_allowlisted_tool(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv(
+        "AGENTESAP_SAP_RUNTIME_READ_TOOLS",
+        "verified_table_read,missing_tool",
+    )
+
+    gateway = McpEvidenceGateway.from_qas_runtime_env()
+    assert gateway is not None
+
+    gateway._list_runtime_tools = lambda: __import__("asyncio").sleep(
+        0, result=("verified_table_read",)
+    )
+
+    try:
+        gateway.preflight_runtime_tools()
+    except ValueError as exc:
+        assert "missing_tool" in str(exc)
+    else:
+        raise AssertionError("preflight must reject a missing allowlisted tool")
