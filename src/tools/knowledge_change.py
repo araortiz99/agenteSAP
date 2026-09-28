@@ -41,7 +41,12 @@ class KnowledgeChangeError(ValueError):
     """Raised when a Knowledge change is unsafe or structurally invalid."""
 
 
+def _strip_bom(content: str) -> str:
+    return content.lstrip("\ufeff")
+
+
 def _metadata(content: str) -> dict[str, str]:
+    content = _strip_bom(content)
     if not content.startswith("---"):
         return {}
     values: dict[str, str] = {}
