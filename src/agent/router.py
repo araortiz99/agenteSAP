@@ -187,13 +187,6 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("get_related_knowledge",),
         )
 
-    if "ticket" in lowered and ticket_id:
-        return AgentPlan(
-            intent="get_ticket",
-            ticket_id=ticket_id,
-            capabilities=("get_ticket",),
-        )
-
     if any(phrase in lowered for phrase in ("consultá", "consulta", "consultar", "explicame", "explicá", "explica")):
         return AgentPlan(
             intent="consult",
@@ -205,6 +198,13 @@ def route_intent(request: str) -> AgentPlan:
                 "build_traceability",
                 "consult_llm",
             ),
+        )
+
+    if "ticket" in lowered and ticket_id:
+        return AgentPlan(
+            intent="get_ticket",
+            ticket_id=ticket_id,
+            capabilities=("get_ticket",),
         )
 
     return AgentPlan(
