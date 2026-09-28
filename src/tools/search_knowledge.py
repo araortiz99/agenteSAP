@@ -52,7 +52,6 @@ def _is_searchable(path: str) -> bool:
 
 
 def _parse_front_matter(content: str) -> dict[str, str]:
-    """Parse the repository's simple YAML-like front matter."""
     if not content.startswith("---"):
         return {}
 
@@ -99,7 +98,6 @@ def _score(content: str, terms: list[str]) -> tuple[float, tuple[str, ...]]:
 def _rank_result(
     content: str, terms: list[str], lexical_score: float
 ) -> tuple[int, float, tuple[str, ...], str]:
-    """Rank identifiers above titles and titles above body matches."""
     identifier_found, identifier_terms = _identifier_match(content, terms)
     if identifier_found:
         return 3, 1.0, identifier_terms, "identifier"
@@ -112,6 +110,15 @@ def _rank_result(
     return 1, lexical_score, content_terms, "content"
 
 
+def _load_contents(client: GitHubClient, paths: list[str], ref: str) -> dict[str, str]:
+    """Use concurrent transport when available; keep test-double compatibility."""
+    get_files = getattr(client, "get_files", None)
+    if callable(get_files):
+        return get_files(paths, ref=ref)
+
+    return {path: client.get_file(path, ref=ref) for path in paths}
+
+
 def search_knowledge(
     client: GitHubClient,
     query: str,
@@ -119,7 +126,6 @@ def search_knowledge(
     max_results: int = 10,
     ref: str = "main",
 ) -> list[SearchResult]:
-    """Search repository text using deterministic relevance tiers."""
     if not query or not query.strip():
         raise ValueError("query must not be empty")
     if max_results < 1:
@@ -136,7 +142,7 @@ def search_knowledge(
         if _is_searchable(item.get("path", ""))
         and (not allowed_paths or item.get("path", "") in allowed_paths)
     ]
-    contents = client.get_files(candidates, ref=ref)
+    contents = _load_contents(client, candidates, ref)
 
     results: list[SearchResult] = []
     for path in candidates:
