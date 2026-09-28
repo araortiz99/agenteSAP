@@ -103,16 +103,18 @@ class McpEvidenceGateway:
                 ),
                 certainty=evidence.certainty,
                 provenance=tuple(
-                    (key, value)
-                    for key, value in (
-                        ("provider", evidence.provider),
-                        ("operation", evidence.operation),
-                        ("system", getattr(evidence, "system", None)),
-                        ("landscape", getattr(evidence, "landscape", None)),
-                        ("object_id", getattr(evidence, "object_id", None)),
-                        ("observation_type", getattr(evidence, "observation_type", None)),
+                    (
+                        (key, value)
+                        for key, value in (
+                            ("provider", evidence.provider),
+                            ("operation", evidence.operation),
+                            ("system", getattr(evidence, "system", None)),
+                            ("landscape", getattr(evidence, "landscape", None)),
+                            ("object_id", getattr(evidence, "object_id", None)),
+                            ("observation_type", getattr(evidence, "observation_type", None)),
+                        )
+                        if value
                     )
-                    if value,
                 ),
             ),
         )
