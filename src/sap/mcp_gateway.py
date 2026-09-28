@@ -92,6 +92,34 @@ class McpEvidenceGateway:
         )
 
 
+
+def _run_async(coro: Coroutine[object, object, T]) -> T:
+    """Run an MCP coroutine from sync code, including an active event loop."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    result: list[T] = []
+    error: list[BaseException] = []
+
+    def runner() -> None:
+        try:
+            result.append(asyncio.run(coro))
+        except BaseException as exc:
+            error.append(exc)
+
+    thread = threading.Thread(target=runner, name="agentesap-mcp", daemon=True)
+    thread.start()
+    thread.join()
+
+    if error:
+        raise error[0]
+    if not result:
+        raise RuntimeError("MCP coroutine completed without a result")
+    return result[0]
+
+
 def _has_zero_results(content: object) -> bool:
     items = content if isinstance(content, (list, tuple)) else [content]
     for item in items:
