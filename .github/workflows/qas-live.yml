@@ -1,0 +1,41 @@
+name: QAS Live Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qas-live:
+    runs-on: ubuntu-latest
+    environment: qas
+    env:
+      AGENTESAP_QAS_LIVE_TESTS: "true"
+      AGENTESAP_SAP_RUNTIME_ENABLED: "true"
+      AGENTESAP_SAP_RUNTIME_LANDSCAPE: QAS
+      AGENTESAP_SAP_RUNTIME_SCOPE: mcp_readonly
+      AGENTESAP_SAP_RUNTIME_SYSTEM: ${{ secrets.AGENTESAP_SAP_RUNTIME_SYSTEM }}
+      AGENTESAP_SAP_RUNTIME_READ_TOOLS: ${{ secrets.AGENTESAP_SAP_RUNTIME_READ_TOOLS }}
+      AGENTESAP_SAP_RUNTIME_QUERY_TOOL: ${{ secrets.AGENTESAP_SAP_RUNTIME_QUERY_TOOL }}
+      AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT: ${{ secrets.AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT }}
+      AGENTESAP_QAS_LIVE_QUERY: ${{ vars.AGENTESAP_QAS_LIVE_QUERY }}
+      AGENTESAP_SAP_MCP_COMMAND: ${{ vars.AGENTESAP_SAP_MCP_COMMAND }}
+      AGENTESAP_SAP_MCP_ARGS: ${{ vars.AGENTESAP_SAP_MCP_ARGS }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run real QAS read-only smoke test
+        run: python -m pytest -q tests/test_qas_live_smoke.py
