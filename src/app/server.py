@@ -54,7 +54,24 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self._send_html()
             return
         if path == "/health":
-            self._send_json(200, {"status": "ok", "mode": "local-read-only"})
+            self._send_json(200, {
+                "status": "ok",
+                "mode": "local-read-only",
+                "sap_writes_exposed": False,
+            })
+            return
+        if path == "/api/status":
+            self._send_json(200, {
+                "agent": "ready",
+                "mode": "local-read-only",
+                "github_owner": os.getenv("GITHUB_OWNER", "araortiz99"),
+                "github_repo": os.getenv("GITHUB_REPO", "agenteSAP"),
+                "github_ref": os.getenv("GITHUB_REF", "main"),
+                "qas_runtime_enabled": os.getenv(
+                    "AGENTESAP_SAP_RUNTIME_ENABLED", "false"
+                ).lower() in {"1", "true", "yes", "on"},
+                "sap_writes_exposed": False,
+            })
             return
         self._send_json(404, {"error": "not_found"})
 
