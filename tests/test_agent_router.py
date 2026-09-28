@@ -278,3 +278,86 @@ def test_route_document_generation_before_analysis_keyword():
     assert plan.intent == "generate_document"
     assert plan.ticket_id == "31426"
     assert "generate_document" in plan.capabilities
+
+
+def test_route_ticket_factual_question_to_consultant():
+    plan = route_intent("¿El ticket 31426 corresponde a K1 o K4?")
+    assert plan.intent == "consult"
+    assert plan.ticket_id == "31426"
+    assert "consult_llm" in plan.capabilities
+
+
+def test_route_ticket_root_cause_question_to_consultant():
+    plan = route_intent("¿Cuál es la causa raíz técnica exacta del ticket 31426?")
+    assert plan.intent == "consult"
+    assert plan.ticket_id == "31426"
+
+
+def test_route_explicit_ticket_retrieval_stays_deterministic():
+    plan = route_intent("Mostrame el ticket 31426")
+    assert plan.intent == "get_ticket"
+
+
+def test_run_agent_unified_search_uses_mcp_when_enabled(monkeypatch):
+    class FakeGateway:
+        def search_resources(self, query):
+            from src.tools.search_unified import UnifiedResult
+            return (
+                UnifiedResult(
+                    path="mcp://sap_devs/search_resources",
+                    score=0.9,
+                    matched_terms=("ABAP",),
+                    content="MCP result",
+                    source_layer="mcp",
+                    match_type="mcp",
+                    source_id="sap_devs:search_resources",
+                    knowledge_type="developer_context",
+                    knowledge_scope="external",
+                    certainty="external_source",
+                ),
+            )
+
+    monkeypatch.setattr(
+        "src.agent.router.McpEvidenceGateway.from_env",
+        lambda: FakeGateway(),
+    )
+    client = AgentFakeGitHubClient()
+    response = run_agent(
+        client,
+        "Compará SAP Standard y nuestra implementación sobre ABAP",
+    )
+
+    assert response.result.mcp
+    assert response.result.mcp[0].source_layer == "mcp"
+
+
+def test_run_agent_evidence_reasoning_preserves_mcp_layer(monkeypatch):
+    class FakeGateway:
+        def search_resources(self, query):
+            from src.tools.search_unified import UnifiedResult
+            return (
+                UnifiedResult(
+                    path="mcp://sap_devs/search_resources",
+                    score=0.9,
+                    matched_terms=("ABAP",),
+                    content="MCP result",
+                    source_layer="mcp",
+                    match_type="mcp",
+                    source_id="sap_devs:search_resources",
+                    knowledge_type="developer_context",
+                    knowledge_scope="external",
+                    certainty="external_source",
+                ),
+            )
+
+    monkeypatch.setattr(
+        "src.agent.router.McpEvidenceGateway.from_env",
+        lambda: FakeGateway(),
+    )
+    client = AgentFakeGitHubClient()
+    response = run_agent(
+        client,
+        "Evaluá la evidencia sobre ABAP",
+    )
+
+    assert any(item.source_layer == "mcp" for item in response.result.evidence.items)

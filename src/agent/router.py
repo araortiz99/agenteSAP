@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from src.github.client import GitHubClient
 from src.agent.consultant import ConsultationResult, consult
 from src.llm.client import LLMClient, OpenAIResponsesClient
+from src.sap.mcp_gateway import McpEvidenceGateway
 from src.tools.analyze import AnalysisResult, analyze
 from src.tools.generate_document import GeneratedDocument, generate_document
 from src.tools.get_ticket import TicketContext, get_ticket
@@ -53,6 +54,57 @@ def _extract_ticket_id(request: str) -> str | None:
     return None
 
 
+def _mcp_gateway() -> McpEvidenceGateway | None:
+    """Build the optional read-only MCP gateway for deterministic retrieval flows."""
+    return McpEvidenceGateway.from_env()
+
+
+def _is_consultative_ticket_request(lowered: str, ticket_id: str | None) -> bool:
+    """Detect ticket questions that need evidence-bounded consultation, not raw retrieval."""
+    if not ticket_id:
+        return False
+
+    explicit_retrieval = (
+        "mostrame el ticket",
+        "muéstrame el ticket",
+        "muestrame el ticket",
+        "ver el ticket",
+        "ver ticket",
+        "obtené el ticket",
+        "obtene el ticket",
+        "traeme el ticket",
+        "traé el ticket",
+    )
+    if any(phrase in lowered for phrase in explicit_retrieval):
+        return False
+
+    consultative_markers = (
+        "¿",
+        "?",
+        "causa",
+        "solución",
+        "solucion",
+        "resultado",
+        "corresponde",
+        "confirmado",
+        "confirmada",
+        "información falta",
+        "informacion falta",
+        "qué pasó",
+        "que paso",
+        "por qué",
+        "por que",
+        "explicame",
+        "explicá",
+        "explica",
+        "decime",
+        "indica",
+        "cuál",
+        "cual",
+    )
+    return any(marker in lowered for marker in consultative_markers)
+
+
 def route_intent(request: str) -> AgentPlan:
     """Classify a user request and produce a deterministic capability plan."""
     text = request.strip()
@@ -90,7 +142,6 @@ def route_intent(request: str) -> AgentPlan:
             ticket_id=ticket_id,
             capabilities=("generate_document",),
         )
-
 
     if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
         if not ticket_id:
@@ -187,6 +238,19 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("get_related_knowledge",),
         )
 
+    if _is_consultative_ticket_request(lowered, ticket_id):
+        return AgentPlan(
+            intent="consult",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+                "build_traceability",
+                "consult_llm",
+            ),
+        )
+
     if any(phrase in lowered for phrase in ("consultá", "consulta", "consultar", "explicame", "explicá", "explica")):
         return AgentPlan(
             intent="consult",
@@ -248,13 +312,31 @@ def run_agent(
     elif plan.intent == "search_sap_standard":
         result = search_sap_standard(client, request, ref=ref)
     elif plan.intent == "search_unified":
-        result = search_unified(client, request, ref=ref)
+        result = search_unified(
+            client,
+            request,
+            ref=ref,
+            max_results=max_results,
+            mcp_gateway=_mcp_gateway(),
+        )
     elif plan.intent == "evidence_reasoning":
-        retrieval = search_unified(client, request, ref=ref)
+        retrieval = search_unified(
+            client,
+            request,
+            ref=ref,
+            max_results=max_results,
+            mcp_gateway=_mcp_gateway(),
+        )
         evidence = assess_evidence(retrieval)
         result = reason_from_evidence(evidence)
     elif plan.intent == "evidence_traceability":
-        retrieval = search_unified(client, request, ref=ref)
+        retrieval = search_unified(
+            client,
+            request,
+            ref=ref,
+            max_results=max_results,
+            mcp_gateway=_mcp_gateway(),
+        )
         evidence = assess_evidence(retrieval)
         reasoning = reason_from_evidence(evidence)
         result = build_traceability(reasoning)

@@ -10,11 +10,16 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import threading
 from dataclasses import dataclass
+from typing import Coroutine, TypeVar
 
 from src.sap.mcp_client import SapMcpClient
 from src.sap.mcp_registry import build_target
 from src.tools.search_unified import UnifiedResult
+
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -66,7 +71,7 @@ class McpEvidenceGateway:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
 
-        evidence = asyncio.run(self._search_resources(query.strip()))
+        evidence = _run_async(self._search_resources(query.strip()))
         if _has_zero_results(evidence.content):
             return ()
 
@@ -85,6 +90,34 @@ class McpEvidenceGateway:
                 certainty=evidence.certainty,
             ),
         )
+
+
+
+def _run_async(coro: Coroutine[object, object, T]) -> T:
+    """Run an MCP coroutine from sync code, including an active event loop."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    result: list[T] = []
+    error: list[BaseException] = []
+
+    def runner() -> None:
+        try:
+            result.append(asyncio.run(coro))
+        except BaseException as exc:
+            error.append(exc)
+
+    thread = threading.Thread(target=runner, name="agentesap-mcp", daemon=True)
+    thread.start()
+    thread.join()
+
+    if error:
+        raise error[0]
+    if not result:
+        raise RuntimeError("MCP coroutine completed without a result")
+    return result[0]
 
 
 def _has_zero_results(content: object) -> bool:
