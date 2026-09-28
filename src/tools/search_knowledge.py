@@ -48,7 +48,6 @@ def _terms(query: str) -> list[str]:
 def _is_searchable(path: str) -> bool:
     if path == "promptMaestro":
         return True
-
     return path.endswith(".md") and path.startswith(SEARCH_ROOTS)
 
 
@@ -68,9 +67,7 @@ def _parse_front_matter(content: str) -> dict[str, str]:
     return metadata
 
 
-def _identifier_match(
-    content: str, terms: list[str]
-) -> tuple[bool, tuple[str, ...]]:
+def _identifier_match(content: str, terms: list[str]) -> tuple[bool, tuple[str, ...]]:
     metadata = _parse_front_matter(content)
     identifiers = {
         _normalize(metadata[field]).strip()
@@ -94,10 +91,8 @@ def _title_match(content: str, terms: list[str]) -> tuple[bool, tuple[str, ...]]
 def _score(content: str, terms: list[str]) -> tuple[float, tuple[str, ...]]:
     normalized = _normalize(content)
     matched = tuple(term for term in terms if term in normalized)
-
     if not terms:
         return 0.0, ()
-
     return len(matched) / len(terms), matched
 
 
@@ -124,15 +119,9 @@ def search_knowledge(
     max_results: int = 10,
     ref: str = "main",
 ) -> list[SearchResult]:
-    """Search repository text using deterministic relevance tiers.
-
-    Entity identifiers receive the highest relevance, followed by document
-    titles and then body-only matches. This keeps direct entity lookups ahead
-    of documents that merely mention the same identifier.
-    """
+    """Search repository text using deterministic relevance tiers."""
     if not query or not query.strip():
         raise ValueError("query must not be empty")
-
     if max_results < 1:
         raise ValueError("max_results must be greater than zero")
 
@@ -141,21 +130,17 @@ def search_knowledge(
         return []
 
     allowed_paths = set(paths or [])
-    tree = client.get_tree(ref=ref)
-
-    candidates = []
-    for item in tree:
-        path = item.get("path", "")
-        if not _is_searchable(path):
-            continue
-        if allowed_paths and path not in allowed_paths:
-            continue
-        candidates.append(path)
+    candidates = [
+        item.get("path", "")
+        for item in client.get_tree(ref=ref)
+        if _is_searchable(item.get("path", ""))
+        and (not allowed_paths or item.get("path", "") in allowed_paths)
+    ]
+    contents = client.get_files(candidates, ref=ref)
 
     results: list[SearchResult] = []
-
     for path in candidates:
-        content = client.get_file(path, ref=ref)
+        content = contents[path]
         lexical_score, _ = _score(content, terms)
         if lexical_score <= 0:
             continue
@@ -182,5 +167,4 @@ def search_knowledge(
         ),
         reverse=True,
     )
-
     return results[:max_results]
