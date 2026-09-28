@@ -218,3 +218,4 @@ def test_investigation_rejects_non_document_additional_evidence():
         assert "additional_evidence" in str(exc)
     else:
         raise AssertionError("non-document evidence must be rejected")
+
