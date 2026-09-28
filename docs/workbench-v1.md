@@ -37,3 +37,17 @@ No SAP write endpoint is exposed.
 - document generation actions;
 - QAS runtime status/readiness panel;
 - optional server-side authenticated persistence.
+
+
+## Ticket workspace action
+
+The **Analizar ticket** action pre-fills a structured investigation request. It does not invent ticket facts; the agent still relies on retrieved evidence and reports gaps.
+
+The intended analysis sections are:
+
+- hechos confirmados;
+- evidencia disponible;
+- hipótesis;
+- gaps de información;
+- objetos SAP relacionados;
+- próximos pasos.
