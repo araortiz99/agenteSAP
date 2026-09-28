@@ -10,6 +10,8 @@ import argparse
 from dataclasses import asdict, is_dataclass
 import json
 import os
+import time
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -17,6 +19,8 @@ from urllib.parse import urlparse
 from src.agent.router import run_agent
 from src.llm.client import LLMConfigurationError
 from src.github.client import GitHubAPIError, GitHubClient
+from src.agent.consultant import ConsultationResult
+from src.app.contracts import build_workbench_analysis
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -57,6 +61,89 @@ def _validated_max_results(value: object) -> int:
         raise ValueError(f"max_results must be between 1 and {MAX_RESULTS}")
     return max_results
 
+
+
+
+def _runtime_payload(status: dict) -> dict:
+    if status["qas_runtime_enabled"]:
+        return {
+            "mode": "QAS",
+            "access": "read-only",
+            "status": "enabled_not_verified",
+            "writes_exposed": False,
+        }
+    return {
+        "mode": "QAS",
+        "access": "read-only",
+        "status": "disabled",
+        "writes_exposed": False,
+    }
+
+
+def _workbench_payload(
+    response: object,
+    *,
+    request_id: str,
+    intent: str,
+    started_at: float,
+) -> dict:
+    legacy = _response_payload(response)
+    status = _status_payload()
+    runtime = _runtime_payload(status)
+
+    if not isinstance(response, ConsultationResult):
+        return {
+            "request_id": request_id,
+            "query": getattr(response, "request", ""),
+            "intent": intent,
+            "result": legacy,
+            "runtime": runtime,
+            "diagnostics": {
+                "request_id": request_id,
+                "trace_id": None,
+                "intent": intent,
+                "evidence_count": 0,
+                "conflicts": 0,
+                "gaps": 0,
+                "llm_used": False,
+                "llm_latency_ms": None,
+                "retrieval_latency_ms": None,
+                "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
+                "runtime_status": runtime["status"],
+            },
+        }
+
+    diagnostics = {
+        "request_id": request_id,
+        "trace_id": response.traceability.trace_id,
+        "intent": intent,
+        "sources_requested": tuple(
+            sorted({item.source_layer for item in response.traceability.evidence})
+        ),
+        "sources_retrieved": tuple(
+            sorted({item.source_layer for item in response.traceability.evidence})
+        ),
+        "evidence_count": len(response.traceability.evidence),
+        "conflicts": len(response.evidence.conflicts),
+        "gaps": len(response.traceability.gaps),
+        "llm_used": bool(response.model),
+        "llm_model": response.model,
+        "llm_latency_ms": None,
+        "retrieval_latency_ms": None,
+        "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
+        "runtime_status": runtime["status"],
+    }
+    structured = build_workbench_analysis(
+        response,
+        request_id=request_id,
+        intent=intent,
+        diagnostics=diagnostics,
+        runtime=runtime,
+    )
+    return {
+        **asdict(structured),
+        "result": legacy,
+    }
 
 def _status_payload() -> dict:
     client = _github_client()
@@ -128,6 +215,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             if not request:
                 raise ValueError("request is required")
 
+            request_id = "REQ-" + uuid.uuid4().hex[:12].upper()
+            started_at = time.perf_counter()
             response = run_agent(
                 _github_client(),
                 request,
@@ -135,7 +224,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 ticket_id=body.get("ticket_id"),
                 max_results=_validated_max_results(body.get("max_results", 8)),
             )
-            self._send_json(200, _response_payload(response))
+            self._send_json(200, _workbench_payload(response, request_id=request_id, intent=response.plan.intent, started_at=started_at))
         except (ValueError, json.JSONDecodeError) as exc:
             self._send_json(400, {"error": str(exc)})
         except GitHubAPIError as exc:
