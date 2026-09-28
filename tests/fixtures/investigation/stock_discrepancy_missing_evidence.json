@@ -1,0 +1,7 @@
+{
+  "scenario": "stock_discrepancy_missing_evidence",
+  "evidence": [
+    {"evidence_id":"EV-001","observation_type":"stock","content":"stock observed for material 100123 at plant 5023"},
+    {"evidence_id":"EV-002","observation_type":"movement","content":"movement observed"}
+  ]
+}
