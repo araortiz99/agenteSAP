@@ -9,8 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from mcp import Client, ClientSession, StdioServerParameters
-from mcp.client.streamable_http import streamable_http_client
+from mcp import Client, StdioServerParameters
 
 from src.sap.mcp_contracts import McpTarget, SapMcpEvidence
 
@@ -56,17 +55,11 @@ class SapMcpClient:
             self._client = await self._context_manager.__aenter__()
             return self
 
-        self._context_manager = streamable_http_client(self.target.url)
-        read_stream, write_stream = await self._context_manager.__aenter__()
-        session = ClientSession(read_stream, write_stream)
-        await session.__aenter__()
-        await session.initialize()
-        self._client = session
+        self._context_manager = Client(self.target.url)
+        self._client = await self._context_manager.__aenter__()
         return self
 
     async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
-        if self.target.transport == "streamable_http" and self._client is not None:
-            await self._client.__aexit__(exc_type, exc, tb)
         if self._context_manager is not None:
             await self._context_manager.__aexit__(exc_type, exc, tb)
         self._client = None
