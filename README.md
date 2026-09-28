@@ -187,6 +187,16 @@ identificar qué capa de evidencia es pertinente a la pregunta:
 Si la capa esperada no está disponible, se registra como gap. La ausencia de una
 fuente no se interpreta como prueba de que el dato no exista.
 
+## MCP Provider Strategy
+
+La selección de evidencia y la selección de proveedor MCP son capas separadas:
+
+- `runtime` identifica una necesidad de observación del sistema, pero no habilita por sí sola una conexión.
+- `sap-devs` puede aportar contexto de desarrollador como evidencia externa/suplementaria, pero no satisface una necesidad `runtime`.
+- `sap-mcp-server` y `abap_ai` están registrados como proveedores potenciales de runtime, pero permanecen en estado **fail-closed** hasta disponer de un contrato explícito de herramientas read-only.
+- La estrategia de proveedor no ejecuta herramientas ni eleva certainty; únicamente determina elegibilidad y readiness.
+- Una pregunta de runtime sin un proveedor read-only listo debe conservar el gap de runtime en lugar de degradar silenciosamente a contexto externo.
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:

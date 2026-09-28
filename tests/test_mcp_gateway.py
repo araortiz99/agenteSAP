@@ -169,3 +169,5 @@ def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
     gateway = McpEvidenceGateway(McpGatewayConfig())
     assert gateway.supports_source("external") is True
     assert gateway.supports_source("runtime") is False
+    assert gateway.provider_plan("runtime").ready is False
+    assert gateway.provider_plan("external").ready is True
