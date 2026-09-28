@@ -54,7 +54,7 @@ def _extract_ticket_id(request: str) -> str | None:
     return None
 
 
-_SAP_OBJECT_PATTERN = re.compile(r"\\b(?:[ZY]\\w{2,}_[A-Z0-9_]+)\\b")
+_SAP_OBJECT_PATTERN = re.compile(r"\b(?:[ZY]\w{2,}_[A-Z0-9_]+)\b")
 
 
 def _extract_sap_object_id(request: str) -> str | None:
