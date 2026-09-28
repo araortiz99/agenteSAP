@@ -161,7 +161,7 @@ class ContractLLM:
 CASES = (
     ("MM-001", "¿Qué significa el movimiento 551?", "factual"),
     ("MM-002", "¿Cuál es la diferencia entre movimiento 551 y 552?", "comparison"),
-    ("MM-003", "¿Cómo se relacionan purchase order, goods receipt y material document?", "factual"),
+    ("MM-003", "¿Qué es un goods receipt contra un purchase order?", "factual"),
     ("MM-004", "¿Cuál es la diferencia entre material document y accounting document?", "comparison"),
     ("MM-005", "¿Qué es MIRO e Invoice Verification?", "factual"),
     ("MM-006", "¿Qué es GR/IR en SAP MM?", "factual"),
