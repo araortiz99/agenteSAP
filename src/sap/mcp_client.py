@@ -20,6 +20,15 @@ class McpServerInfo:
     version: str
 
 
+@dataclass(frozen=True)
+class McpToolDescriptor:
+    name: str
+    description: str
+    input_schema: object
+    read_only_hint: bool | None = None
+    destructive_hint: bool | None = None
+
+
 class SapMcpClient:
     """Async read-only client for an MCP stdio target."""
 
@@ -57,6 +66,27 @@ class SapMcpClient:
     async def list_tools(self) -> tuple[str, ...]:
         result = await self._require_connected().list_tools()
         return tuple(tool.name for tool in result.tools)
+
+    async def list_tool_descriptors(self) -> tuple[McpToolDescriptor, ...]:
+        """Return the provider's tool catalog without executing any tool."""
+        result = await self._require_connected().list_tools()
+        descriptors = []
+        for tool in result.tools:
+            annotations = getattr(tool, "annotations", None)
+            descriptors.append(
+                McpToolDescriptor(
+                    name=tool.name,
+                    description=str(getattr(tool, "description", "") or ""),
+                    input_schema=getattr(tool, "inputSchema", {}),
+                    read_only_hint=getattr(annotations, "readOnlyHint", None)
+                    if annotations is not None
+                    else None,
+                    destructive_hint=getattr(annotations, "destructiveHint", None)
+                    if annotations is not None
+                    else None,
+                )
+            )
+        return tuple(descriptors)
 
     def server_info(self) -> McpServerInfo | None:
         info = self._require_connected().server_info
