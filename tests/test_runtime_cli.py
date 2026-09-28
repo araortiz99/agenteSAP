@@ -163,3 +163,69 @@ def test_qas_readiness_does_not_verify_catalog_without_explicit_probe(monkeypatc
     report = json.loads(capsys.readouterr().out)
     assert report["catalog_verified"] is False
     assert report["runtime_ready"] is False
+
+
+def test_qas_read_cli_requires_allowlisted_read_only_tool(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
+
+    class FakeEvidence:
+        provider = "sap_mcp_server"
+        operation = "verified_read_tool"
+        landscape = "QAS"
+        system = "S4QAS"
+        object_id = "MARA"
+        observation_type = "runtime_observation"
+        certainty = "observed"
+        content = '{"rows":[{"MATNR":"100123"}]}'
+        provenance = (("provider", "sap_mcp_server"), ("landscape", "QAS"))
+
+    class FakeGateway:
+        @classmethod
+        def from_qas_runtime_env(cls):
+            return cls()
+
+        def validate_runtime_allowlist(self):
+            return ({"name": "verified_read_tool", "valid": True, "reason": "read-only"},)
+
+        def read_runtime(self, tool_name, arguments):
+            assert tool_name == "verified_read_tool"
+            assert arguments == {"query": "MARA"}
+            return FakeEvidence()
+
+    monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
+    assert runtime_cli.main([
+        "read-qas",
+        "--tool", "verified_read_tool",
+        "--arguments", '{"query":"MARA"}',
+    ]) == 0
+
+
+def test_qas_read_cli_rejects_non_allowlisted_tool(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
+
+    class FakeGateway:
+        @classmethod
+        def from_qas_runtime_env(cls):
+            return cls()
+
+        def validate_runtime_allowlist(self):
+            return ({"name": "verified_read_tool", "valid": True, "reason": "read-only"},)
+
+    monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
+
+    try:
+        runtime_cli.main([
+            "read-qas",
+            "--tool", "unknown_tool",
+            "--arguments", "{}",
+        ])
+    except PermissionError as exc:
+        assert "not allowlisted" in str(exc)
+    else:
+        raise AssertionError("unallowlisted runtime tool must be rejected")
