@@ -334,3 +334,43 @@ def test_runtime_allowlist_validation_uses_catalog_only(monkeypatch):
             "reason": "destructive_hint=true",
         },
     )
+
+
+def test_for_request_selects_qas_gateway_for_runtime(monkeypatch):
+    calls = []
+
+    def fake_qas(cls):
+        calls.append("qas")
+        return "qas-gateway"
+
+    def fake_external(cls):
+        calls.append("external")
+        return "external-gateway"
+
+    monkeypatch.setattr(McpEvidenceGateway, "from_qas_runtime_env", classmethod(fake_qas))
+    monkeypatch.setattr(McpEvidenceGateway, "from_env", classmethod(fake_external))
+
+    result = McpEvidenceGateway.for_request("¿Cuál es el estado actual en QAS del inventario?")
+
+    assert result == "qas-gateway"
+    assert calls == ["qas"]
+
+
+def test_for_request_keeps_external_gateway_for_non_runtime(monkeypatch):
+    calls = []
+
+    def fake_qas(cls):
+        calls.append("qas")
+        return "qas-gateway"
+
+    def fake_external(cls):
+        calls.append("external")
+        return "external-gateway"
+
+    monkeypatch.setattr(McpEvidenceGateway, "from_qas_runtime_env", classmethod(fake_qas))
+    monkeypatch.setattr(McpEvidenceGateway, "from_env", classmethod(fake_external))
+
+    result = McpEvidenceGateway.for_request("Explicame SAP Standard sobre material master.")
+
+    assert result == "external-gateway"
+    assert calls == ["external"]
