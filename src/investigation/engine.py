@@ -43,6 +43,7 @@ def _normalize_knowledge_evidence(result: UnifiedResult) -> InvestigationEvidenc
                 result.source_id or "",
                 result.knowledge_type,
                 result.certainty,
+                _content(result.content),
             )
         ).encode("utf-8")
     ).hexdigest()[:12].upper()
