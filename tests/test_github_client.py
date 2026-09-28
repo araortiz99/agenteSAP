@@ -11,7 +11,7 @@ def test_github_client_caches_tree_and_files():
             return {"tree": [{"path": "knowledge/a.md", "type": "blob"}]}
         return {
             "type": "file",
-            "content": "aGVsbG8=",  # "hello"
+            "content": "aGVsbG8=",
         }
 
     client._request = fake_request
@@ -44,5 +44,28 @@ def test_github_client_cache_is_scoped_by_ref():
 
     assert calls == [
         "git/trees/main?recursive=1",
-        "git/trees/feature%2Fagent-mvp-search?recursive=1",
+        "git/trees/feature/agent-mvp-search?recursive=1",
+    ]
+
+
+def test_github_client_get_files_deduplicates_and_uses_cache():
+    client = GitHubClient("owner", "repo")
+    calls = []
+
+    def fake_request(path):
+        calls.append(path)
+        return {"type": "file", "content": "aGVsbG8="}
+
+    client._request = fake_request
+
+    result = client.get_files(
+        ["a.md", "b.md", "a.md"],
+        ref="feature/test",
+        max_workers=2,
+    )
+
+    assert result == {"a.md": "hello", "b.md": "hello"}
+    assert sorted(calls) == [
+        "contents/a.md?ref=feature%2Ftest",
+        "contents/b.md?ref=feature%2Ftest",
     ]
