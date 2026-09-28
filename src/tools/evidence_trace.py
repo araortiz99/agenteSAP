@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 
-from src.tools.evidence import EvidenceAssessment, EvidenceItem
+from src.tools.evidence import ConflictRecord, EvidenceAssessment, EvidenceItem
 from src.tools.reason import ReasoningResult
 
 
@@ -33,7 +33,7 @@ class TraceabilityReport:
     supporting_evidence_ids: tuple[str, ...]
     unresolved_evidence_ids: tuple[str, ...]
     gaps: tuple[str, ...]
-    conflicts: tuple[str, ...]
+    conflicts: tuple[ConflictRecord, ...]
 
 
 def _evidence_id(item: EvidenceItem) -> str:
@@ -134,5 +134,15 @@ def render_traceability(report: TraceabilityReport) -> str:
     lines.extend(["", "## Gaps"])
     lines.extend(f"- {x}" for x in report.gaps)
     lines.extend(["", "## Conflicts"])
-    lines.extend(f"- {x}" for x in report.conflicts)
+    for conflict in report.conflicts:
+        lines.extend(
+            [
+                "",
+                f"### {conflict.conflict_type}",
+                f"- Status: {conflict.status}",
+                f"- Description: {conflict.description}",
+                "- Evidence paths:",
+                *[f"  - {path}" for path in conflict.evidence_paths],
+            ]
+        )
     return "\n".join(lines) + "\n"
