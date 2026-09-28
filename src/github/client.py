@@ -186,9 +186,9 @@ class GitHubClient:
         paths: list[str],
         ref: str = "main",
         *,
-        max_workers: int = 4,
+        max_workers: int = 1,
     ) -> dict[str, str]:
-        """Fetch repository files with a bounded amount of concurrency."""
+        """Fetch repository files with bounded concurrency; serial by default to limit API pressure."""
         if max_workers < 1:
             raise ValueError("max_workers must be greater than zero")
 
