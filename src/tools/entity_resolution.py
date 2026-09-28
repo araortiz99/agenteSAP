@@ -15,7 +15,6 @@ ENTITY_FIELDS = (
     ("rule_id", "BUSINESS_RULE"),
     ("ticket_id", "TICKET"),
     ("source_id", "SOURCE"),
-    ("relationship_id", "RELATIONSHIP"),
 )
 
 
