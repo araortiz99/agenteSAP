@@ -122,6 +122,17 @@ def _validate_answer_structure(answer: str) -> None:
         )
 
 
+def _validate_ticket_reference(
+    answer: str,
+    ticket_context: tuple[TicketContextReference, ...],
+) -> None:
+    if ticket_context and not any(
+        reference.reference_id in answer for reference in ticket_context
+    ):
+        raise ConsultationFormatError(
+            "LLM answer does not reference the supplied TKT-* ticket context."
+        )
+
 def _parse_citations(
     answer: str,
     traceability: TraceabilityReport,
@@ -243,6 +254,13 @@ def consult(
         context += "\n\n## Ticket context\n"
         for item in ticket_context:
             context += f"\n### {item.reference_id}\npath: {item.path}\n{item.content.strip()}\n"
+    if ticket_context:
+        context += "\n## Ticket reference requirements\n"
+        context += (
+            "Use the supplied ticket reference IDs in the Ticket section: "
+            + ", ".join(item.reference_id for item in ticket_context)
+            + ".\n"
+        )
     if ticket_relationships and ticket_relationships.relationships:
         context += "\n## Ticket relationships\n"
         for relation in ticket_relationships.relationships:
@@ -256,6 +274,7 @@ def consult(
     )
     answer = llm.generate(system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt).strip()
     _validate_answer_structure(answer)
+    _validate_ticket_reference(answer, ticket_context)
     citations = _parse_citations(answer, traceability)
     cited_ids = {citation.evidence_id for citation in citations}
     uncited = tuple(
