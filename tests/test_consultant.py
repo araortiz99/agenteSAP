@@ -111,7 +111,15 @@ class InvalidStructureLLM(FakeLLM):
 
 class HallucinatingLLM(FakeLLM):
     def generate(self, *, system_prompt, user_prompt):
-        return "Respuesta con [EVD-NOEXISTE]."
+        return (
+            "## Resumen\nRespuesta con [EVD-NOEXISTE].\n\n"
+            "## Qué está confirmado\nNo confirmado.\n\n"
+            "## Qué corresponde a nuestra implementación\nNo consta.\n\n"
+            "## Qué no está confirmado\nNo consta.\n\n"
+            "## Evidencias\n[EVD-NOEXISTE]\n\n"
+            "## Ticket\nSin ticket.\n\n"
+            "## Próximos pasos\nValidar."
+        )
 
 
 def test_consult_rejects_invalid_answer_structure():
@@ -183,7 +191,20 @@ def test_consult_requires_ticket_reference_in_structured_answer():
     assert result.ticket_context[0].reference_id in result.answer
 
 def test_consult_includes_ticket_context_and_relationships():
-    llm = FakeLLM()
+    class TicketAwareLLM(FakeLLM):
+        def generate(self, *, system_prompt, user_prompt):
+            evidence_id = __import__("re").search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
+            ticket_id = __import__("re").search(r"(TKT-[A-Z0-9]+)", user_prompt).group(1)
+            return (
+                "## Resumen\nRespuesta.\n\n"
+                "## Qué está confirmado\nConfirmado [" + evidence_id + "].\n\n"
+                "## Qué corresponde a nuestra implementación\nImplementación [" + evidence_id + "].\n\n"
+                "## Qué no está confirmado\nPendiente.\n\n"
+                "## Evidencias\n[" + evidence_id + "]\n\n"
+                "## Ticket\nContexto [" + ticket_id + "].\n\n"
+                "## Próximos pasos\nValidar."
+            )
+    llm = TicketAwareLLM()
     result = consult(
         TicketFakeClient(),
         "Consultá el ticket 31426 y explicame qué está confirmado",
@@ -201,7 +222,20 @@ def test_consult_includes_ticket_context_and_relationships():
 
 
 def test_consult_ticket_context_does_not_replace_evidence():
-    llm = FakeLLM()
+    class TicketAwareLLM(FakeLLM):
+        def generate(self, *, system_prompt, user_prompt):
+            evidence_id = __import__("re").search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
+            ticket_id = __import__("re").search(r"(TKT-[A-Z0-9]+)", user_prompt).group(1)
+            return (
+                "## Resumen\nRespuesta.\n\n"
+                "## Qué está confirmado\nConfirmado [" + evidence_id + "].\n\n"
+                "## Qué corresponde a nuestra implementación\nImplementación [" + evidence_id + "].\n\n"
+                "## Qué no está confirmado\nPendiente.\n\n"
+                "## Evidencias\n[" + evidence_id + "]\n\n"
+                "## Ticket\nContexto [" + ticket_id + "].\n\n"
+                "## Próximos pasos\nValidar."
+            )
+    llm = TicketAwareLLM()
     result = consult(
         TicketFakeClient(),
         "Consultá el ticket 31426",
