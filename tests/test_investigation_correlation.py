@@ -62,3 +62,12 @@ def test_conflicting_golden_fixture_is_explicit():
 def test_correlation_is_deterministic():
     items = load_fixture("stock_discrepancy_conflict.json")
     assert correlate_evidence(items).as_dict() == correlate_evidence(items).as_dict()
+
+
+def test_duplicate_evidence_ids_create_gap_without_self_relation():
+    items = load_fixture("stock_discrepancy_basic.json")
+    duplicated = [items[0], items[0]]
+    result = correlate_evidence(duplicated)
+    assert "duplicate_evidence_id" in result.gaps
+    assert result.unresolved_relationships
+    assert result.relations == ()
