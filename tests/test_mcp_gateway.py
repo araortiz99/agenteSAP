@@ -61,3 +61,32 @@ def test_gateway_ignores_zero_result_mcp_response(monkeypatch):
 
     monkeypatch.setattr(gateway, "_search_resources", fake_search)
     assert gateway.search_resources("does-not-exist") == ()
+
+
+def test_mcp_evidence_has_explicit_external_priority():
+    from src.tools.evidence import assess_evidence
+
+    gateway_result = UnifiedResult(
+        path="mcp://sap_devs/search_resources",
+        score=0.9,
+        matched_terms=("ABAP",),
+        content="MCP developer context",
+        source_layer="mcp",
+        match_type="mcp",
+        source_id="sap_devs:search_resources",
+        knowledge_type="developer_context",
+        knowledge_scope="external",
+        certainty="external_source",
+    )
+    assessment = assess_evidence(
+        search_unified(
+            FakeClient(),
+            "ABAP",
+            mcp_gateway=type(
+                "Gateway",
+                (),
+                {"search_resources": lambda self, query: (gateway_result,)},
+            )(),
+        )
+    )
+    assert assessment.items[0].weight == 2 * 0.0
