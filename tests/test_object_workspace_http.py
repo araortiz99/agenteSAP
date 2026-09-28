@@ -49,3 +49,18 @@ def test_object_workspace_http_endpoint(monkeypatch):
         httpd.shutdown()
         thread.join(timeout=2)
         httpd.server_close()
+
+
+def test_object_workspace_html_markers():
+    from pathlib import Path
+    html = Path("src/app/static/index.html").read_text(encoding="utf-8")
+    for marker in (
+        "objectWorkspaceCard",
+        "objectQuery",
+        "loadObjectWorkspace",
+        "renderObjectWorkspace",
+        "/api/object/",
+        "objectRelationships",
+        "objectRuntime",
+    ):
+        assert marker in html
