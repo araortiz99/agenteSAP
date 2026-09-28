@@ -66,21 +66,7 @@ def route_intent(request: str) -> AgentPlan:
     # This prevents phrases such as "explicame" or "consulta" from swallowing
     # requests that explicitly ask for analysis, evidence, comparison, relationships,
     # or document generation.
-    if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
-        if not ticket_id:
-            raise IntentRoutingError(
-                "No se pudo identificar ticket_id para la solicitud de análisis."
-            )
-        return AgentPlan(
-            intent="analyze_ticket",
-            ticket_id=ticket_id,
-            capabilities=(
-                "get_ticket",
-                "get_related_knowledge",
-                "analyze",
-            ),
-        )
-
+    # Document generation is an explicit action and must win over generic analysis terms.
     if any(term in lowered for term in ("generá", "genera", "generar", "creá", "crear", "documentá", "documentar")):
         document_type = None
         if "requerimiento" in lowered:
@@ -103,6 +89,22 @@ def route_intent(request: str) -> AgentPlan:
             intent="generate_document",
             ticket_id=ticket_id,
             capabilities=("generate_document",),
+        )
+
+
+    if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
+        if not ticket_id:
+            raise IntentRoutingError(
+                "No se pudo identificar ticket_id para la solicitud de análisis."
+            )
+        return AgentPlan(
+            intent="analyze_ticket",
+            ticket_id=ticket_id,
+            capabilities=(
+                "get_ticket",
+                "get_related_knowledge",
+                "analyze",
+            ),
         )
 
     if any(
