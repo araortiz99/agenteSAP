@@ -21,6 +21,7 @@ class SapQasRuntimeConfig:
     landscape: str
     scope: str
     system: str | None = None
+    discovery_only: bool = False
     enabled: bool = False
 
     def validate(self) -> None:
@@ -34,9 +35,14 @@ class SapQasRuntimeConfig:
             raise ValueError(
                 "QAS runtime integration requires the mcp_readonly scope"
             )
-        if not self.allowed_tools:
+        if not self.allowed_tools and not self.discovery_only:
             raise ValueError(
-                "QAS runtime integration requires an explicit read-tool allowlist"
+                "QAS runtime integration requires an explicit read-tool allowlist "
+                "unless discovery_only is enabled"
+            )
+        if self.discovery_only and self.allowed_tools:
+            raise ValueError(
+                "discovery_only mode must not pre-authorize runtime tools"
             )
         if not self.command:
             raise ValueError("QAS runtime integration requires a server command")
@@ -64,6 +70,9 @@ class SapQasRuntimeConfig:
             landscape=os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS").upper(),
             scope=os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
             system=os.getenv("AGENTESAP_SAP_RUNTIME_SYSTEM") or None,
+            discovery_only=os.getenv(
+                "AGENTESAP_SAP_RUNTIME_DISCOVERY", ""
+            ).lower() in {"1", "true", "yes", "on"},
             enabled=enabled,
         )
         config.validate()
