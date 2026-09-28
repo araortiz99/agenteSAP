@@ -77,3 +77,73 @@ def ingest_document(
         evidence=evidence,
         entities=tuple(extracted),
     )
+
+
+@dataclass(frozen=True)
+class MultiDocumentIngestion:
+    """Bounded aggregate of multiple independent document ingestions."""
+
+    documents: tuple[IngestedDocument, ...]
+    evidence: tuple[InvestigationEvidence, ...]
+    entities: tuple[SapEntity, ...]
+
+    @property
+    def document_count(self) -> int:
+        return len(self.documents)
+
+
+def ingest_documents(
+    sources: tuple[DocumentSource, ...] | list[DocumentSource],
+    *,
+    config: DocumentIngestionConfig | None = None,
+    max_documents: int = 16,
+    max_total_content_chars: int = 1_000_000,
+    max_total_evidence: int = 512,
+) -> MultiDocumentIngestion:
+    """Ingest multiple explicit sources with aggregate safety bounds.
+
+    Sources are processed in caller order. Duplicate document identities are
+    ignored deterministically so the same content cannot be counted twice.
+    No filesystem, SAP, MCP, network, or persistence side effects occur here.
+    """
+    if max_documents < 1:
+        raise ValueError("max_documents must be greater than zero")
+    if max_total_content_chars < 1:
+        raise ValueError("max_total_content_chars must be greater than zero")
+    if max_total_evidence < 1:
+        raise ValueError("max_total_evidence must be greater than zero")
+
+    materialized = tuple(sources)
+    if len(materialized) > max_documents:
+        raise ValueError(f"document count exceeds max_documents={max_documents}")
+
+    settings = config or DocumentIngestionConfig()
+    ingested: list[IngestedDocument] = []
+    evidence: list[InvestigationEvidence] = []
+    entities: list[SapEntity] = []
+    seen_ids: set[str] = set()
+    total_chars = 0
+
+    for source in materialized:
+        if source.document_id in seen_ids:
+            continue
+        if total_chars + len(source.content) > max_total_content_chars:
+            raise ValueError(
+                f"aggregate content exceeds max_total_content_chars={max_total_content_chars}"
+            )
+        item = ingest_document(source, config=settings)
+        if len(evidence) + len(item.evidence) > max_total_evidence:
+            raise ValueError(
+                f"aggregate evidence exceeds max_total_evidence={max_total_evidence}"
+            )
+        seen_ids.add(source.document_id)
+        total_chars += len(source.content)
+        ingested.append(item)
+        evidence.extend(item.evidence)
+        entities.extend(item.entities)
+
+    return MultiDocumentIngestion(
+        documents=tuple(ingested),
+        evidence=tuple(evidence),
+        entities=tuple(entities),
+    )
