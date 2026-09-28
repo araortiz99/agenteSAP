@@ -58,6 +58,26 @@ A trace report identifies:
 7. Traceability does not convert inference into confirmed knowledge.
 8. A trace report is an audit artifact; it does not itself prove functional correctness.
 
+
+## Conflict model
+
+A conflict is a deterministic reasoning signal that blocks a definitive functional conclusion until the underlying evidence is validated.
+
+Each conflict is represented by:
+
+- `conflict_type`: stable classification such as `metadata_conflict` or `explicit_documented_conflict`;
+- `status`: current reasoning state, normally `requires_analysis`;
+- `description`: bounded explanation of the documented inconsistency;
+- `evidence_paths`: repository documents that explicitly support the conflict signal.
+
+### Conflict detection rules
+
+1. Metadata conflicts may be detected deterministically when the same evidence source exposes incompatible classification values.
+2. Documented contradictions may be detected only when the retrieved document explicitly identifies a conflict, contradiction or discrepancy in a dedicated conflict section.
+3. Co-occurrence of different identifiers, scenarios or values is not sufficient to infer a conflict.
+4. A detected conflict changes deterministic reasoning status to `conflict` and prevents a definitive conclusion.
+5. Conflict detection does not resolve the contradiction; functional validation remains a required next step.
+
 ## LLM boundary
 
 A future LLM may receive a trace report as structured context. The LLM must not remove provenance, change certainty, or promote unsupported evidence without an explicit validation step.
