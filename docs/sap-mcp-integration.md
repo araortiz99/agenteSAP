@@ -63,9 +63,34 @@ knowledge/sap-standard or knowledge/internal
 
 ### sap-devs
 
-The CLI can synchronize SAP developer content and exposes a built-in MCP server with tools such as `list_packs`, `get_context`, `search_resources`, `get_known_errors`, `get_samples`, `search_tutorials`, and `search_learning_journeys`.
+The CLI exposes a built-in MCP server with tools including `list_packs`, `get_context`, `search_resources`, `get_known_errors`, `get_samples`, `search_tutorials`, and `search_learning_journeys`.
 
-This provider is appropriate for current SAP developer guidance and curated resources. It is not treated as a live SAP system.
+The AgenteSAP adapter has been locally validated against `sap-devs 0.0.15` using the official Python MCP SDK. The validated path is:
+
+```
+AgenteSAP
+    ↓
+SapMcpClient
+    ↓
+MCP stdio
+    ↓
+sap-devs 0.0.15
+```
+
+Validated operations include:
+
+- MCP handshake;
+- server/tool discovery;
+- `search_resources` schema discovery;
+- read-only `search_resources` invocation;
+- read-only `list_packs` invocation;
+- normalization into `SapMcpEvidence`.
+
+The local `list_packs` response currently exposes four packs: `base`, `cap`, `abap`, and `btp-core`.
+
+This provider is appropriate for current SAP developer guidance and curated resources. It is not treated as a live SAP system and is not assumed to be a general functional MM knowledge source.
+
+The default AgenteSAP allowlist remains intentionally conservative. In particular, `update_tutorial_progress` is not enabled by default.
 
 ### sap-mcp-server
 
@@ -75,11 +100,15 @@ AgenteSAP should use the read-only boundary for runtime investigation.
 
 The server's `connections.json` is local configuration and must never be committed.
 
+The AgenteSAP adapter contract exists, but a live `sap-mcp-server` runtime connection has not been implemented or validated.
+
 ### abap-ai/mcp
 
 The ABAP SDK allows an SAP system to expose custom MCP servers with tools/resources and DDIC-derived schemas.
 
 This is useful when organization-specific ABAP capabilities need to be exposed through MCP. It is not required for the first SAP Standard Knowledge flow.
+
+No live ABAP-hosted MCP connection has been implemented or validated.
 
 ## Implementation status
 
@@ -89,14 +118,16 @@ Current repository implementation provides:
 - explicit tool allowlisting;
 - read-only contract;
 - normalized evidence provenance;
-- tests for provider boundaries.
+- an official Python MCP SDK stdio client adapter;
+- local `sap-devs` handshake and read-tool validation;
+- unit tests for provider boundaries and read-tool normalization.
 
 Not yet implemented:
 
-- live MCP protocol client;
-- local provider installation;
+- Router/Consultant integration of MCP evidence;
+- automatic promotion of MCP output to Knowledge;
+- live `sap-mcp-server` SAP landscape connection;
 - SAP landscape credentials;
-- SAP runtime connection;
-- automatic promotion of MCP output to Knowledge.
+- live `abap-ai/mcp` endpoint integration.
 
 Those are intentionally separate steps.
