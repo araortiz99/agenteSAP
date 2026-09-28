@@ -114,6 +114,8 @@ def test_investigation_runs_end_to_end_with_fake_qas():
     assert result.intent == "stock_discrepancy"
     assert {x.entity_type for x in result.entities} == {"material", "plant"}
     assert any(x.landscape == "QAS" for x in result.evidence_collected)
+    assert len({x.evidence_id for x in result.evidence_collected}) == len(result.evidence_collected)
+    assert len([x for x in result.evidence_collected if x.landscape == "QAS"]) == 3
     assert result.stop_reason == "evidence_sufficient"
     rendered = render_investigation(result)
     assert "Confidence:" in rendered

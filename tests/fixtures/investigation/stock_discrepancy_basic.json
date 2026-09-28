@@ -1,0 +1,7 @@
+{
+  "scenario": "stock_discrepancy_basic",
+  "evidence": [
+    {"evidence_id":"EV-001","observation_type":"stock","content":"{\"material\":\"100123\",\"plant\":\"5023\",\"stock\":125}"},
+    {"evidence_id":"EV-002","observation_type":"master","content":"{\"material\":\"100123\",\"plant\":\"5023\",\"description\":\"Fixture material\"}"}
+  ]
+}

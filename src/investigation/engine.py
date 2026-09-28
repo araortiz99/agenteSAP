@@ -14,6 +14,7 @@ from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_
 
 from src.investigation.capabilities import discover_capabilities, match_capabilities
 from src.investigation.case_id import build_case_id
+from src.investigation.correlation import correlate_evidence
 from src.investigation.contracts import (
     Investigation,
     InvestigationEntity,
@@ -42,6 +43,7 @@ def _normalize_knowledge_evidence(result: UnifiedResult) -> InvestigationEvidenc
                 result.source_id or "",
                 result.knowledge_type,
                 result.certainty,
+                _content(result.content),
             )
         ).encode("utf-8")
     ).hexdigest()[:12].upper()
@@ -70,6 +72,7 @@ def _normalize_runtime_evidence(evidence: Any) -> InvestigationEvidence:
             str(evidence.landscape or ""),
             str(evidence.object_id or ""),
             str(evidence.observation_type),
+            _content(evidence.content),
         )
     )
     evidence_id = "EVD-" + __import__("hashlib").sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
@@ -238,8 +241,14 @@ def investigate(
                     f"runtime_call:{evidence_type}:{capability.name}:{exc}"
                 )
                 continue
-            investigation.evidence_collected.append(_normalize_runtime_evidence(runtime))
-            investigation.provenance.append(_provenance(investigation.evidence_collected[-1]))
+            normalized_runtime = _normalize_runtime_evidence(runtime)
+            if normalized_runtime.evidence_id not in {
+                item.evidence_id for item in investigation.evidence_collected
+            }:
+                investigation.evidence_collected.append(normalized_runtime)
+                investigation.provenance.append(_provenance(normalized_runtime))
+
+    investigation.correlation = correlate_evidence(investigation.evidence_collected)
 
     runtime_items = [item for item in investigation.evidence_collected if item.landscape == "QAS"]
     if runtime_items:
