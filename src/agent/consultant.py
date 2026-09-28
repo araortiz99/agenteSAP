@@ -211,6 +211,7 @@ def build_context(
                 f"knowledge_type: {result.knowledge_type}",
                 f"knowledge_scope: {result.knowledge_scope}",
                 f"certainty: {result.certainty}",
+                f"provenance: {dict(result.provenance)}",
                 f"role: {trace.role}",
                 "content:",
                 _snippet(result),
