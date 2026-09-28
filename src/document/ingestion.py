@@ -8,6 +8,7 @@ from src.document.chunking import DocumentChunk, chunk_document
 from src.document.integration import record_to_investigation_evidence
 from src.document.provenance import DocumentRecord, chunk_to_record
 from src.document.sap_entities import SapEntity, extract_sap_entities
+from src.knowledge.authority import KnowledgeAuthority, KnowledgeOrigin, build_authority_record
 from src.document.source import DocumentSource
 from src.document.structure import DocumentStructure, parse_text_structure
 from src.investigation.contracts import InvestigationEvidence
@@ -61,7 +62,31 @@ def ingest_document(
         max_chunk_chars=settings.max_chunk_chars,
         max_chunks=settings.max_chunks,
     )
-    records = tuple(chunk_to_record(chunk, source.filename) for chunk in chunks)
+    metadata = dict(source.metadata)
+    try:
+        authority = KnowledgeAuthority(metadata.get("authority", "candidate"))
+    except ValueError as exc:
+        raise ValueError("invalid document authority metadata") from exc
+    try:
+        origin = KnowledgeOrigin(metadata.get("origin", "business_document"))
+    except ValueError as exc:
+        raise ValueError("invalid document origin metadata") from exc
+    document_authority = build_authority_record(
+        source_id=source.source_id,
+        content=source.content,
+        version=metadata.get("version", "1.0"),
+        authority=authority,
+        origin=origin,
+        scope=metadata.get("scope", "unknown"),
+        title=metadata.get("title", source.filename),
+        source_path=metadata.get("source_path", source.filename),
+        supersedes=metadata.get("supersedes"),
+        approved_by=metadata.get("approved_by"),
+    )
+    records = tuple(
+        chunk_to_record(chunk, source.filename, authority=document_authority)
+        for chunk in chunks
+    )
     evidence = tuple(record_to_investigation_evidence(record) for record in records)
 
     extracted: list[SapEntity] = []

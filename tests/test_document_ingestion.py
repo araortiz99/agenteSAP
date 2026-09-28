@@ -57,3 +57,30 @@ def test_ingestion_rejects_content_over_limit():
         assert "max_content_chars" in str(exc)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_ingestion_defaults_business_documents_to_candidate_authority():
+    source = DocumentSource("source", "zmm.md", "# ZMM\n\nBusiness rule.")
+    result = ingest_document(source)
+    assert result.records[0].authority.authority.value == "candidate"
+    assert dict(result.evidence[0].provenance)["authority"] == "candidate"
+
+
+def test_ingestion_rejects_unapproved_authoritative_document():
+    source = DocumentSource(
+        "source",
+        "zmm.md",
+        "# ZMM\n\nBusiness rule.",
+        metadata=(
+            ("authority", "authoritative"),
+            ("origin", "business_document"),
+            ("version", "1.0"),
+            ("scope", "organization"),
+        ),
+    )
+    try:
+        ingest_document(source)
+    except ValueError as exc:
+        assert "approved_by" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
