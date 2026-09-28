@@ -78,6 +78,17 @@ def test_route_analyze_ticket_31426_builds_capability_plan():
     )
 
 
+
+
+def test_route_rich_ticket_analysis_to_consultant():
+    plan = route_intent(
+        "Analizá el ticket 31426 y separá hechos confirmados, evidencias, "
+        "qué corresponde a nuestra implementación y próximos pasos."
+    )
+    assert plan.intent == "consult"
+    assert plan.ticket_id == "31426"
+    assert "consult_llm" in plan.capabilities
+
 def test_run_agent_executes_analysis_chain_without_manual_capability_calls():
     client = AgentFakeGitHubClient()
 
