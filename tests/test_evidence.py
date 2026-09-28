@@ -109,7 +109,7 @@ Validar contra el registro original.
     assert conflict.status == "requires_analysis"
     assert "K4" in conflict.description
     assert conflict.evidence_paths == ("rel-31426-snc-k1.md",)
-    assert assessment.requires_analysis is False
+    assert assessment.requires_analysis is True
 
 
 def test_evidence_does_not_infer_conflict_from_cooccurrence():
