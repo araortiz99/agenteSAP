@@ -19,6 +19,9 @@ class Relationship:
     target_id: str
     target_type: str
     content: str
+    certainty: str
+    status: str
+    evidence_source_id: str | None
 
 
 @dataclass(frozen=True)
@@ -112,6 +115,9 @@ def get_related_knowledge(
                 target_id=metadata.get("target_id", ""),
                 target_type=metadata.get("target_type", ""),
                 content=content,
+                certainty=metadata.get("certainty", "unknown"),
+                status=metadata.get("status", "unknown"),
+                evidence_source_id=metadata.get("evidence_source_id"),
             )
         )
 
