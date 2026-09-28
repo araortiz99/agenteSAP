@@ -412,6 +412,12 @@ def run_agent(
 
     if plan.intent == "consult":
         llm_client = llm or OpenAIResponsesClient.from_env()
+        requested_sources = select_evidence_sources(request).requested
+        mcp_gateway = (
+            McpEvidenceGateway.for_request(request)
+            if "runtime" in requested_sources
+            else _mcp_gateway()
+        )
         result = consult(
             client,
             request,
@@ -419,7 +425,7 @@ def run_agent(
             ref=ref,
             ticket_id=plan.ticket_id,
             max_results=max_results,
-            mcp_gateway=_mcp_gateway(request),
+            mcp_gateway=mcp_gateway,
         )
     elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
