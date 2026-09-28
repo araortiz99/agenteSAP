@@ -30,3 +30,20 @@ def test_empty_query_rejected():
     except ValueError:
         return
     raise AssertionError("empty query should raise ValueError")
+
+
+def test_standard_retrieval_filters_generic_prose_and_preserves_short_sap_terms():
+    client = FakeClient()
+    client.files["knowledge/sap-standard/mm/other.md"] = (
+        "---\n"
+        "source_id: SAP-OTHER\n"
+        "transaction: MIGO\n"
+        "---\n"
+        "# Other\n"
+        "MIGO goods movement."
+    )
+    results = search_sap_standard(client, "Explicá qué hace MIGO")
+    assert results[0].path == "knowledge/sap-standard/mm/other.md"
+    assert results[0].match_type == "identifier"
+    assert "migo" in results[0].matched_terms
+    assert "qué" not in results[0].matched_terms
