@@ -23,3 +23,13 @@ def test_empty_query_rejected():
         pass
     else:
         raise AssertionError("empty query must be rejected")
+
+
+def test_generic_sap_phrase_does_not_require_runtime():
+    selection = select_evidence_sources("¿Cómo funciona el stock en SAP?")
+    assert "runtime" not in selection.requested
+
+
+def test_current_configuration_still_requires_runtime():
+    selection = select_evidence_sources("¿Qué configuración tiene SAP actualmente en QAS?")
+    assert selection.requested == ("runtime",)
