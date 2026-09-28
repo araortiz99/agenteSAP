@@ -226,6 +226,12 @@ Con una conexión QAS válida y scope mcp_readonly, se puede ejecutar:
 
 El resultado debe utilizarse para identificar el nombre y schema exactos de la herramienta de lectura que luego será incorporada a AGENTESAP_SAP_RUNTIME_READ_TOOLS. La configuración sigue deshabilitada por defecto.
 
+Para validar operativamente una allowlist ya configurada, sin ejecutar ninguna herramienta SAP:
+
+    python -m src.sap.runtime_cli readiness-qas --pretty --verify-catalog
+
+Este probe ejecuta únicamente MCP `tools/list` a través de la validación del catálogo. Sólo informa `runtime_ready=true` cuando las herramientas configuradas están anunciadas y cada una declara `readOnlyHint=true` sin `destructiveHint=true`.
+
 ## Runtime read-only actual
 
 La baseline ya contiene el contrato técnico para lecturas QAS opt-in. La ejecución efectiva depende de una conexión `sap-mcp-server` disponible, scope `mcp_readonly` y una herramienta concreta anunciada por `tools/list` con `readOnlyHint=true`. Sin esa conexión y catálogo verificable, el estado correcto permanece `pending` y el agente no inventa observaciones.
