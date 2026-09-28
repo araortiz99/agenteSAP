@@ -54,6 +54,18 @@ class SAPStandardFakeClient:
         return self.files[path]
 
 
+def test_route_explicit_consult_to_llm_layer():
+    plan = route_intent("Consultá sobre material master")
+    assert plan.intent == "consult"
+    assert "consult_llm" in plan.capabilities
+
+
+class FakeLLM:
+    model = "fake"
+
+    def generate(self, *, system_prompt, user_prompt):
+        return "respuesta"
+
 def test_route_analyze_ticket_31426_builds_capability_plan():
     plan = route_intent("Analizá el ticket 31426")
 
