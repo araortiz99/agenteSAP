@@ -21,6 +21,8 @@ class SapQasRuntimeConfig:
     landscape: str
     scope: str
     system: str | None = None
+    query_tool: str | None = None
+    query_argument: str = "query"
     discovery_only: bool = False
     enabled: bool = False
 
@@ -46,6 +48,10 @@ class SapQasRuntimeConfig:
             )
         if not self.command:
             raise ValueError("QAS runtime integration requires a server command")
+        if not self.discovery_only and not self.query_tool:
+            raise ValueError("QAS runtime integration requires an explicit query tool")
+        if not self.query_argument.strip():
+            raise ValueError("QAS runtime integration requires a non-empty query argument")
 
     @classmethod
     def from_env(cls) -> "SapQasRuntimeConfig":
@@ -70,6 +76,8 @@ class SapQasRuntimeConfig:
             landscape=os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS").upper(),
             scope=os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
             system=os.getenv("AGENTESAP_SAP_RUNTIME_SYSTEM") or None,
+            query_tool=os.getenv("AGENTESAP_SAP_RUNTIME_QUERY_TOOL") or None,
+            query_argument=os.getenv("AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT", "query"),
             discovery_only=os.getenv(
                 "AGENTESAP_SAP_RUNTIME_DISCOVERY", ""
             ).lower() in {"1", "true", "yes", "on"},
