@@ -280,6 +280,17 @@ def test_route_document_generation_before_analysis_keyword():
     assert "generate_document" in plan.capabilities
 
 
+def test_route_runtime_configuration_question_to_consultant():
+    plan = route_intent("¿Qué tiene configurado actualmente ZMM_IMX_0004 en QAS?")
+    assert plan.intent == "consult"
+    assert "search_unified" in plan.capabilities
+    assert "consult_llm" in plan.capabilities
+
+
+def test_route_runtime_configuration_without_explicit_question_to_consultant():
+    plan = route_intent("Estado actual de ZMM_IMX_0004 en PRD")
+    assert plan.intent == "consult"
+
 def test_route_ticket_factual_question_to_consultant():
     plan = route_intent("¿El ticket 31426 corresponde a K1 o K4?")
     assert plan.intent == "consult"
