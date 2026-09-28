@@ -22,6 +22,7 @@ from src.tools.search_unified import (
     search_unified,
     unified_result_key,
 )
+from src.investigation.contracts import InvestigationEvidence
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,29 @@ def _merge_retrievals(
     )
 
 
+def _additional_evidence_result(item: InvestigationEvidence) -> UnifiedResult:
+    """Adapt explicit caller-supplied evidence into the unified retrieval contract."""
+    provenance = dict(item.provenance)
+    filename = provenance.get("filename", item.object_id or "evidence")
+    chunk_id = provenance.get("chunk_id", "")
+    path = f"document://{filename}"
+    if chunk_id:
+        path += f"#{chunk_id}"
+    return UnifiedResult(
+        path=path,
+        score=0.95,
+        matched_terms=(),
+        content=item.content,
+        source_layer="internal",
+        match_type="document",
+        source_id=item.object_id,
+        knowledge_type="document_chunk",
+        knowledge_scope="organization",
+        certainty=item.certainty,
+        provenance=tuple(item.provenance) + (("source_type", "DOCUMENT"),),
+    )
+
+
 def investigate(
     client: GitHubClient,
     query: str,
@@ -82,6 +106,7 @@ def investigate(
     max_results: int = 8,
     max_hops: int = 2,
     mcp_gateway: McpEvidenceGateway | None = None,
+    additional_evidence: tuple[InvestigationEvidence, ...] = (),
 ) -> InvestigationResult:
     """Execute the deterministic investigation chain before LLM synthesis.
 
@@ -115,6 +140,19 @@ def investigate(
         )
         for subquery in plan.subqueries
     )
+    if additional_evidence:
+        supplied_results = tuple(
+            _additional_evidence_result(item) for item in additional_evidence
+        )
+        supplied = UnifiedSearchResult(
+            query=query.strip(),
+            results=supplied_results,
+            sap_standard=(),
+            internal=supplied_results,
+            mcp=(),
+        )
+        retrievals = (*retrievals, supplied)
+
     retrieval = _merge_retrievals(
         query,
         retrievals,
