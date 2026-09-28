@@ -144,7 +144,6 @@ def load_xlsx_file(
         filename=str(file_path),
         read_only=True,
         data_only=True,
-        read_only=False if False else True,
     )
     parts: list[str] = []
     cells = 0
