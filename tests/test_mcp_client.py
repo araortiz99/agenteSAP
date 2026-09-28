@@ -202,7 +202,7 @@ def test_call_read_tool_rejects_unadvertised_or_destructive_runtime_tool():
             "description": "test",
             "inputSchema": {"type": "object"},
             "annotations": type(
-                "Annotations", (), {"readOnlyHint": False, "destructiveHint": True}
+                "Annotations", (), {"readOnlyHint": True, "destructiveHint": True}
             )(),
         })()
     ]
