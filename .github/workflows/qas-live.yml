@@ -49,8 +49,15 @@ jobs:
           curl -fsSL https://github.com/sap-support/sap-mcp-server/releases/latest/download/install-sap-mcp.sh | bash
           installer_status=$?
           set -e
-          test -x "$HOME/sap-mcp-server"
-          install -m 0755 "$HOME/sap-mcp-server" /usr/local/bin/sap-mcp-server
+          test -e "$HOME/sap-mcp-server"
+          if [ -d "$HOME/sap-mcp-server" ]; then
+            MCP_BINARY="$(find "$HOME/sap-mcp-server" -maxdepth 2 -type f -name 'sap-mcp-server*' -perm -u+x | head -n 1)"
+          else
+            MCP_BINARY="$HOME/sap-mcp-server"
+          fi
+          test -n "$MCP_BINARY"
+          test -x "$MCP_BINARY"
+          install -m 0755 "$MCP_BINARY" /usr/local/bin/sap-mcp-server
           test -x /usr/local/bin/sap-mcp-server
           echo "installer_exit=$installer_status"
           /usr/local/bin/sap-mcp-server --version || true
