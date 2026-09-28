@@ -253,7 +253,9 @@ def consult(
     context = build_context(retrieval, traceability)
     knowledge_context = build_knowledge_context(
         client, request, ref=ref, direct_retrieval=retrieval
-    )\n    context += "\\n\\n" + render_knowledge_context(knowledge_context)\n    if ticket_context:
+    )
+    context += "\n\n" + render_knowledge_context(knowledge_context)
+    if ticket_context:
         context += "\n\n## Ticket context\n"
         for item in ticket_context:
             context += f"\n### {item.reference_id}\npath: {item.path}\n{item.content.strip()}\n"
