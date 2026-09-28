@@ -99,3 +99,26 @@ No implementar todavía:
 El agente debe sentirse como una capa de asistencia inteligente para el
 Analista Funcional SAP, manteniendo la Knowledge Base como fuente de contexto
 y la evidencia como mecanismo de control.
+
+## Contrato de salida estructurada
+
+La respuesta generada por el proveedor LLM debe contener, en este orden, las secciones:
+
+1. Resumen
+2. Qué está confirmado
+3. Qué corresponde a nuestra implementación
+4. Qué no está confirmado
+5. Evidencias
+6. Ticket
+7. Próximos pasos
+
+El runtime valida este contrato antes de exponer la respuesta.
+
+### Gates determinísticos
+
+- **Structure Gate:** rechaza respuestas que omitan o desordenen las secciones.
+- **Evidence Gate:** rechaza citas `EVD-*` que no existan en la trazabilidad recuperada.
+- **Ticket Gate:** cuando existe contexto de ticket, exige que al menos un identificador `TKT-*` suministrado aparezca en la respuesta.
+- **Conflict Gate:** los conflictos detectados por reasoning se mantienen como `conflict / requires_analysis`; el LLM puede explicarlos, pero no resolverlos por autoridad propia.
+
+Una respuesta que no supere un gate produce un error explícito; no se corrige silenciosamente ni se presenta como válida.
