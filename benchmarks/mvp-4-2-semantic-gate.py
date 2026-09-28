@@ -106,7 +106,8 @@ def check_certainty_preservation(result: ConsultationResult) -> tuple[bool, str]
                 return (
                     False,
                     f"{evidence_id} tiene certainty={item.certainty} "
-                    "pero fue presentado como confirmado.",
+                    "pero fue presentado como confirmado. "
+                    f"Unidad detectada: {line.strip()}",
                 )
     return True, "No se detectó promoción explícita de certainty."
 
@@ -372,11 +373,12 @@ def run_once(github: GitHubClient, llm: OpenAIResponsesClient) -> tuple[Consulta
     if not isinstance(result, ConsultationResult):
         raise TypeError("El router no produjo ConsultationResult.")
     checks = semantic_checks(result)
-    passed = all(item[0] for item in checks)
+    passed = all(ok for _, (ok, _) in checks)
     print(f"Reasoning status: {result.reasoning.conclusion_status}")
     print(f"Trace: {result.traceability.trace_id}")
     for name, (ok, detail) in checks:
         print(f"{'PASS' if ok else 'FAIL'} | {name} | {detail}")
+    print(f"Gate result: {'PASS' if passed else 'FAIL'}")
     return result, passed
 
 
