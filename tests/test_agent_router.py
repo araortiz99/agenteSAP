@@ -415,3 +415,20 @@ def test_run_agent_consult_passes_mcp_gateway(monkeypatch):
     )
     assert response.plan.intent == "consult"
     assert response.result.retrieval.mcp
+
+
+def test_route_runtime_configuration_question_to_consultant():
+    plan = route_intent("¿Qué tiene configurado actualmente ZMM_IMX_0004 en QAS?")
+    assert plan.intent == "consult"
+    assert "search_unified" in plan.capabilities
+    assert "consult_llm" in plan.capabilities
+
+
+def test_route_runtime_configuration_without_explicit_question_to_consultant():
+    plan = route_intent("Estado actual de ZMM_IMX_0004 en PRD")
+    assert plan.intent == "consult"
+
+
+def test_route_runtime_question_is_not_captured_by_standard_search():
+    plan = route_intent("¿Qué tiene configurado actualmente ZMM_IMX_0004 según SAP Standard?")
+    assert plan.intent == "consult"
