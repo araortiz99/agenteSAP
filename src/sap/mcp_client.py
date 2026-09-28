@@ -154,5 +154,11 @@ class SapMcpClient:
             in {"runtime_observation", "custom_runtime_observation"}
             else "external_source",
             observation_type=self.target.observation_type,
-            provenance={"transport": self.target.transport},
+            provenance={
+                "transport": self.target.transport,
+                "tool_description": descriptor.description,
+                "tool_read_only_hint": descriptor.read_only_hint,
+                "tool_destructive_hint": descriptor.destructive_hint,
+                "tool_input_schema": descriptor.input_schema,
+            },
         )

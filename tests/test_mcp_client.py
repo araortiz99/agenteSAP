@@ -149,7 +149,11 @@ def test_call_read_tool_normalizes_result_and_preserves_provenance():
     assert evidence.observation_type == "developer_context"
     assert evidence.system == "sap-devs-local"
     assert evidence.landscape == "local"
-    assert evidence.provenance == {"transport": "stdio"}
+    assert dict(evidence.provenance)["transport"] == "stdio"
+    assert dict(evidence.provenance)["tool_description"] == "test tool"
+    assert dict(evidence.provenance)["tool_input_schema"] == {"type": "object"}
+    assert dict(evidence.provenance)["tool_read_only_hint"] is None
+    assert dict(evidence.provenance)["tool_destructive_hint"] is None
     assert evidence.content == [
         '{"count": 1, "results": [{"title": "SAP Help"}]}'
     ]
@@ -255,3 +259,32 @@ def test_runtime_tool_requires_explicit_readonly_hint():
 
     with pytest.raises(PermissionError, match="explicit read-only hint"):
         asyncio.run(client.call_read_tool("read_table"))
+
+
+
+
+def test_runtime_evidence_preserves_tool_contract():
+    fake_tool = FakeTool(
+        "read_table",
+        read_only_hint=True,
+        destructive_hint=False,
+    )
+    client = SapMcpClient(
+        build_target(
+            "sap_mcp_server",
+            command="sap-mcp-server",
+            args=(),
+            allowed_tools=("read_table",),
+            metadata={"system": "S4QAS", "landscape": "QAS"},
+        )
+    )
+    client._client = FakeClient([fake_tool])
+
+    evidence = asyncio.run(client.call_read_tool("read_table", {}))
+
+    provenance = dict(evidence.provenance)
+    assert provenance["transport"] == "stdio"
+    assert provenance["tool_description"] == fake_tool.description
+    assert provenance["tool_read_only_hint"] is True
+    assert provenance["tool_destructive_hint"] is False
+    assert provenance["tool_input_schema"] == fake_tool.inputSchema

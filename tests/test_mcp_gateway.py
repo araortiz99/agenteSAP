@@ -295,9 +295,9 @@ def test_runtime_allowlist_validation_uses_catalog_only(monkeypatch):
         },
     )()
 
-    monkeypatch.setattr(
-        "src.sap.mcp_gateway._run_async",
-        lambda _coro: (
+    def fake_run_async(coro):
+        coro.close()
+        return (
             {
                 "name": "read_table",
                 "read_only_hint": True,
@@ -308,7 +308,11 @@ def test_runtime_allowlist_validation_uses_catalog_only(monkeypatch):
                 "read_only_hint": True,
                 "destructive_hint": True,
             },
-        ),
+        )
+
+    monkeypatch.setattr(
+        "src.sap.mcp_gateway._run_async",
+        fake_run_async,
     )
 
     result = gateway.validate_runtime_allowlist()
