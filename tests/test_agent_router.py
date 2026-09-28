@@ -249,7 +249,7 @@ def test_route_ticket_consult_extracts_ticket_id():
 
 def test_route_specialized_evidence_request_before_generic_consult():
     plan = route_intent(
-        "Explicame qué está confirmado y qué falta según la evidencia sobre material master"
+        "Evaluá la evidencia y explicame qué está confirmado y qué falta sobre material master"
     )
     assert plan.intent == "evidence_reasoning"
 
