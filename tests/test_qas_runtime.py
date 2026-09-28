@@ -98,3 +98,41 @@ def test_qas_runtime_config_rejects_non_readonly_scope(monkeypatch):
         assert "mcp_readonly scope" in str(exc)
     else:
         raise AssertionError("QAS runtime integration must require mcp_readonly")
+\n\ndef test_qas_runtime_allowlist_rejects_wildcards(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "*")
+
+    try:
+        SapQasRuntimeConfig.from_env()
+    except ValueError as exc:
+        assert "concrete tool names" in str(exc)
+    else:
+        raise AssertionError("wildcard runtime tools must be rejected")
+
+
+def test_qas_runtime_allowlist_rejects_duplicates(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "read_table,read_table")
+
+    try:
+        SapQasRuntimeConfig.from_env()
+    except ValueError as exc:
+        assert "duplicates" in str(exc)
+    else:
+        raise AssertionError("duplicate runtime tools must be rejected")
+
+
+def test_qas_runtime_query_tool_must_be_allowlisted(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "read_table")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_QUERY_TOOL", "other_read_tool")
+
+    try:
+        SapQasRuntimeConfig.from_env()
+    except ValueError as exc:
+        assert "query tool must be explicitly allowlisted" in str(exc)
+    else:
+        raise AssertionError("query tool outside the allowlist must be rejected")
