@@ -74,7 +74,7 @@ def test_evidence_detects_metadata_conflict():
     assert assessment.conflicts
     assert assessment.conflicts[0].conflict_type == "metadata_conflict"
     assert assessment.conflicts[0].status == "requires_analysis"
-    assert assessment.requires_analysis is False
+    assert assessment.requires_analysis is True
 
 
 def test_evidence_detects_explicit_documented_conflict():
