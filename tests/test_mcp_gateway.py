@@ -171,3 +171,27 @@ def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
     assert gateway.supports_source("runtime") is False
     assert gateway.provider_plan("runtime").ready is False
     assert gateway.provider_plan("external").ready is True
+
+
+def test_runtime_tool_inspection_is_allowlist_bound(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv(
+        "AGENTESAP_SAP_RUNTIME_READ_TOOLS",
+        "verified_table_read",
+    )
+
+    gateway = McpEvidenceGateway.from_qas_runtime_env()
+    assert gateway is not None
+
+    async def fake_inspect():
+        return (
+            {"name": "verified_table_read", "description": "read"},
+            {"name": "unlisted_tool", "description": "other"},
+        )
+
+    gateway._inspect_runtime_tools = fake_inspect
+    catalog = gateway.inspect_runtime_tools()
+
+    assert [item["name"] for item in catalog] == ["verified_table_read"]
