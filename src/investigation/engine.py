@@ -160,6 +160,7 @@ def investigate(
     mcp_gateway: McpEvidenceGateway | None = None,
     max_steps: int = MAX_STEPS_DEFAULT,
     day: date | None = None,
+    additional_evidence: tuple[InvestigationEvidence, ...] = (),
 ) -> Investigation:
     if not question or not question.strip():
         raise ValueError("question must not be empty")
@@ -203,6 +204,14 @@ def investigate(
     )
     for result in knowledge.results:
         investigation.evidence_collected.append(_normalize_knowledge_evidence(result))
+    for item in additional_evidence:
+        if item.landscape != "KNOWLEDGE":
+            raise ValueError("additional_evidence must be KNOWLEDGE evidence")
+        if item.provider != "document":
+            raise ValueError("additional_evidence must use provider=document")
+        if item.evidence_id not in {evidence.evidence_id for evidence in investigation.evidence_collected}:
+            investigation.evidence_collected.append(item)
+            investigation.provenance.append(_provenance(item))
 
     capabilities = ()
     selected: dict[str, Any] = {}
@@ -321,6 +330,10 @@ def investigate(
     if knowledge.results:
         investigation.findings.append(
             f"Se recuperaron {len(knowledge.results)} evidencias de Knowledge para contextualizar la investigación."
+        )
+    if additional_evidence:
+        investigation.findings.append(
+            f"Se incorporaron {len(additional_evidence)} evidencias documentales locales con trazabilidad de origen."
         )
 
     assessment = assess_evidence(
