@@ -45,3 +45,4 @@ def test_unified_search_preserves_mcp_layer():
     assert result.mcp
     assert result.mcp[0].source_layer == "mcp"
     assert result.results[0].source_layer == "mcp"
+\n\ndef test_gateway_ignores_zero_result_mcp_response(monkeypatch):\n    gateway = McpEvidenceGateway(McpGatewayConfig())\n\n    class FakeEvidence:\n        provider = "sap_devs"\n        operation = "search_resources"\n        content = ['{"count": 0, "total": 0, "results": []}']\n        certainty = "external_source"\n\n    async def fake_search(query):\n        return FakeEvidence()\n\n    monkeypatch.setattr(gateway, "_search_resources", fake_search)\n    assert gateway.search_resources("does-not-exist") == ()\n
