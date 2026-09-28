@@ -107,5 +107,5 @@ def test_object_workspace_does_not_invent_runtime(monkeypatch):
         lambda *args, **kwargs: context,
     )
     result = build_object_workspace(FakeClient(), "ZMM_IMX_0004")
-    assert result.runtime["status"] == "not_observed"
+    assert result.runtime["status"] == "disabled"
     assert result.runtime["evidence_count"] == 0
