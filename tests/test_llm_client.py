@@ -27,6 +27,28 @@ def test_openai_client_requires_api_key(monkeypatch):
         client.generate(system_prompt="system", user_prompt="user")
 
 
+def test_openai_client_from_env_requires_configuration(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+
+    with pytest.raises(LLMConfigurationError, match="OPENAI_API_KEY"):
+        OpenAIResponsesClient.from_env()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only-key")
+    with pytest.raises(LLMConfigurationError, match="OPENAI_MODEL"):
+        OpenAIResponsesClient.from_env()
+
+
+def test_openai_client_from_env_reads_configuration(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only-key")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+
+    client = OpenAIResponsesClient.from_env()
+
+    assert client.model == "test-model"
+    assert client.api_key == "test-only-key"
+
+
 def test_openai_client_parses_output_text(monkeypatch):
     captured = {}
 
