@@ -6,13 +6,7 @@ def test_ingestion_preserves_heading_context_and_provenance():
     source = DocumentSource(
         "source",
         "ticket.md",
-        "# Inventario
-
-MIGO mueve stock.
-
-## Ajuste
-
-551 registra merma.",
+        "# Inventario\n\nMIGO mueve stock.\n\n## Ajuste\n\n551 registra merma.",
     )
 
     result = ingest_document(source)
@@ -25,9 +19,7 @@ MIGO mueve stock.
 
 
 def test_ingestion_is_deterministic():
-    source = DocumentSource("source", "ticket.md", "# MM
-
-MIGO 101.")
+    source = DocumentSource("source", "ticket.md", "# MM\n\nMIGO 101.")
     first = ingest_document(source)
     second = ingest_document(source)
 
@@ -42,7 +34,11 @@ def test_ingestion_is_bounded_by_content_and_chunks():
 
     result = ingest_document(
         source,
-        config=DocumentIngestionConfig(max_content_chars=100, max_chunk_chars=10, max_chunks=3),
+        config=DocumentIngestionConfig(
+            max_content_chars=100,
+            max_chunk_chars=10,
+            max_chunks=3,
+        ),
     )
 
     assert len(result.chunks) == 3
