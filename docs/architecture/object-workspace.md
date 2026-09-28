@@ -88,7 +88,8 @@ El Workspace no ejecuta una consulta QAS al abrir un objeto.
 
 El estado:
 
-- `not_observed` significa que no existe evidencia runtime en el contexto;
+- `disabled` significa que el runtime QAS no está habilitado;
+- `enabled_not_verified` significa que está habilitado pero todavía no existe evidencia runtime en el contexto;
 - `observed` solamente se informa cuando existe evidencia con `knowledge_scope=runtime` o `knowledge_type=runtime_observation`.
 
 Runtime continúa separado de SAP Standard/Internal Knowledge y mantiene acceso `read-only`.
