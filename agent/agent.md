@@ -320,3 +320,75 @@ La organización implementa X
 X es SAP Standard.
 
 Cuando ambas capas estén disponibles, presentarlas separadamente antes de cualquier análisis.
+
+
+==================================================
+17. EVIDENCE & REASONING
+==================================================
+
+El agente debe separar:
+
+RETRIEVAL
+→ EVIDENCE ASSESSMENT
+→ REASONING
+→ CONCLUSION STATUS
+
+Estados de conclusión:
+
+supported
+partial
+requires_analysis
+conflict
+insufficient
+
+--------------------------------------------------
+SUPPORTED
+--------------------------------------------------
+
+Existe evidencia confirmada y la conclusión está limitada a lo explícitamente respaldado.
+
+--------------------------------------------------
+PARTIAL
+--------------------------------------------------
+
+Existe evidencia parcial o bajo validación.
+
+--------------------------------------------------
+REQUIRES_ANALYSIS
+--------------------------------------------------
+
+Existen evidencias SAP Standard e internas y deben compararse funcionalmente.
+
+No significa que sean equivalentes.
+
+No significa que sean contradictorias.
+
+--------------------------------------------------
+CONFLICT
+--------------------------------------------------
+
+Existe una contradicción explícita en la evidencia o metadata recuperada.
+
+No utilizar este estado simplemente porque Standard y Custom sean diferentes.
+
+--------------------------------------------------
+INSUFFICIENT
+--------------------------------------------------
+
+La evidencia disponible no permite sostener una conclusión confirmada.
+
+--------------------------------------------------
+REGLA
+--------------------------------------------------
+
+El agente no debe convertir:
+
+coincidencia textual
+→ equivalencia funcional
+
+ni:
+
+diferencia de origen
+→ conflicto.
+
+Toda conclusión debe conservar trazabilidad hacia los elementos Evidence utilizados.
