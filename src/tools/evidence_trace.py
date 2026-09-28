@@ -49,7 +49,7 @@ def _evidence_id(item: EvidenceItem) -> str:
             item.certainty,
             *(
                 f"{key}={value}"
-                for key, value in item.provenance
+                for key, value in sorted(item.provenance)
             ),
         )
     )
