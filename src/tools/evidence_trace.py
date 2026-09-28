@@ -90,7 +90,7 @@ def build_traceability(reasoning: ReasoningResult) -> TraceabilityReport:
         supporting_evidence_ids=supporting,
         unresolved_evidence_ids=unresolved,
         gaps=reasoning.evidence.gaps,
-        conflicts=reasoning.evidence.conflicts,
+        conflicts=reasoning.conflicts,
     )
 
 
