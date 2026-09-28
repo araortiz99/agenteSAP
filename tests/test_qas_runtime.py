@@ -98,7 +98,9 @@ def test_qas_runtime_config_rejects_non_readonly_scope(monkeypatch):
         assert "mcp_readonly scope" in str(exc)
     else:
         raise AssertionError("QAS runtime integration must require mcp_readonly")
-\n\ndef test_qas_runtime_allowlist_rejects_wildcards(monkeypatch):
+
+
+def test_qas_runtime_allowlist_rejects_wildcards(monkeypatch):
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "*")
