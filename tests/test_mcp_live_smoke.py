@@ -68,3 +68,18 @@ def test_sap_devs_live_search_preserves_external_classification():
         payload = json.loads(first)
         assert isinstance(payload, dict)
         assert "results" in payload
+
+
+
+def test_mcp_gateway_live_search():
+    from src.sap.mcp_gateway import McpEvidenceGateway
+
+    gateway = McpEvidenceGateway()
+    results = gateway.search_resources("ABAP")
+
+    assert isinstance(results, tuple)
+    for result in results:
+        assert result.source_layer == "mcp"
+        assert result.knowledge_type == "developer_context"
+        assert result.knowledge_scope == "external"
+        assert result.certainty == "external_source"
