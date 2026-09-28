@@ -45,6 +45,11 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
 <div class="card">
 <h3>Respuesta</h3>
 <div id="answer">Esperando consulta…</div>
+<div id="ticketPanels" style="display:none">
+  <details open><summary>Hechos / implementación</summary><pre id="confirmed">—</pre></details>
+  <details><summary>Gaps / próximos pasos</summary><pre id="gaps">—</pre></details>
+  <details><summary>Evidencias</summary><pre id="evidence">—</pre></details>
+</div>
 <details><summary>Plan y trazabilidad</summary><pre id="trace">—</pre></details>
 </div>
 </main>
@@ -93,6 +98,20 @@ async function consult(){
     if(!r.ok) throw new Error(data.error||"Error del agente");
     const result=data.result||data;
     $("answer").textContent=result.answer||JSON.stringify(result,null,2);
+    const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
+    $("ticketPanels").style.display=isTicket?"block":"none";
+    function section(text,title,next){
+  const start=text.indexOf(title);
+  if(start<0)return "";
+  const body=text.slice(start+title.length);
+  const end=next?body.indexOf(next):-1;
+  return (end>=0?body.slice(0,end):body).trim();
+}
+    $("confirmed").textContent=
+      section(result.answer||"","## Qué está confirmado","## Qué corresponde a nuestra implementación")+
+      "\n\n"+section(result.answer||"","## Qué corresponde a nuestra implementación","## Qué no está confirmado");
+    $("gaps").textContent=(result.traceability?.gaps||[]).join("\n")||"No hay gaps estructurados disponibles.";
+    $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n")||"No hay citas.";
     $("trace").textContent=JSON.stringify({
       intent:result.plan?.intent,
       ticket_id:result.plan?.ticket_id,
