@@ -172,3 +172,23 @@ def test_knowledge_context_preserves_mcp_evidence():
     )
     assert any(item.result.source_layer == "mcp" for item in context.evidence)
     assert any(item.result.path.startswith("mcp://") for item in context.evidence)
+
+
+
+def test_knowledge_context_enforces_expansion_budget():
+    context = build_knowledge_context(
+        FakeClient(),
+        "ZMM_IMX_0004",
+        max_hops=3,
+        max_expansions=1,
+    )
+    assert any("max_expansions=1" in gap for gap in context.gaps)
+
+
+def test_knowledge_context_rejects_invalid_expansion_budget():
+    try:
+        build_knowledge_context(FakeClient(), "ZMM_IMX_0004", max_expansions=0)
+    except ValueError as exc:
+        assert "context limits" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
