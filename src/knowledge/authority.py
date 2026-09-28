@@ -51,7 +51,7 @@ class AuthorityRecord:
             raise ValueError("source_id must not be empty")
         if not re.fullmatch(r"[0-9a-f]{64}", self.content_hash):
             raise ValueError("content_hash must be a SHA-256 hex digest")
-        if not re.fullmatch(r"d+.d+(?:.d+)?", self.version):
+        if not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", self.version):
             raise ValueError("version must use MAJOR.MINOR[.PATCH]")
         if not self.title.strip():
             raise ValueError("title must not be empty")
@@ -139,4 +139,4 @@ def can_promote_to_authoritative(
         return False
     if not has_provenance or not has_security_review:
         return False
-    return bool(re.fullmatch(r"d+.d+(?:.d+)?", version))
+    return bool(re.fullmatch(r"\d+\.\d+(?:\.\d+)?", version))
