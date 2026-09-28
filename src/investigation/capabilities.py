@@ -96,7 +96,7 @@ def discover_capabilities(gateway) -> tuple[ToolCapability, ...]:
 def match_capabilities(
     required_evidence: tuple[str, ...],
     capabilities: tuple[ToolCapability, ...],
-    required_entities: tuple[str, ...] = ("material", "plant"),
+    required_entities: tuple[str, ...] = (),
 ) -> dict[str, ToolCapability]:
     selected: dict[str, ToolCapability] = {}
     aliases = {
@@ -116,7 +116,10 @@ def match_capabilities(
             and set(aliases.get(evidence_type, ())).intersection(
                 capability.supported_operations
             )
-            and set(required_entities).issubset(capability.supported_entities)
+            and (
+                not required_entities
+                or set(required_entities).issubset(capability.supported_entities)
+            )
         ]
         if candidates:
             selected[evidence_type] = sorted(
