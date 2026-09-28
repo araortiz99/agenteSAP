@@ -31,6 +31,7 @@ class Hypothesis:
 def _status_for(
     evidence_ids: tuple[str, ...],
     states: dict[str, EvidenceState],
+    evidence: dict[str, InvestigationEvidence],
     correlation: EvidenceCorrelation,
 ) -> tuple[str, str]:
     if any(
@@ -44,10 +45,19 @@ def _status_for(
         for evidence_id in evidence_ids
         if evidence_id in states
     ]
+    records = [
+        evidence[evidence_id]
+        for evidence_id in evidence_ids
+        if evidence_id in evidence
+    ]
     if not available:
         return "UNVERIFIED", "No existe evidencia vinculada suficiente para evaluar la hipótesis."
+    if all(item.state == "AVAILABLE" for item in available) and all(
+        item.certainty in {"confirmed", "partial"} for item in records
+    ):
+        return "SUPPORTED", "Toda la evidencia vinculada está disponible, sin conflicto y con certeza suficiente."
     if all(item.state == "AVAILABLE" for item in available):
-        return "SUPPORTED", "Toda la evidencia vinculada está disponible y sin conflicto."
+        return "PARTIALLY_SUPPORTED", "La evidencia está disponible, pero su certeza no permite tratar la hipótesis como confirmada."
     if any(item.state in {"MISSING", "INSUFFICIENT", "INVALID"} for item in available):
         return "PARTIALLY_SUPPORTED", "Existe evidencia disponible, pero también faltan o son insuficientes elementos necesarios."
     return "UNVERIFIED", "La evidencia vinculada no permite verificar la hipótesis."
@@ -64,6 +74,7 @@ def build_hypotheses(
     """
     items = tuple(evidence)
     state_map = {item.evidence_id or "": item for item in states}
+    evidence_map = {item.evidence_id: item for item in items}
     result: list[Hypothesis] = []
 
     movement_ids = tuple(
@@ -93,7 +104,7 @@ def build_hypotheses(
             )
         )
         ids = linked or tuple(dict.fromkeys(movement_ids + stock_ids))
-        status, reason = _status_for(ids, state_map, correlation)
+        status, reason = _status_for(ids, state_map, evidence_map, correlation)
         result.append(
             Hypothesis(
                 hypothesis_id="HYP-MOVEMENT-STOCK",
