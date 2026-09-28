@@ -248,7 +248,7 @@ def test_runtime_tool_requires_explicit_readonly_hint():
     )
     client = SapMcpClient(target)
     client._client = FakeClient(
-        [FakeTool("read_table", read_only_hint=None, destructive_hint=None)]
+        [FakeTool("read_table", read_only_hint=True, destructive_hint=False)]
     )
 
     with pytest.raises(PermissionError, match="explicit read-only hint"):
