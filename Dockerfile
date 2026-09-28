@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -12,4 +12,4 @@ ENV AGENTESAP_MCP_SERVER_HOST=0.0.0.0
 ENV AGENTESAP_MCP_SERVER_PORT=8000
 ENV AGENTESAP_MCP_SERVER_PATH=/mcp
 EXPOSE 8000
-CMD ["python","-m","src.mcp.consultant_server"]
+CMD ["python", "-m", "src.mcp.consultant_server"]
