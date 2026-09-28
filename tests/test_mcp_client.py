@@ -149,7 +149,11 @@ def test_call_read_tool_normalizes_result_and_preserves_provenance():
     assert evidence.observation_type == "developer_context"
     assert evidence.system == "sap-devs-local"
     assert evidence.landscape == "local"
-    assert evidence.provenance == {"transport": "stdio"}
+    assert dict(evidence.provenance)["transport"] == "stdio"
+    assert dict(evidence.provenance)["tool_description"] == "test tool"
+    assert dict(evidence.provenance)["tool_input_schema"] == {"type": "object"}
+    assert dict(evidence.provenance)["tool_read_only_hint"] is None
+    assert dict(evidence.provenance)["tool_destructive_hint"] is None
     assert evidence.content == [
         '{"count": 1, "results": [{"title": "SAP Help"}]}'
     ]
