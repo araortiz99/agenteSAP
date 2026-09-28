@@ -8,15 +8,38 @@ from __future__ import annotations
 
 import base64
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
 
+@dataclass(frozen=True)
+class GitHubRateLimit:
+    """Rate-limit metadata returned by the GitHub API."""
+
+    limit: int | None = None
+    remaining: int | None = None
+    reset_epoch: int | None = None
+    retry_after: int | None = None
+
+
 class GitHubAPIError(RuntimeError):
     """Raised when the GitHub API cannot fulfill a read request."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        rate_limit: GitHubRateLimit | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.rate_limit = rate_limit or GitHubRateLimit()
 
 
 class GitHubClient:
@@ -31,11 +54,35 @@ class GitHubClient:
         self.repo = repo
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.api_version = api_version
-        # Scoped to one client execution; this is a transport cache, not
-        # persistent agent memory.
+        # Scoped to one client lifetime. The local Workbench reuses one client
+        # across requests, so repeated consultations reuse already-read content.
         self._repository_cache: dict[str, dict] = {}
         self._tree_cache: dict[str, list[dict]] = {}
         self._file_cache: dict[tuple[str, str], str] = {}
+        self._last_rate_limit = GitHubRateLimit()
+
+    @property
+    def authenticated(self) -> bool:
+        return bool(self.token)
+
+    @property
+    def last_rate_limit(self) -> GitHubRateLimit:
+        return self._last_rate_limit
+
+    def _rate_limit_from_headers(self, headers) -> GitHubRateLimit:
+        def integer(name: str) -> int | None:
+            value = headers.get(name)
+            try:
+                return int(value) if value is not None else None
+            except (TypeError, ValueError):
+                return None
+
+        return GitHubRateLimit(
+            limit=integer("X-RateLimit-Limit"),
+            remaining=integer("X-RateLimit-Remaining"),
+            reset_epoch=integer("X-RateLimit-Reset"),
+            retry_after=integer("Retry-After"),
+        )
 
     def _request(self, path: str) -> object:
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/{path.lstrip('/')}"
@@ -52,13 +99,54 @@ class GitHubClient:
 
         try:
             with urllib.request.urlopen(request, timeout=20) as response:
+                self._last_rate_limit = self._rate_limit_from_headers(response.headers)
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
+            rate_limit = self._rate_limit_from_headers(exc.headers)
+            self._last_rate_limit = rate_limit
+
+            if exc.code in {403, 429}:
+                if rate_limit.remaining == 0:
+                    reset = rate_limit.reset_epoch
+                    reset_text = (
+                        f" UTC epoch {reset}" if reset is not None else " at the reset time"
+                    )
+                    message = (
+                        "GitHub API rate limit exhausted. "
+                        f"Retry after the reset{reset_text}."
+                    )
+                elif rate_limit.retry_after is not None:
+                    message = (
+                        "GitHub API secondary rate limit reached. "
+                        f"Retry after {rate_limit.retry_after} seconds."
+                    )
+                else:
+                    message = (
+                        "GitHub API returned a rate-limit/forbidden response. "
+                        "Wait before retrying."
+                    )
+            elif exc.code == 401:
+                message = (
+                    "GitHub authentication failed (HTTP 401). "
+                    "Check GITHUB_TOKEN."
+                )
+            elif exc.code == 404:
+                message = (
+                    f"GitHub resource not found or not accessible: {path}. "
+                    "For private repositories, verify GITHUB_TOKEN access."
+                )
+            else:
+                message = f"GitHub API returned HTTP {exc.code} for {path}"
+
             raise GitHubAPIError(
-                f"GitHub API returned HTTP {exc.code} for {path}"
+                message,
+                status_code=exc.code,
+                rate_limit=rate_limit,
             ) from exc
         except urllib.error.URLError as exc:
-            raise GitHubAPIError(f"GitHub API unavailable: {exc.reason}") from exc
+            raise GitHubAPIError(
+                f"GitHub API unavailable: {exc.reason}"
+            ) from exc
 
     def get_repository(self, ref: str = "") -> dict:
         if ref in self._repository_cache:
@@ -99,9 +187,9 @@ class GitHubClient:
         paths: list[str],
         ref: str = "main",
         *,
-        max_workers: int = 8,
+        max_workers: int = 4,
     ) -> dict[str, str]:
-        """Fetch repository files concurrently while preserving the client cache."""
+        """Fetch repository files with a bounded amount of concurrency."""
         if max_workers < 1:
             raise ValueError("max_workers must be greater than zero")
 
@@ -119,12 +207,16 @@ class GitHubClient:
             return cached
 
         workers = min(max_workers, len(pending))
+        if workers == 1:
+            for path in pending:
+                cached[path] = self.get_file(path, ref=ref)
+            return {path: cached[path] for path in unique_paths}
+
         with ThreadPoolExecutor(max_workers=workers) as executor:
             fetched = executor.map(
                 lambda path: (path, self.get_file(path, ref=ref)),
                 pending,
             )
-
             for path, content in fetched:
                 cached[path] = content
 
