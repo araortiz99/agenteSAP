@@ -100,6 +100,7 @@ def _identity(evidence: InvestigationEvidence) -> dict[str, Any]:
         "plant": _field(values, ("plant", "center", "centro", "werks")),
         "document": _field(values, ("material_document", "materialdocument", "mblnr", "document")),
         "object": evidence.object_id,
+        "object_type": evidence.object_type,
     }
 
 
@@ -112,13 +113,37 @@ def _observations(evidence: InvestigationEvidence) -> dict[str, Any]:
 
 
 def _same_entity(left: dict[str, Any], right: dict[str, Any]) -> tuple[bool, list[str]]:
-    shared = [
-        name for name in ("material", "plant", "document", "object")
-        if left.get(name) is not None
-        and right.get(name) is not None
-        and str(left[name]) == str(right[name])
-    ]
-    return bool(shared), shared
+    if left.get("material") is not None and right.get("material") is not None and str(left["material"]) != str(right["material"]):
+        return False, []
+    if left.get("plant") is not None and right.get("plant") is not None and str(left["plant"]) != str(right["plant"]):
+        return False, []
+
+    if (
+        left.get("material") is not None
+        and right.get("material") is not None
+        and left.get("plant") is not None
+        and right.get("plant") is not None
+        and str(left["material"]) == str(right["material"])
+        and str(left["plant"]) == str(right["plant"])
+    ):
+        return True, ["material", "plant"]
+
+    if (
+        left.get("document") is not None
+        and right.get("document") is not None
+        and str(left["document"]) == str(right["document"])
+    ):
+        return True, ["document"]
+
+    if (
+        left.get("object") is not None
+        and right.get("object") is not None
+        and str(left["object"]) == str(right["object"])
+        and str(left.get("object_type")) == str(right.get("object_type"))
+    ):
+        return True, ["object"]
+
+    return False, []
 
 
 def correlate_evidence(
@@ -160,7 +185,8 @@ def correlate_evidence(
                 left_stock is not None
                 and right_stock is not None
                 and str(left_stock) != str(right_stock)
-                and set(shared).intersection({"material", "plant"})
+                and "material" in shared
+                and "plant" in shared
             ):
                 contradictions.append((left.evidence_id, right.evidence_id))
                 relations.append(
