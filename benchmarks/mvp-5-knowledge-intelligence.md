@@ -1,0 +1,76 @@
+# MVP 5 — Knowledge Intelligence Benchmark
+
+## Purpose
+
+Validate deterministic entity resolution, explicit relationship traversal, bounded multi-hop retrieval and provenance preservation.
+
+## Canonical cases
+
+| ID | Case | Expected |
+|---|---|---|
+| KI-01 | Entity resolution | Canonical SAP object resolved from metadata |
+| KI-02 | Direct relationship | Explicit relationship is returned |
+| KI-03 | Multi-hop | Related evidence is discovered within configured hop limit |
+| KI-04 | No false relationship | Co-occurrence alone creates no relationship |
+| KI-05 | Provenance | path/source_layer/source_id/certainty survive traversal |
+| KI-06 | Hop limit | Traversal stops at configured maximum |
+| KI-07 | Deduplication | Same evidence path appears once |
+| KI-08 | Context rendering | Structured context exposes entities, relationships and evidence |
+
+## Negative cases
+
+### KI-N01 — Textual co-occurrence
+
+Input contains two SAP identifiers in one document without a relationship document.
+
+Expected: no relationship is created.
+
+### KI-N02 — Certainty escalation
+
+A related document has certainty: partial.
+
+Expected: context preserves partial.
+
+### KI-N03 — Hop overflow
+
+A third-hop relationship exists.
+
+Expected: with max_hops=2, third-hop data is not traversed.
+
+### KI-N04 — Unknown entity
+
+Query does not map to metadata-backed entity.
+
+Expected: no fabricated entity is returned.
+
+## Closure criteria
+
+All canonical and negative cases must pass. MVP 4.2 regression tests must remain green.
+
+
+## Ejecutabilidad
+
+Los casos KI-N01 a KI-N04 se materializan en `tests/test_knowledge_intelligence.py`.
+El benchmark de MVP 5 debe considerarse válido únicamente si la suite local y el CI coinciden.
+
+
+## Procedimiento de ejecución
+
+Desde la raíz del repositorio:
+
+```powershell
+python -m pytest -q tests/test_knowledge_intelligence.py
+python -m pytest -q
+```
+
+El segundo comando es el **Regression Gate**: debe permanecer verde junto con el benchmark de MVP 5.
+
+Para inspección directa de relaciones reales:
+
+```text
+TICKET:31426
+  ├── relacionado_con → SAP_OBJECT:ZMM_IMX_0004 [confirmed / confirmed]
+  └── participa_en → PROCESS:PROC-0001 [partial / candidate]
+```
+
+La segunda relación no debe ser elevada a confirmed durante el traversal. Además, la fuente asociada declara un conflicto K1/K4 que debe conservarse en la capa de evidencia.

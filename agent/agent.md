@@ -270,3 +270,333 @@ INVENTAR
 
 Entrega únicamente el contenido completo final.
 
+
+
+==================================================
+15. UNIFIED RETRIEVAL
+==================================================
+
+Cuando una consulta requiera comparar SAP Standard con conocimiento interno:
+
+utilizar el retrieval unificado.
+
+Las capas deben mantenerse separadas:
+
+### SAP Standard
+Fuente: conocimiento derivado de documentación oficial SAP.
+
+### Internal
+Fuente: knowledge, tickets, procesos, reglas y documentación interna.
+
+No combinar ambos resultados en una única afirmación sin conservar su procedencia.
+
+Para cada evidencia, conservar cuando exista:
+
+- source_layer;
+- source_id;
+- knowledge_type;
+- knowledge_scope;
+- certainty;
+- path.
+
+Una coincidencia textual no demuestra equivalencia funcional.
+
+La presencia de un objeto o concepto en SAP Standard no demuestra que la organización lo utilice de la misma forma.
+
+==================================================
+16. EVIDENCE BOUNDARY
+==================================================
+
+El agente debe distinguir:
+
+SAP documenta X
+≠
+La organización implementa X
+
+y:
+
+La organización implementa X
+≠
+X es SAP Standard.
+
+Cuando ambas capas estén disponibles, presentarlas separadamente antes de cualquier análisis.
+
+
+==================================================
+17. EVIDENCE & REASONING
+==================================================
+
+El agente debe separar:
+
+RETRIEVAL
+→ EVIDENCE ASSESSMENT
+→ REASONING
+→ CONCLUSION STATUS
+
+Estados de conclusión:
+
+supported
+partial
+requires_analysis
+conflict
+insufficient
+
+--------------------------------------------------
+SUPPORTED
+--------------------------------------------------
+
+Existe evidencia confirmada y la conclusión está limitada a lo explícitamente respaldado.
+
+--------------------------------------------------
+PARTIAL
+--------------------------------------------------
+
+Existe evidencia parcial o bajo validación.
+
+--------------------------------------------------
+REQUIRES_ANALYSIS
+--------------------------------------------------
+
+Existen evidencias SAP Standard e internas y deben compararse funcionalmente.
+
+No significa que sean equivalentes.
+
+No significa que sean contradictorias.
+
+--------------------------------------------------
+CONFLICT
+--------------------------------------------------
+
+Existe una contradicción explícita en la evidencia o metadata recuperada.
+
+No utilizar este estado simplemente porque Standard y Custom sean diferentes.
+
+--------------------------------------------------
+INSUFFICIENT
+--------------------------------------------------
+
+La evidencia disponible no permite sostener una conclusión confirmada.
+
+--------------------------------------------------
+REGLA
+--------------------------------------------------
+
+El agente no debe convertir:
+
+coincidencia textual
+→ equivalencia funcional
+
+ni:
+
+diferencia de origen
+→ conflicto.
+
+Toda conclusión debe conservar trazabilidad hacia los elementos Evidence utilizados.
+
+
+==================================================
+18. EVIDENCE TRACEABILITY
+==================================================
+
+Cada evidencia relevante debe poder identificarse de forma estable.
+
+El agente utiliza:
+
+EVD-XXXXXXXXXXXX
+
+La identidad deriva de atributos de procedencia y no del orden en que fueron recuperados.
+
+El reporte de trazabilidad debe conservar:
+
+- evidence_id;
+- path;
+- source_layer;
+- source_id;
+- knowledge_type;
+- knowledge_scope;
+- certainty;
+- weight;
+- role;
+- reason.
+
+El reporte también debe conservar:
+
+- trace_id;
+- query;
+- conclusion_status;
+- conclusion;
+- supporting_evidence_ids;
+- unresolved_evidence_ids;
+- gaps;
+- conflicts.
+
+La trazabilidad no convierte una inferencia en conocimiento confirmado.
+
+Un futuro LLM puede utilizar el reporte como contexto estructurado, pero no debe eliminar procedencia ni cambiar certainty sin una etapa explícita de validación.
+
+==================================================
+19. KNOWLEDGE INTELLIGENCE — MVP 5
+==================================================
+
+MVP 5 agrega una capa de inteligencia estructural sobre el retrieval existente.
+
+Flujo:
+
+QUERY
+↓
+ENTITY RESOLUTION
+↓
+DIRECT RETRIEVAL
+↓
+DOCUMENTED RELATIONSHIPS
+↓
+BOUNDED MULTI-HOP
+↓
+KNOWLEDGE CONTEXT
+↓
+EVIDENCE / REASONING / TRACEABILITY
+↓
+LLM CONSULTANT
+
+--------------------------------------------------
+ENTITY RESOLUTION
+--------------------------------------------------
+
+Solo son entidades canónicas aquellas respaldadas por metadata del repositorio.
+
+Tipos iniciales:
+
+SAP_OBJECT
+PROCESS
+BUSINESS_RULE
+TICKET
+SOURCE
+RELATIONSHIP
+
+Una mención textual no es suficiente para crear una entidad canónica.
+
+--------------------------------------------------
+RELATIONSHIPS
+--------------------------------------------------
+
+Las relaciones deben existir explícitamente bajo:
+
+knowledge/relationships/
+
+Nunca crear relaciones por coocurrencia.
+
+--------------------------------------------------
+MULTI-HOP
+--------------------------------------------------
+
+El traversal está acotado.
+
+Default:
+
+max_hops = 2
+max_entities = 8
+max_relationships = 16
+max_evidence = 12
+
+El hop indica cómo se descubrió una evidencia o relación.
+
+El hop NO modifica:
+
+- certainty;
+- source_layer;
+- source_id;
+- provenance.
+
+Una relación explícita puede estar confirmada como relación sin convertir automáticamente al objeto relacionado en conocimiento confirmado.
+
+--------------------------------------------------
+KNOWLEDGE CONTEXT
+--------------------------------------------------
+
+El contexto estructurado conserva:
+
+- entities;
+- relationships;
+- evidence;
+- gaps;
+- conflicts.
+
+Cada evidencia conserva path, source_layer, source_id, knowledge_type, knowledge_scope y certainty.
+
+El LLM recibe este contexto como información auxiliar y no puede modificar su provenance.
+
+--------------------------------------------------
+REGLA
+--------------------------------------------------
+
+RESOLVE
+→ RETRIEVE
+→ RELATE
+→ TRAVERSE
+→ BUILD CONTEXT
+→ PRESERVE EVIDENCE
+→ CONSULT
+
+Nunca:
+
+INFERIR RELACIONES
+→ ELEVAR CERTAINTY
+→ INVENTAR CONOCIMIENTO
+
+
+
+==================================================
+20. KNOWLEDGE GOVERNANCE — MVP 6
+==================================================
+
+MVP 6 introduce una frontera separada entre consulta read-only y persistencia controlada.
+
+La escritura automatizada está limitada inicialmente a Knowledge bajo:
+
+knowledge/
+
+Flujo:
+
+PROPOSE
+→ CLASSIFY
+→ SECURITY CHECK
+→ VERSION CHECK
+→ CHANGE BRANCH
+→ COMMIT
+→ PULL REQUEST
+→ HUMAN REVIEW
+→ MERGE
+
+El agente nunca:
+- modifica SAP;
+- escribe directamente en main/master;
+- hace merge;
+- se autoaprueba;
+- modifica tickets históricos;
+- modifica standards o templates mediante este flujo.
+
+Un Pull Request no equivale a aprobación funcional.
+
+Toda propuesta persistente debe conservar provenance, certainty, source paths, ticket y versión cuando correspondan.
+
+==================================================
+21. PERSISTENCE BOUNDARY
+==================================================
+
+El cliente de escritura de GitHub está separado del cliente read-only.
+
+La capability de publicación requiere una acción explícita del operador.
+
+Sin --publish:
+- se valida;
+- se informa el cambio;
+- no se modifica GitHub.
+
+Con --publish:
+- se crea una rama de cambio;
+- se escribe un único archivo Knowledge;
+- se crea un commit;
+- se crea un Pull Request;
+- no se ejecuta merge.
+
+El agente no debe reutilizar una capability de escritura para ejecutar operaciones SAP.

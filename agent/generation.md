@@ -1,527 +1,239 @@
-Actúa como arquitecto de información y especialista en diseño de agentes de conocimiento para SAP.
-
-Necesito generar el archivo:
-
-agent/generation.md
-
-Este archivo debe definir formalmente el mecanismo mediante el cual el agente SAP genera documentos funcionales a partir de una solicitud del usuario.
-
-IMPORTANTE:
-
-- Este archivo NO debe contener documentos funcionales concretos.
-- No debe contener ejemplos extensos de incidentes reales.
-- No debe inventar información SAP.
-- No debe reemplazar a promptMaestro.
-- No debe reemplazar standards/documentation-standard.md.
-- No debe reemplazar los templates.
-- Debe definir el proceso operativo que conecta:
-  
-  usuario → tipo documental → template → contexto → knowledge → sources → generación → validación → documento.
-
-La arquitectura existente del repositorio es:
-
-agenteSAP/
-├── agent/
-│   └── agent.md
-├── knowledge/
-│   ├── business-rules/
-│   ├── processes/
-│   ├── relationships/
-│   ├── sap-objects/
-│   └── sources/
-├── standards/
-│   ├── documentation-standard.md
-│   ├── knowledge-classification-standard.md
-│   ├── security-standard.md
-│   └── versioning-standard.md
-├── templates/
-│   ├── analysis.md
-│   ├── functional-specification.md
-│   ├── functional-tests.md
-│   ├── investigation.md
-│   └── requirement.md
-├── tickets/
-│   ├── index.md
-│   └── ticket.md
-└── promptMaestro
-
-Los templates existentes representan la especificación de:
-- qué debe contener cada documento;
-- cómo debe construirse;
-- qué reglas debe seguir el agente para generarlo.
-
-El documento generado será una instancia concreta y no debe confundirse con el template.
-
-==================================================
-OBJETIVO DEL ARCHIVO
-==================================================
-
-Definir un Generation Contract para que el agente pueda recibir solicitudes como:
-
-- "Generá el análisis del ticket 31426."
-- "Creá la especificación funcional para este requerimiento."
-- "Documentá el debug realizado."
-- "Generá las pruebas funcionales."
-- "Actualizá el análisis existente."
-- "Convertí esta investigación en documentación funcional."
-
-y determinar de forma controlada:
-
-1. qué documento debe generar;
-2. qué template debe utilizar;
-3. qué información debe recuperar;
-4. qué información puede utilizar;
-5. qué información debe marcar como desconocida;
-6. cómo debe construir el documento;
-7. cómo debe validarlo;
-8. cómo debe versionarlo;
-9. cómo debe mantener trazabilidad;
-10. cuándo una información descubierta puede convertirse en Knowledge reutilizable.
-
-==================================================
-PRINCIPIOS OBLIGATORIOS
-==================================================
-
-El mecanismo de generación debe cumplir:
-
-1. No inventar información.
-2. No transformar inferencias en hechos.
-3. Mantener separación entre:
-   - documentación;
-   - conocimiento reutilizable;
-   - fuentes;
-   - evidencia;
-   - contexto de ticket.
-4. Respetar la clasificación:
-   - knowledge_type;
-   - knowledge_scope;
-   - certainty;
-   - SAP object origin;
-   - implementation_type;
-   - source origin;
-   - source type.
-5. Mantener ticket_id como identificador transversal cuando corresponda.
-6. Mantener trazabilidad hacia las fuentes utilizadas.
-7. No duplicar información que ya existe como Knowledge.
-8. Reutilizar Knowledge existente en lugar de copiarlo innecesariamente.
-9. No promover automáticamente cualquier información documentada a Knowledge reusable.
-10. Distinguir claramente información confirmada, parcial, pendiente, inferida y no confirmada.
-11. Respetar security-standard.md.
-12. Respetar documentation-standard.md.
-13. Respetar knowledge-classification-standard.md.
-14. Respetar versioning-standard.md.
-15. Utilizar el template correspondiente antes de generar un documento.
-16. Si existe un documento previo, actualizarlo o versionarlo en lugar de crear duplicados.
-17. El agente es consultivo y documental. No ejecuta cambios en SAP.
-
-==================================================
-ESTRUCTURA OBLIGATORIA DE generation.md
-==================================================
-
-Generá el documento con las siguientes secciones:
-
 # Generation Contract
 
 ## 1. Purpose
 
-Explicar la finalidad del mecanismo de generación documental.
+Define the normative and operational mechanism used by agenteSAP to generate functional documentation from a user request and repository evidence.
+
+Generation is consultative and read-only. It produces a proposed document in memory; it does not execute SAP changes or write to the repository.
 
 ## 2. Scope
 
-Definir qué tipos de documentos cubre y qué queda fuera.
+The MVP covers requirement, analysis, functional-specification, functional-test and investigation. DEBUG is intentionally outside the current MVP scope.
+
+The contract applies to documents associated with a ticket and to documents that legitimately have no ticket. It does not authorize SAP execution, repository writes, automatic Knowledge promotion, or automatic approval.
 
 ## 3. Generation Lifecycle
 
-Definir formalmente el flujo:
+REQUEST → DOCUMENT TYPE IDENTIFICATION → TEMPLATE SELECTION → TICKET RESOLUTION → CONTEXT RETRIEVAL → KNOWLEDGE RETRIEVAL → SOURCE RETRIEVAL → EVIDENCE ANALYSIS → DOCUMENT GENERATION → VALIDATION → VERSIONING → TRACEABILITY → OUTPUT → KNOWLEDGE PROMOTION EVALUATION
 
-REQUEST
-→ DOCUMENT TYPE IDENTIFICATION
-→ TEMPLATE SELECTION
-→ TICKET RESOLUTION
-→ CONTEXT RETRIEVAL
-→ KNOWLEDGE RETRIEVAL
-→ SOURCE RETRIEVAL
-→ EVIDENCE ANALYSIS
-→ DOCUMENT GENERATION
-→ VALIDATION
-→ VERSIONING
-→ TRACEABILITY
-→ OUTPUT
-→ KNOWLEDGE PROMOTION EVALUATION
+Each stage is mandatory unless the request is explicitly out of scope.
 
-Explicar cada etapa.
+- REQUEST: capture the user's objective and supplied context.
+- DOCUMENT TYPE IDENTIFICATION: determine one supported document type; ask when ambiguous.
+- TEMPLATE SELECTION: load the official template before generating.
+- TICKET RESOLUTION: resolve an existing ticket when applicable; never invent one.
+- CONTEXT RETRIEVAL: retrieve ticket documents and available chronology, decisions, validations and pending items.
+- KNOWLEDGE RETRIEVAL: retrieve explicit reusable knowledge and relationships.
+- SOURCE RETRIEVAL: identify sources supporting relevant statements.
+- EVIDENCE ANALYSIS: separate facts, evidence, hypotheses, inference and gaps.
+- DOCUMENT GENERATION: populate the template without inventing unavailable information.
+- VALIDATION: validate structure, content, evidence, classification, security and version.
+- VERSIONING: determine the appropriate document version from the existing state and change.
+- TRACEABILITY: preserve ticket, source, Knowledge and related-document references.
+- OUTPUT: return the complete proposed document and its validation state.
+- KNOWLEDGE PROMOTION EVALUATION: identify candidate reusable Knowledge separately; never promote automatically.
 
 ## 4. Document Type Identification
 
-Definir cómo el agente determina el tipo documental solicitado.
+| User intent | document_type |
+|---|---|
+| Need, problem, business need, acceptance criteria | requirement |
+| Functional assessment, evidence-based diagnosis, analysis | analysis |
+| Functional test plan/results | functional-test |
+| Research/question investigation | investigation |
+| Functional solution definition | functional-specification |
 
-Debe contemplar como mínimo:
+DEBUG is not supported by the current MVP. If requested, the agent must state that the current generation capability does not materialize DEBUG documents rather than silently choosing another type.
 
-- REQUIREMENT
-- ANALYSIS
-- DEBUG
-- INVESTIGATION
-- FUNCTIONAL_SPECIFICATION
-- FUNCTIONAL_TESTS
-
-Si la intención no es suficientemente clara, el agente debe pedir aclaración en lugar de elegir arbitrariamente.
+If the intention is ambiguous, the agent asks for clarification instead of selecting arbitrarily.
 
 ## 5. Template Selection
 
-Definir cómo se selecciona:
+| document_type | Template |
+|---|---|
+| requirement | templates/requirement.md |
+| analysis | templates/analysis.md |
+| functional-specification | templates/functional-specification.md |
+| functional-test | templates/functional-tests.md |
+| investigation | templates/investigation.md |
 
-templates/<document_type>.md
-
-Debe existir una correspondencia controlada entre document_type y template.
-
-El agente nunca debe generar un documento funcional ignorando el template correspondiente.
+The template is the structural contract. Generated documents are instances of the template and must not be confused with the template itself.
 
 ## 6. Standard Selection
 
-Definir qué standards deben consultarse antes de generar.
+Before generation, consult standards/documentation-standard.md, standards/knowledge-classification-standard.md, standards/versioning-standard.md and standards/security-standard.md.
 
-Como mínimo:
-
-- documentation-standard.md
-- knowledge-classification-standard.md
-- versioning-standard.md
-- security-standard.md
-
-Explicar cuándo cada uno es obligatorio.
+When the document uses sources, relationships, SAP objects, processes or business rules, the corresponding Knowledge specifications are also applicable.
 
 ## 7. Ticket Resolution
 
-Definir cómo identificar el ticket asociado.
+Resolve ticket_id in this order: explicitly provided by the user; identified in supplied context; identified through existing repository documentation with sufficient evidence; absent when the document type legitimately permits a document without a ticket.
 
-Prioridad:
-
-1. ticket_id explícitamente proporcionado;
-2. ticket_id encontrado en contexto;
-3. ticket_id identificado mediante documentos relacionados;
-4. si realmente no existe, utilizar el mecanismo definido para documentos sin ticket.
-
-No inventar ticket_id.
+Never invent a ticket identifier. When an existing ticket directory is available, get_ticket is the authoritative retrieval capability for its document set.
 
 ## 8. Context Retrieval
 
-Definir cómo recuperar contexto del ticket.
+For a ticket, retrieve ticket documentation, available analysis/specification/test documents, documented chronology, decisions, validations, pending information and explicitly related documents.
 
-Debe contemplar:
-
-- ticket;
-- documentos existentes;
-- cronología;
-- decisiones;
-- solución;
-- validaciones;
-- pendientes;
-- documentos relacionados.
-
-El contexto del ticket debe considerarse contexto histórico y no necesariamente verdad universal.
+Ticket context is historical context. It is not automatically reusable Knowledge or universal SAP behavior.
 
 ## 9. Knowledge Retrieval
 
-Definir cómo recuperar conocimiento reusable relacionado.
+Search reusable Knowledge before generating new statements. Relevant entities include SAP Objects, Processes, Business Rules, Relationships and Sources.
 
-Debe contemplar:
+Classify retrieved information as directly applicable, related, potentially applicable or contradictory.
 
-- SAP Objects;
-- Processes;
-- Business Rules;
-- Relationships;
-- Sources.
-
-El agente debe buscar primero Knowledge existente antes de crear información redundante.
-
-Debe diferenciar:
-
-- conocimiento aplicable directamente;
-- conocimiento relacionado;
-- conocimiento potencialmente aplicable;
-- conocimiento contradictorio.
+Only explicit relationships are traversed. Co-occurrence does not establish a relationship.
 
 ## 10. Source Retrieval
 
-Definir cómo recuperar y utilizar Sources.
+Sources are classified by origin, source_type, reliability and certainty.
 
-Las fuentes deben clasificarse según:
+Evidence priority is: direct evidence > official SAP documentation > confirmed configuration > confirmed code > functional test > internal documentation > analysis > inference.
 
-- origin;
-- source_type;
-- reliability;
-- certainty.
-
-Definir prioridad de evidencia.
-
-Como regla general:
-
-direct evidence
->
-official SAP documentation
->
-confirmed configuration
->
-confirmed code
->
-functional test
->
-internal documentation
->
-analysis
->
-inference
-
-No presentar una inferencia como hecho confirmado.
+A lower-priority source may provide context but must not be presented as stronger evidence than its classification supports.
 
 ## 11. Evidence Handling
 
-Definir cómo el agente debe manejar:
+The agent distinguishes direct evidence, documentary evidence, technical evidence, test evidence, debug evidence when referenced by existing documentation, partial evidence and absence of evidence.
 
-- evidencia directa;
-- evidencia documental;
-- evidencia técnica;
-- evidencia de pruebas;
-- evidencia de debug;
-- evidencia parcial;
-- ausencia de evidencia.
-
-Cuando no exista evidencia suficiente, debe indicarlo explícitamente.
+When evidence is insufficient, the document explicitly records the gap.
 
 ## 12. Information Gaps
 
-Definir el comportamiento ante información faltante.
+The agent must identify missing information, distinguish unknown from not applicable, mark pending validation, request indispensable information, continue generation where safe and never fill critical fields by assumption.
 
-El agente debe:
-
-- identificar qué falta;
-- distinguir dato desconocido de dato no aplicable;
-- marcar información pendiente;
-- solicitar información cuando sea indispensable;
-- continuar con la generación cuando sea posible;
-- no completar campos críticos mediante suposiciones.
-
-Utilizar estados claros como:
-
-- confirmed;
-- partial;
-- under_validation;
-- inferred;
-- not_confirmed.
+Allowed certainty states: confirmed, partial, under_validation, inferred, not_confirmed.
 
 ## 13. Document Generation
 
-Definir cómo construir el documento final.
+Generation follows this sequence: load the official template; load applicable standards; resolve ticket/context; retrieve Knowledge and relationships; retrieve sources; classify evidence; populate metadata; populate every required template section; explicitly mark unavailable information; validate the generated document.
 
-El agente debe:
+The generator may construct a complete document in memory. Repository persistence is outside the MVP.
 
-1. cargar el template;
-2. interpretar sus instrucciones;
-3. recuperar contexto;
-4. recuperar Knowledge;
-5. recuperar Sources;
-6. estructurar la información;
-7. clasificar hechos;
-8. completar metadata;
-9. generar el contenido;
-10. registrar pendientes.
-
-La estructura del documento generado debe respetar el template.
+For functional tests, expected and obtained results are never invented. For requirements and specifications, technical objects are never invented. For investigations, conclusions remain bounded by the evidence.
 
 ## 14. Fact and Inference Separation
 
-Definir reglas para separar:
+Every substantive statement must be attributable to user-provided information, repository fact, source/evidence, functional analysis, hypothesis, inference or pending validation.
 
-- hecho confirmado;
-- información proporcionada por el usuario;
-- evidencia;
-- análisis;
-- hipótesis;
-- inferencia;
-- pendiente de validación.
-
-Nunca convertir una hipótesis en una afirmación factual.
+Facts and evidence may be stated as such. Hypotheses and inferences must be labeled. Pending information must remain pending.
 
 ## 15. Validation
 
-Definir una validación previa a la entrega.
-
-Como mínimo:
-
 ### Structural validation
-- estructura correcta;
-- secciones requeridas;
-- metadata completa.
+- official template loaded;
+- required headings present;
+- metadata present;
+- document type consistent.
 
 ### Content validation
-- coherencia;
-- ausencia de contradicciones;
-- información suficiente.
+- no invented facts;
+- required sections populated or explicitly marked pending;
+- facts, analysis and pending information remain distinguishable.
 
 ### Evidence validation
-- trazabilidad;
-- fuentes identificables;
-- incertidumbre correctamente indicada.
+- relevant source paths retained;
+- explicit relationships preserved;
+- uncertainty retained;
+- no relationship created by co-occurrence.
 
 ### Classification validation
 - knowledge_type;
 - knowledge_scope;
-- certainty;
-- SAP object classification;
-- source classification.
+- certainty where applicable;
+- SAP object origin and implementation_type;
+- source origin, source_type and reliability where applicable.
 
 ### Security validation
-- ausencia de credenciales;
-- ausencia de secretos;
-- ausencia de información sensible innecesaria.
+- no passwords;
+- no tokens;
+- no API keys;
+- no private keys;
+- no credentials;
+- no unnecessary sensitive production information.
 
 ### Version validation
-- versión correcta;
-- historial consistente;
-- actualización en lugar de duplicación.
+- current version identified when available;
+- change type recorded;
+- history not silently overwritten.
 
 ## 16. Versioning
 
-Definir cómo se determina la versión del documento.
+Versioning follows standards/versioning-standard.md. A version increment must be justified by the nature of the change. Git commit history is separate from the document version.
 
-Diferenciar:
-
-- versión documental;
-- historial Git;
-- cambio menor;
-- cambio estructural;
-- corrección;
-- nueva información;
-- modificación funcional.
-
-Respetar versioning-standard.md.
+The agent must not rewrite historical approved/validated content silently. A correction creates a new logical version when the standard requires it.
 
 ## 17. Traceability
 
-Todo documento generado debe poder responder:
+A generated document must expose, when applicable: originating ticket_id; source paths; retrieved Knowledge; explicit relationships; related documents; pending information; generation version/status.
 
-- ¿qué ticket originó el documento?
-- ¿qué información fue utilizada?
-- ¿qué Knowledge fue consultado?
-- ¿qué Sources fueron utilizados?
-- ¿qué documentos relacionados existen?
-- ¿qué información quedó pendiente?
-
-La trazabilidad debe ser explícita.
+Traceability must permit reconstruction of why a statement was included.
 
 ## 18. Existing Document Handling
 
-Definir qué ocurre si ya existe un documento del mismo tipo para el mismo ticket.
+Before creating a new document for a ticket: search for an existing document of the same type; determine whether the request is a new document or an update; compare the requested change with the existing version; preserve the prior logical version; increment the version when required; update related references when necessary; avoid duplicate documents.
 
-El agente debe:
-
-1. buscar el documento existente;
-2. determinar si corresponde actualizarlo;
-3. identificar cambios;
-4. incrementar versión cuando corresponda;
-5. preservar trazabilidad;
-6. evitar documentos duplicados.
+The current MVP can generate proposed documents but does not perform repository writes or automatic merges.
 
 ## 19. Knowledge Promotion
 
-Definir el proceso mediante el cual una información descubierta durante la documentación puede convertirse en Knowledge reusable.
+Knowledge promotion is a separate lifecycle: DOCUMENTATION → DISCOVERY → CANDIDATE KNOWLEDGE → VALIDATION → REUSABLE KNOWLEDGE.
 
-Debe existir una separación explícita:
+A generated document does not automatically become reusable Knowledge.
 
-DOCUMENTATION
-→ DISCOVERY
-→ CANDIDATE KNOWLEDGE
-→ VALIDATION
-→ REUSABLE KNOWLEDGE
-
-La generación de un documento NO implica automáticamente la creación de Knowledge.
-
-Para promover información a Knowledge debe existir evidencia suficiente y clasificación adecuada.
+Promotion requires sufficient evidence, correct classification, source traceability and explicit validation.
 
 ## 20. Conflict Handling
 
-Definir qué ocurre cuando:
-
-- dos Sources contradicen;
-- un documento contradice Knowledge;
-- un ticket histórico contradice una configuración actual;
-- existe información antigua y nueva.
-
-El agente no debe ocultar conflictos.
-
-Debe preservar:
-
-- fuente;
-- fecha;
-- contexto;
-- certeza;
-- estado.
+When information conflicts, preserve the conflicting sources, identify dates and contexts, classify certainty, do not silently choose one as universal truth, and distinguish historical behavior from current behavior.
 
 ## 21. Output Contract
 
-Definir qué debe contener una salida generada.
+A generated output contains, when applicable: metadata; document_type; ticket_id; version; status; date; author; knowledge_type; knowledge_scope; complete template content; source/evidence traceability; related Knowledge; pending information.
 
-Como mínimo:
-
-- metadata;
-- document_type;
-- ticket_id;
-- version;
-- status;
-- date;
-- author;
-- knowledge classification;
-- content;
-- sources/evidence;
-- related knowledge;
-- pending information.
+The output is a proposed artifact unless a human process explicitly changes its status.
 
 ## 22. Human Review
 
-Definir cuándo el documento puede considerarse:
+Supported lifecycle statuses are draft, in_review, approved, validated, implemented and obsolete.
 
-- draft;
-- in_review;
-- approved;
-- validated;
-- implemented;
-- obsolete.
-
-El agente no debe asumir aprobación humana si esta no fue indicada.
+The agent may propose a status based on the request but must not claim human approval or validation unless explicitly documented.
 
 ## 23. Agent Rules
 
-Cerrar con reglas operativas resumidas:
-
-- no inventar;
-- no duplicar;
-- no ocultar incertidumbre;
-- no mezclar estándar y custom;
-- no mezclar ticket context con reusable knowledge;
-- mantener trazabilidad;
-- respetar templates;
-- respetar standards;
-- versionar;
-- preservar historial;
-- solicitar aclaración cuando sea indispensable.
+- Do not invent.
+- Do not duplicate.
+- Do not generalize from a single ticket without evidence.
+- Do not confuse Standard with Custom.
+- Do not confuse configuration with development.
+- Do not create relationships without evidence.
+- Do not convert inference into fact.
+- Preserve uncertainty.
+- Preserve traceability.
+- Use the official template.
+- Apply the applicable standards.
+- Version changes consistently.
+- Preserve history.
+- Ask for clarification when indispensable.
+- Do not execute or modify SAP.
 
 ## 24. Generation Checklist
 
-Crear una checklist final que el agente pueda utilizar antes de entregar cualquier documento.
-
-Debe ser concreta y verificable.
-
-==================================================
-FORMATO
-==================================================
-
-Usar Markdown limpio.
-
-Usar tablas solamente cuando realmente aporten claridad.
-
-Utilizar YAML únicamente para metadata o estructuras donde sea necesario.
-
-No agregar contenido inventado.
-
-No crear todavía ejemplos reales de tickets.
-
-El resultado debe ser una especificación normativa y operativa del mecanismo de generación documental del agente SAP.
+- [ ] Correct document_type.
+- [ ] Official template loaded.
+- [ ] Required sections present.
+- [ ] ticket_id resolved or intentionally absent.
+- [ ] Metadata complete with known values only.
+- [ ] knowledge_type and knowledge_scope classified.
+- [ ] Facts separated from analysis and inference.
+- [ ] Missing information explicitly marked.
+- [ ] Sources/evidence traceable.
+- [ ] Relationships are explicit, not inferred from co-occurrence.
+- [ ] Standard/Custom classification supported by evidence.
+- [ ] No technical object invented.
+- [ ] Security validation passed.
+- [ ] Version/status are consistent.
+- [ ] Existing document checked when applicable.
+- [ ] Human approval not assumed.
+- [ ] Knowledge promotion not performed automatically.
