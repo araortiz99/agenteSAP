@@ -42,6 +42,12 @@ class SapQasRuntimeConfig:
                 "QAS runtime integration requires an explicit read-tool allowlist "
                 "unless discovery_only is enabled"
             )
+        if any(tool in {"*", "**"} or any(char.isspace() for char in tool) for tool in self.allowed_tools):
+            raise ValueError("QAS runtime read-tool allowlist must contain concrete tool names")
+        if len(set(self.allowed_tools)) != len(self.allowed_tools):
+            raise ValueError("QAS runtime read-tool allowlist must not contain duplicates")
+        if self.query_tool and self.query_tool not in self.allowed_tools and not self.discovery_only:
+            raise ValueError("QAS runtime query tool must be explicitly allowlisted")
         if self.discovery_only and self.allowed_tools:
             raise ValueError(
                 "discovery_only mode must not pre-authorize runtime tools"
