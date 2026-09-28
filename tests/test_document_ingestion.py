@@ -63,7 +63,7 @@ def test_ingestion_defaults_business_documents_to_candidate_authority():
     source = DocumentSource("source", "zmm.md", "# ZMM\n\nBusiness rule.")
     result = ingest_document(source)
     assert result.records[0].authority.authority.value == "candidate"
-    assert result.evidence[0].provenance[-4][1] == "candidate"
+    assert dict(result.evidence[0].provenance)["authority"] == "candidate"
 
 
 def test_ingestion_rejects_unapproved_authoritative_document():
