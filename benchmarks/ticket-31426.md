@@ -35,30 +35,73 @@ incorporado a la Knowledge Base.
 - [x] La discrepancia documental K1/K4 queda pendiente.
 - [x] No se confunde el ticket histórico con comportamiento SAP Standard.
 
-### CI
-- [x] GitHub Actions: job `test` — success.
-- [x] Último baseline: 72 tests pasaron antes del último ajuste del test.
-- [x] El ajuste posterior valida pertenencia de citas al conjunto de trazabilidad.
+### Gate semántico real
+El benchmark ejecutable `benchmarks/mvp-4-2-semantic-gate.py` valida:
+
+1. estructura obligatoria de la respuesta;
+2. citas EVD-* pertenecientes a la trazabilidad;
+3. tratamiento explícito del conflicto K1/K4;
+4. preservación de `certainty`;
+5. separación SAP Standard vs implementación interna/custom;
+6. explicitación de información faltante;
+7. referencia TKT-*.
+
+Además ejecuta cuatro casos negativos sintéticos que **deben ser rechazados**:
+
+- `partial_as_confirmed`: presenta evidencia `partial` como confirmada.
+- `conflict_omitted`: omite la discrepancia K1/K4.
+- `unknown_evidence`: introduce un EVD-* inexistente.
+- `standard_custom_mixed`: presenta un objeto/proceso custom como SAP Standard.
+
+Los casos negativos no modifican la evidencia real; son mutaciones en memoria del
+`ConsultationResult` para probar el comportamiento del Gate.
+
+### Estabilidad
+La ejecución canónica acepta el parámetro `--runs N` para repetir la consulta
+real con el proveedor LLM configurado. El criterio de estabilidad es:
+
+- todas las ejecuciones deben pasar los checks semánticos;
+- los cuatro negativos deben continuar siendo rechazados.
+
+Ejemplo:
+
+```powershell
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe benchmarks\mvp-4-2-semantic-gate.py --runs 3
+```
+
+## Baseline semántico esperado
+
+La respuesta canónica debe mantener:
+
+- `Reasoning status: conflict`;
+- discrepancia K1/K4 como no resuelta;
+- evidencia parcial como parcial;
+- separación de SAP Standard e implementación interna/custom;
+- información faltante explícita;
+- referencias EVD-* válidas;
+- referencia TKT-*.
+
+La redacción exacta del LLM **no es el resultado esperado**. El benchmark valida
+propiedades semánticas y de trazabilidad, no una respuesta textual exacta.
 
 ## Resultado
 
-El pipeline técnico del benchmark cumple el contrato de trazabilidad.
+El pipeline técnico y el Gate semántico deben considerarse aprobados solamente
+cuando:
 
-La validación de la **respuesta semántica de un LLM real** queda separada de
-esta prueba determinística y requiere credenciales/runtime del proveedor.
+1. la consulta canónica pasa todos los checks en las ejecuciones solicitadas;
+2. los cuatro casos negativos son rechazados por el check correspondiente;
+3. no se altera la procedencia ni la certeza de la evidencia para conseguir el PASS.
 
-## Criterio para MVP 4.2
+## Criterio para MVP 5
 
-No avanzar a MVP 4.2 únicamente por tener el pipeline verde. Primero se debe
-ejecutar una consulta con un proveedor LLM real y revisar manualmente:
+No avanzar a MVP 5 por una única respuesta correcta. Primero debe existir:
 
-1. exactitud factual;
-2. preservación de certainty;
-3. uso correcto de EVD-*;
-4. tratamiento de la discrepancia K1/K4;
-5. separación Standard/Custom;
-6. identificación explícita de información faltante.
+- un baseline semántico persistido;
+- casos negativos reproducibles;
+- evidencia de estabilidad en múltiples ejecuciones;
+- separación entre validación determinística y comportamiento probabilístico del LLM.
 
-Si esos seis puntos pasan, MVP 4.2 puede centrarse en la experiencia de
-consulta del consultor SAP, sin introducir todavía memoria conversacional ni
-RAG semántico.
+El siguiente MVP puede entonces centrarse en nuevas capacidades sobre este contrato
+ya validado, sin reinterpretar la evidencia existente.
