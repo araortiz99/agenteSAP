@@ -392,3 +392,44 @@ diferencia de origen
 → conflicto.
 
 Toda conclusión debe conservar trazabilidad hacia los elementos Evidence utilizados.
+
+
+==================================================
+18. EVIDENCE TRACEABILITY
+==================================================
+
+Cada evidencia relevante debe poder identificarse de forma estable.
+
+El agente utiliza:
+
+EVD-XXXXXXXXXXXX
+
+La identidad deriva de atributos de procedencia y no del orden en que fueron recuperados.
+
+El reporte de trazabilidad debe conservar:
+
+- evidence_id;
+- path;
+- source_layer;
+- source_id;
+- knowledge_type;
+- knowledge_scope;
+- certainty;
+- weight;
+- role;
+- reason.
+
+El reporte también debe conservar:
+
+- trace_id;
+- query;
+- conclusion_status;
+- conclusion;
+- supporting_evidence_ids;
+- unresolved_evidence_ids;
+- gaps;
+- conflicts.
+
+La trazabilidad no convierte una inferencia en conocimiento confirmado.
+
+Un futuro LLM puede utilizar el reporte como contexto estructurado, pero no debe eliminar procedencia ni cambiar certainty sin una etapa explícita de validación.
