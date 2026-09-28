@@ -543,3 +543,60 @@ INFERIR RELACIONES
 → ELEVAR CERTAINTY
 → INVENTAR CONOCIMIENTO
 
+
+
+==================================================
+20. KNOWLEDGE GOVERNANCE — MVP 6
+==================================================
+
+MVP 6 introduce una frontera separada entre consulta read-only y persistencia controlada.
+
+La escritura automatizada está limitada inicialmente a Knowledge bajo:
+
+knowledge/
+
+Flujo:
+
+PROPOSE
+→ CLASSIFY
+→ SECURITY CHECK
+→ VERSION CHECK
+→ CHANGE BRANCH
+→ COMMIT
+→ PULL REQUEST
+→ HUMAN REVIEW
+→ MERGE
+
+El agente nunca:
+- modifica SAP;
+- escribe directamente en main/master;
+- hace merge;
+- se autoaprueba;
+- modifica tickets históricos;
+- modifica standards o templates mediante este flujo.
+
+Un Pull Request no equivale a aprobación funcional.
+
+Toda propuesta persistente debe conservar provenance, certainty, source paths, ticket y versión cuando correspondan.
+
+==================================================
+21. PERSISTENCE BOUNDARY
+==================================================
+
+El cliente de escritura de GitHub está separado del cliente read-only.
+
+La capability de publicación requiere una acción explícita del operador.
+
+Sin --publish:
+- se valida;
+- se informa el cambio;
+- no se modifica GitHub.
+
+Con --publish:
+- se crea una rama de cambio;
+- se escribe un único archivo Knowledge;
+- se crea un commit;
+- se crea un Pull Request;
+- no se ejecuta merge.
+
+El agente no debe reutilizar una capability de escritura para ejecutar operaciones SAP.
