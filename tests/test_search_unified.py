@@ -49,3 +49,60 @@ def test_unified_search_requires_query():
     except ValueError:
         return
     raise AssertionError("empty query should raise ValueError")
+
+
+def test_unified_search_reserves_requested_layers(monkeypatch):
+    from src.tools.search_unified import UnifiedResult
+    import src.tools.search_unified as module
+
+    standard = UnifiedResult(
+        "sap.md", 0.95, ("x",), "standard", "sap_standard", "content",
+        "SAP-1", "standard", "global", "confirmed"
+    )
+    internal = UnifiedResult(
+        "int.md", 0.90, ("x",), "internal", "internal", "content",
+        "INT-1", "custom", "org", "confirmed"
+    )
+
+    monkeypatch.setattr(module, "search_sap_standard", lambda *args, **kwargs: [
+        type("R", (), {"path": "sap.md", "score": 0.95, "matched_terms": ("x",), "match_type": "content", "content": """---
+knowledge_type: standard
+source_id: SAP-1
+certainty: confirmed
+---
+standard"""})()
+    ])
+    monkeypatch.setattr(module, "search_knowledge", lambda *args, **kwargs: [
+        type("R", (), {"path": "int.md", "score": 0.90, "matched_terms": ("x",), "match_type": "content", "content": """---
+knowledge_type: custom
+source_id: INT-1
+certainty: confirmed
+---
+internal"""})()
+    ])
+
+    result = module.search_unified(object(), "¿Cómo funciona el inventario?", max_results=2)
+    assert {item.source_layer for item in result.results} == {"sap_standard", "internal"}
+
+
+def test_evidence_does_not_count_truncated_source_as_retrieved():
+    from src.tools.evidence import assess_evidence
+    from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
+
+    internal = UnifiedResult(
+        "int.md", 1.0, ("x",), "internal", "internal", "content",
+        "INT-1", "custom", "org", "partial"
+    )
+    hidden_standard = UnifiedResult(
+        "sap.md", 0.9, ("x",), "standard", "sap_standard", "content",
+        "SAP-1", "standard", "global", "confirmed"
+    )
+    retrieval = UnifiedSearchResult(
+        "¿Cómo funciona el inventario?",
+        (internal,),
+        (hidden_standard,),
+        (internal,),
+    )
+    assessment = assess_evidence(retrieval)
+    assert "sap_standard" not in {item.source_layer for item in assessment.items}
+    assert "No SAP Standard evidence was retrieved." in assessment.gaps

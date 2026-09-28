@@ -207,12 +207,14 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
     selection = select_evidence_sources(retrieval.query)
     selected = set(selection.requested)
 
-    if "sap_standard" in selected and not retrieval.sap_standard:
+    retrieved_layers = {item.source_layer for item in items}
+
+    if "sap_standard" in selected and "sap_standard" not in retrieved_layers:
         gaps.append("No SAP Standard evidence was retrieved.")
         gaps.append(
             "Source-selection policy: SAP Standard evidence is expected for this query."
         )
-    if "internal" in selected and not retrieval.internal:
+    if "internal" in selected and "internal" not in retrieved_layers:
         gaps.append("No internal evidence was retrieved.")
         gaps.append(
             "Source-selection policy: internal implementation evidence is expected for this query."
@@ -226,11 +228,11 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
     if not confirmed:
         gaps.append("No confirmed evidence was retrieved.")
 
-    requires_analysis = bool(
-        retrieval.sap_standard and retrieval.internal
-    ) and not conflicts
+    has_standard = "sap_standard" in retrieved_layers
+    has_internal = "internal" in retrieved_layers
+    requires_analysis = has_standard and has_internal and not conflicts
 
-    if retrieval.sap_standard and retrieval.internal:
+    if has_standard and has_internal:
         gaps.append(
             "Presence of both layers requires functional comparison; "
             "retrieval alone does not establish equivalence or difference."
