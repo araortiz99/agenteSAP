@@ -280,3 +280,53 @@ def test_runtime_inspection_uses_descriptor_contract(monkeypatch):
 
     assert catalog[0]["name"] == "read_table"
     assert catalog[0]["read_only_hint"] is True
+
+
+def test_runtime_allowlist_validation_uses_catalog_only(monkeypatch):
+    gateway = McpEvidenceGateway.__new__(McpEvidenceGateway)
+    gateway.target = type(
+        "Target",
+        (),
+        {
+            "provider": "sap_mcp_server",
+            "metadata": {"landscape": "QAS"},
+            "allowed_tools": ("read_table", "missing_tool", "unsafe_tool"),
+            "discovery_only": False,
+        },
+    )()
+
+    monkeypatch.setattr(
+        "src.sap.mcp_gateway._run_async",
+        lambda _coro: (
+            {
+                "name": "read_table",
+                "read_only_hint": True,
+                "destructive_hint": False,
+            },
+            {
+                "name": "unsafe_tool",
+                "read_only_hint": True,
+                "destructive_hint": True,
+            },
+        ),
+    )
+
+    result = gateway.validate_runtime_allowlist()
+
+    assert result == (
+        {
+            "name": "read_table",
+            "valid": True,
+            "reason": "advertised and explicitly read-only",
+        },
+        {
+            "name": "missing_tool",
+            "valid": False,
+            "reason": "not advertised",
+        },
+        {
+            "name": "unsafe_tool",
+            "valid": False,
+            "reason": "destructive_hint=true",
+        },
+    )
