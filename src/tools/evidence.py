@@ -100,8 +100,11 @@ def _explicit_conflict_records(
         if not section:
             continue
 
+        # A dedicated conflict/contradiction/discrepancy section is
+        # itself explicit documentation of unresolved conflict. Do not infer
+        # conflicts merely from terms appearing elsewhere in a document.
         lowered = section.lower()
-        marker = any(
+        marker = bool(section.strip()) or any(
             token in lowered
             for token in (
                 "contradic",
