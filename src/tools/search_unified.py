@@ -63,6 +63,7 @@ def _internal_result(result: SearchResult) -> UnifiedResult:
         knowledge_type=metadata.get("knowledge_type", "unknown"),
         knowledge_scope=metadata.get("knowledge_scope", "unknown"),
         certainty=metadata.get("certainty", "unknown"),
+        authority=metadata.get("authority", "reference"),
         provenance=(
             ("source_layer", "internal"),
             ("path", result.path),
