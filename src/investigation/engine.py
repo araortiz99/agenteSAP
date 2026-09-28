@@ -71,6 +71,7 @@ def _normalize_runtime_evidence(evidence: Any) -> InvestigationEvidence:
             str(evidence.landscape or ""),
             str(evidence.object_id or ""),
             str(evidence.observation_type),
+            _content(evidence.content),
         )
     )
     evidence_id = "EVD-" + __import__("hashlib").sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
