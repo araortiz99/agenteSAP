@@ -240,3 +240,9 @@ def test_run_agent_evidence_traceability():
     )
     assert response.plan.intent == "evidence_traceability"
     assert response.result.trace_id.startswith("TRACE-")
+
+
+def test_route_ticket_consult_extracts_ticket_id():
+    plan = route_intent("Consultá el ticket 31426 y explicame qué está confirmado")
+    assert plan.intent == "consult"
+    assert plan.ticket_id == "31426"
