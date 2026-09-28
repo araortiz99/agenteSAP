@@ -168,6 +168,8 @@ target_type: "SAP_OBJECT"
 def test_consult_requires_ticket_reference_in_structured_answer():
     class TicketAwareLLM(FakeLLM):
         def generate(self, *, system_prompt, user_prompt):
+            self.system_prompt = system_prompt
+            self.user_prompt = user_prompt
             evidence_id = __import__("re").search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
             ticket_id = __import__("re").search(r"(TKT-[A-Z0-9]+)", user_prompt).group(1)
             return (
@@ -193,6 +195,8 @@ def test_consult_requires_ticket_reference_in_structured_answer():
 def test_consult_includes_ticket_context_and_relationships():
     class TicketAwareLLM(FakeLLM):
         def generate(self, *, system_prompt, user_prompt):
+            self.system_prompt = system_prompt
+            self.user_prompt = user_prompt
             evidence_id = __import__("re").search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
             ticket_id = __import__("re").search(r"(TKT-[A-Z0-9]+)", user_prompt).group(1)
             return (
