@@ -7,6 +7,7 @@ Authentication is supplied through the GITHUB_TOKEN environment variable.
 from __future__ import annotations
 
 import base64
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import urllib.error
@@ -30,10 +31,8 @@ class GitHubClient:
         self.repo = repo
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.api_version = api_version
-        # A single agent execution performs several retrieval passes over the
-        # same ref. Keep an in-memory cache so repeated searches do not repeat
-        # identical GitHub API calls. The cache is scoped to this client
-        # instance and therefore never becomes persistent agent memory.
+        # Scoped to one client execution; this is a transport cache, not
+        # persistent agent memory.
         self._repository_cache: dict[str, dict] = {}
         self._tree_cache: dict[str, list[dict]] = {}
         self._file_cache: dict[tuple[str, str], str] = {}
@@ -62,13 +61,11 @@ class GitHubClient:
             raise GitHubAPIError(f"GitHub API unavailable: {exc.reason}") from exc
 
     def get_repository(self, ref: str = "") -> dict:
-        cache_key = ref
-        if cache_key in self._repository_cache:
-            return self._repository_cache[cache_key]
-
+        if ref in self._repository_cache:
+            return self._repository_cache[ref]
         data = self._request("")
         repository = data  # type: ignore[assignment]
-        self._repository_cache[cache_key] = repository
+        self._repository_cache[ref] = repository
         return repository
 
     def get_tree(self, ref: str = "main") -> list[dict]:
@@ -96,3 +93,39 @@ class GitHubClient:
         content = base64.b64decode(data["content"]).decode("utf-8")
         self._file_cache[cache_key] = content
         return content
+
+    def get_files(
+        self,
+        paths: list[str],
+        ref: str = "main",
+        *,
+        max_workers: int = 8,
+    ) -> dict[str, str]:
+        """Fetch repository files concurrently while preserving the client cache."""
+        if max_workers < 1:
+            raise ValueError("max_workers must be greater than zero")
+
+        unique_paths = list(dict.fromkeys(paths))
+        if not unique_paths:
+            return {}
+
+        cached = {
+            path: self._file_cache[(ref, path)]
+            for path in unique_paths
+            if (ref, path) in self._file_cache
+        }
+        pending = [path for path in unique_paths if path not in cached]
+        if not pending:
+            return cached
+
+        workers = min(max_workers, len(pending))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            fetched = executor.map(
+                lambda path: (path, self.get_file(path, ref=ref)),
+                pending,
+            )
+
+            for path, content in fetched:
+                cached[path] = content
+
+        return {path: cached[path] for path in unique_paths}
