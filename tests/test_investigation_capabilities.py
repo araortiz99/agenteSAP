@@ -188,3 +188,39 @@ def test_query_validation_accepts_matching_arguments():
 
     assert valid
     assert reason == ""
+
+
+
+def test_matching_prefers_more_specific_schema_when_operation_and_entities_tie():
+    broad = descriptor("a_broad", "Read stock material plant")
+    specific = descriptor(
+        "z_specific",
+        "Read stock material plant",
+        schema={
+            "type": "object",
+            "properties": {"material": {"type": "string"}, "plant": {"type": "string"}},
+            "required": ["material", "plant"],
+            "additionalProperties": False,
+        },
+    )
+    broad["input_schema"] = {
+        "type": "object",
+        "properties": {"material": {"type": "string"}, "plant": {"type": "string"}, "language": {"type": "string"}},
+        "required": ["material"],
+        "additionalProperties": False,
+    }
+    class Gateway:
+        def inspect_runtime_tools(self):
+            return (broad, specific)
+    capabilities = discover_capabilities(Gateway())
+    selected = match_capabilities(("current_stock",), capabilities, required_entities=("material", "plant"))
+    assert selected["current_stock"].name == "z_specific"
+
+
+def test_invalid_readonly_hint_never_matches_even_with_valid_schema():
+    unsafe = descriptor("unsafe_stock", read_only=False, destructive=False)
+    class Gateway:
+        def inspect_runtime_tools(self):
+            return (unsafe,)
+    capabilities = discover_capabilities(Gateway())
+    assert match_capabilities(("current_stock",), capabilities) == {}

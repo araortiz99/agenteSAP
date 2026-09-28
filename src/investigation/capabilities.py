@@ -114,7 +114,7 @@ def _candidate_score(capability: ToolCapability, evidence_type: str, required_en
     exact_operation = int(aliases.get(evidence_type) in capability.supported_operations)
     schema_entity_coverage = sum(_schema_supports_entity(capability.input_schema, entity) for entity in required_entities)
     required_count = len(capability.input_schema.get("required", []) if isinstance(capability.input_schema, dict) else ())
-    return (-exact_operation, -schema_entity_coverage, required_count, capability.name)
+    return (-exact_operation, -schema_entity_coverage, -required_count, capability.name)
 
 
 def match_capabilities(
