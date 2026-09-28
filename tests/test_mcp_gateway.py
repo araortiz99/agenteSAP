@@ -116,3 +116,14 @@ def test_gateway_search_resources_works_inside_active_event_loop(monkeypatch):
     result = asyncio.run(invoke())
     assert result
     assert result[0].source_layer == "mcp"
+
+
+def test_gateway_from_env_parses_quoted_args(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_MCP_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_MCP_COMMAND", "sap-devs")
+    monkeypatch.setenv("AGENTESAP_MCP_ARGS", 'mcp serve --profile "developer context"')
+
+    gateway = McpEvidenceGateway.from_env()
+
+    assert gateway is not None
+    assert gateway.config.args == ("mcp", "serve", "--profile", "developer context")

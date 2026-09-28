@@ -21,7 +21,11 @@ Intent Routing determinístico
   ↓
 Retrieval
   ├── SAP Standard
-  └── Internal / Custom
+  ├── Internal / Custom
+  └── Optional MCP evidence
+       ├── sap-devs (developer context)
+       ├── sap-mcp-server (runtime, disabled)
+       └── ABAP MCP (custom runtime, disabled)
   ↓
 Evidence Assessment
   ↓
@@ -58,6 +62,7 @@ Respuesta trazable
 | Entity / relationship resolution | ✅ |
 | Bounded multi-hop context | ✅ |
 | Knowledge governance / PR flow | ✅ |
+| Read-only MCP evidence gateway | ✅ (opt-in) |
 
 ## Reglas de seguridad funcional
 
@@ -67,6 +72,9 @@ Respuesta trazable
 - Hop no equivale a certainty.
 - El LLM no puede elevar certainty ni inventar evidencia.
 - El agente no ejecuta SAP.
+- MCP es opt-in, read-only y utiliza una allowlist explícita de herramientas.
+- `sap-devs` se trata como contexto externo/developer context; por sí solo no puede establecer una conclusión interna como confirmada.
+- Los proveedores MCP de runtime permanecen deshabilitados hasta validar explícitamente su conexión y contrato de evidencia.
 - El agente no afirma haber cambiado SAP, configuración, código o GitHub si no existe
   evidencia de esa acción.
 - La publicación de Knowledge es explícita y separada del consultor read-only.
@@ -154,7 +162,8 @@ El MVP actual prioriza:
 3. evidencia y reasoning acotado;
 4. contexto multi-hop limitado;
 5. consultoría LLM sobre evidencia acotada;
-6. governance para propuestas de Knowledge.
+6. governance para propuestas de Knowledge;
+7. MCP read-only como fuente complementaria de evidencia, sin promoción automática a Knowledge.
 
 No se considera todavía parte de esta baseline:
 
