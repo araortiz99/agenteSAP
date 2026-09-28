@@ -16,9 +16,22 @@ class FakeResult:
         self.content = content
 
 
+class FakeTool:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeToolResult:
+    def __init__(self, names: tuple[str, ...]) -> None:
+        self.tools = [FakeTool(name) for name in names]
+
+
 class FakeClient:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict]] = []
+
+    async def list_tools(self) -> FakeToolResult:
+        return FakeToolResult(("search_resources", "list_packs", "read_table"))
 
     async def call_tool(self, tool_name: str, arguments: dict) -> FakeResult:
         self.calls.append((tool_name, arguments))
