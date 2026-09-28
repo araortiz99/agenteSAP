@@ -8,7 +8,7 @@ from src.github.client import GitHubClient
 from src.tools.entity_resolution import ResolvedEntity, resolve_entities
 from src.tools.evidence import ConflictRecord, assess_evidence
 from src.tools.get_related_knowledge import Relationship, get_related_knowledge
-from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
+from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified, unified_result_key
 
 
 @dataclass(frozen=True)
@@ -120,8 +120,10 @@ def build_knowledge_context(
         mcp_gateway=mcp_gateway,
     )
 
-    evidence: dict[str, ContextEvidence] = {
-        result.path: ContextEvidence(result=result, hop=0, discovery="direct")
+    evidence: dict[tuple[str, str, str, tuple[tuple[str, str], ...]], ContextEvidence] = {
+        unified_result_key(result): ContextEvidence(
+            result=result, hop=0, discovery="direct"
+        )
         for result in direct.results
     }
 
@@ -204,9 +206,10 @@ def build_knowledge_context(
                         ref=ref,
                         mcp_gateway=mcp_gateway,
                     ):
-                        existing = evidence.get(context_evidence.result.path)
+                        result_key = unified_result_key(context_evidence.result)
+                        existing = evidence.get(result_key)
                         if existing is None or context_evidence.hop < existing.hop:
-                            evidence[context_evidence.result.path] = context_evidence
+                            evidence[result_key] = context_evidence
                         if len(evidence) >= max_evidence:
                             break
 
