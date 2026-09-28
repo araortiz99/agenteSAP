@@ -110,4 +110,24 @@ def test_runtime_and_knowledge_are_not_merged():
         discovery="direct",
     )
     payload = _runtime_payload(_context(evidence=(knowledge,)))
-    assert payload["status"] == "not_observed"
+    assert payload["status"] == "disabled"
+
+
+def test_object_identity_does_not_resolve_content_only_candidate():
+    entity = FakeEntity(
+        "ZMM_IMX_0004", "SAP_OBJECT", "knowledge/objects/zmm.md",
+        0.4, "content", "confirmed", "internal",
+    )
+    identity = _select_identity("inventario", _context((entity,)))
+    assert identity.status == "unresolved"
+    assert identity.object_id == "inventario"
+    assert identity.candidates[0]["entity_id"] == "ZMM_IMX_0004"
+
+
+def test_runtime_enabled_without_observation_is_explicit(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "read_object")
+    payload = _runtime_payload(_context())
+    assert payload["status"] == "enabled_not_verified"
+    assert payload["landscape"] == "QAS"
+    assert payload["access"] == "read-only"
