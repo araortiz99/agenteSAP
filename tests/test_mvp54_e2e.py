@@ -195,14 +195,16 @@ def _direct_results(client, query, max_results, ref):
 
 def _with_retrieval_patch():
     import src.agent.consultant as module
-    original = module.search_unified
+    import src.tools.knowledge_context as context_module
+    original = (module.search_unified, context_module.search_unified)
     module.search_unified = _direct_results
-    return module, original
+    context_module.search_unified = _direct_results
+    return (module, context_module), original
 
 
 def test_mvp54_canonical_31426_end_to_end():
     client = Canonical31426Client()
-    module, original = _with_retrieval_patch()
+    (module, context_module), original = _with_retrieval_patch()
     try:
         llm = E2E31426LLM()
         request = (
@@ -236,7 +238,7 @@ def test_mvp54_canonical_31426_end_to_end():
         assert "K1" in llm.user_prompt
         assert "K4" in llm.user_prompt
     finally:
-        module.search_unified = original
+        module.search_unified, context_module.search_unified = original
 
 
 def test_mvp54_rejects_missing_ticket_reference():
