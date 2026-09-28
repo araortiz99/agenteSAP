@@ -41,6 +41,42 @@ certainty: partial
 # Custom inventory process
 The customer implementation uses ZMM_IM_0002 for a local inventory process.
 """,
+            "knowledge/entities/purchase-order.md": """---
+process_id: PURCHASE_ORDER
+knowledge_type: standard
+knowledge_scope: global
+certainty: confirmed
+---
+# Purchase Order
+Standard purchase order entity.
+""",
+            "knowledge/entities/goods-receipt.md": """---
+process_id: GOODS_RECEIPT
+knowledge_type: standard
+knowledge_scope: global
+certainty: confirmed
+---
+# Goods Receipt
+Standard goods receipt entity.
+""",
+            "knowledge/entities/material-document.md": """---
+object_id: MATERIAL_DOCUMENT
+knowledge_type: standard
+knowledge_scope: global
+certainty: confirmed
+---
+# Material Document
+Standard material document entity.
+""",
+            "knowledge/entities/accounting-document.md": """---
+object_id: ACCOUNTING_DOCUMENT
+knowledge_type: standard
+knowledge_scope: global
+certainty: confirmed
+---
+# Accounting Document
+Standard accounting document entity.
+""",
             "knowledge/relationships/po-gr.md": """---
 relationship_id: REL-MM-001
 source_id: PURCHASE_ORDER
