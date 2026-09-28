@@ -433,3 +433,113 @@ El reporte también debe conservar:
 La trazabilidad no convierte una inferencia en conocimiento confirmado.
 
 Un futuro LLM puede utilizar el reporte como contexto estructurado, pero no debe eliminar procedencia ni cambiar certainty sin una etapa explícita de validación.
+
+==================================================
+19. KNOWLEDGE INTELLIGENCE — MVP 5
+==================================================
+
+MVP 5 agrega una capa de inteligencia estructural sobre el retrieval existente.
+
+Flujo:
+
+QUERY
+↓
+ENTITY RESOLUTION
+↓
+DIRECT RETRIEVAL
+↓
+DOCUMENTED RELATIONSHIPS
+↓
+BOUNDED MULTI-HOP
+↓
+KNOWLEDGE CONTEXT
+↓
+EVIDENCE / REASONING / TRACEABILITY
+↓
+LLM CONSULTANT
+
+--------------------------------------------------
+ENTITY RESOLUTION
+--------------------------------------------------
+
+Solo son entidades canónicas aquellas respaldadas por metadata del repositorio.
+
+Tipos iniciales:
+
+SAP_OBJECT
+PROCESS
+BUSINESS_RULE
+TICKET
+SOURCE
+RELATIONSHIP
+
+Una mención textual no es suficiente para crear una entidad canónica.
+
+--------------------------------------------------
+RELATIONSHIPS
+--------------------------------------------------
+
+Las relaciones deben existir explícitamente bajo:
+
+knowledge/relationships/
+
+Nunca crear relaciones por coocurrencia.
+
+--------------------------------------------------
+MULTI-HOP
+--------------------------------------------------
+
+El traversal está acotado.
+
+Default:
+
+max_hops = 2
+max_entities = 8
+max_relationships = 16
+max_evidence = 12
+
+El hop indica cómo se descubrió una evidencia o relación.
+
+El hop NO modifica:
+
+- certainty;
+- source_layer;
+- source_id;
+- provenance.
+
+Una relación explícita puede estar confirmada como relación sin convertir automáticamente al objeto relacionado en conocimiento confirmado.
+
+--------------------------------------------------
+KNOWLEDGE CONTEXT
+--------------------------------------------------
+
+El contexto estructurado conserva:
+
+- entities;
+- relationships;
+- evidence;
+- gaps;
+- conflicts.
+
+Cada evidencia conserva path, source_layer, source_id, knowledge_type, knowledge_scope y certainty.
+
+El LLM recibe este contexto como información auxiliar y no puede modificar su provenance.
+
+--------------------------------------------------
+REGLA
+--------------------------------------------------
+
+RESOLVE
+→ RETRIEVE
+→ RELATE
+→ TRAVERSE
+→ BUILD CONTEXT
+→ PRESERVE EVIDENCE
+→ CONSULT
+
+Nunca:
+
+INFERIR RELACIONES
+→ ELEVAR CERTAINTY
+→ INVENTAR CONOCIMIENTO
+
