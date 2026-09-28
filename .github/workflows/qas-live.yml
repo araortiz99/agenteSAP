@@ -2,9 +2,6 @@ name: QAS Live Smoke
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/qas-live-investigation
 
 permissions:
   contents: read
