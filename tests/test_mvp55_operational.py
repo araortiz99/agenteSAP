@@ -50,6 +50,8 @@ def test_mvp55_router_keeps_explicit_ticket_in_plan(monkeypatch):
 
     import src.agent.router as router
 
+    sentinel_gateway = object()
+    monkeypatch.setattr(router, "_mcp_gateway", lambda: sentinel_gateway)
     monkeypatch.setattr(router, "consult", fake_consult)
     response = run_agent(
         object(),
@@ -62,4 +64,4 @@ def test_mvp55_router_keeps_explicit_ticket_in_plan(monkeypatch):
     assert response.plan.ticket_id == "99999"
     assert captured["ticket_id"] == "99999"
     assert captured["max_results"] == 12
-    assert captured["mcp_gateway"] is not None
+    assert captured["mcp_gateway"] is sentinel_gateway
