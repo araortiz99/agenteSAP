@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import json
 import threading
 import urllib.request
+import urllib.error
 
 from src.app.server import AgentRequestHandler, ThreadingHTTPServer, _response_payload
 
@@ -34,6 +35,7 @@ def test_local_app_http_health_and_consult(monkeypatch):
             assert status["sap_writes_exposed"] is False
             assert status["qas_runtime_enabled"] is False
             assert "openai_api_key_configured" in status
+            assert "github_token_configured" in status
 
         payload = json.dumps({"request": "test"}).encode()
         request = urllib.request.Request(
@@ -44,6 +46,21 @@ def test_local_app_http_health_and_consult(monkeypatch):
         )
         with urllib.request.urlopen(request, timeout=2) as response:
             assert json.loads(response.read())["result"] == "ok"
+
+        oversized_results = json.dumps({"request": "test", "max_results": 21}).encode()
+        request = urllib.request.Request(
+            url + "/api/consult",
+            data=oversized_results,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            urllib.request.urlopen(request, timeout=2)
+        except urllib.error.HTTPError as exc:
+            assert exc.code == 400
+            assert "max_results must be between 1 and 20" in exc.read().decode()
+        else:
+            raise AssertionError("max_results upper bound was not enforced")
     finally:
         httpd.shutdown()
         thread.join(timeout=2)
