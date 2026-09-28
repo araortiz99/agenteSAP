@@ -199,6 +199,58 @@ class McpEvidenceGateway:
                 if item.get("name") in self.target.allowed_tools
             )
 
+    def validate_runtime_allowlist(self) -> tuple[dict[str, object], ...]:
+        """Validate the configured QAS allowlist using only MCP tools/list."""
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("runtime allowlist validation requires sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("runtime allowlist validation is restricted to QAS")
+        if self.target.discovery_only:
+            raise PermissionError(
+                "runtime allowlist validation requires an explicit allowlist, not discovery_only"
+            )
+        if not self.target.allowed_tools:
+            raise PermissionError(
+                "runtime allowlist validation requires at least one configured tool"
+            )
+
+        catalog = _run_async(self._inspect_runtime_tools())
+        by_name = {str(item["name"]): item for item in catalog}
+        results = []
+        for tool_name in self.target.allowed_tools:
+            item = by_name.get(tool_name)
+            if item is None:
+                results.append(
+                    {"name": tool_name, "valid": False, "reason": "not advertised"}
+                )
+                continue
+            if item.get("read_only_hint") is not True:
+                results.append(
+                    {
+                        "name": tool_name,
+                        "valid": False,
+                        "reason": "requires read_only_hint=true",
+                    }
+                )
+                continue
+            if item.get("destructive_hint") is True:
+                results.append(
+                    {
+                        "name": tool_name,
+                        "valid": False,
+                        "reason": "destructive_hint=true",
+                    }
+                )
+                continue
+            results.append(
+                {
+                    "name": tool_name,
+                    "valid": True,
+                    "reason": "advertised and explicitly read-only",
+                }
+            )
+        return tuple(results)
+
     def read_runtime(
         self,
         tool_name: str,
