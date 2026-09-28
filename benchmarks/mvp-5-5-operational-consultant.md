@@ -84,3 +84,18 @@ Debe conservar ZMM_IMX_0004, SNC K1, K1/K4, relaciones, partial/candidate, confl
 ## Criterio de cierre
 
 MVP 5.5 se cierra cuando los CLI Gates, E2E Gate y Regression Gate estén verdes.
+
+
+## Performance hardening — 5.5
+
+La primera ejecución E2E real del caso 31426 mostró que el flujo funcional es correcto, pero el tiempo de respuesta puede ser elevado por múltiples lecturas repetidas del repositorio GitHub.
+
+Se incorpora una optimización de transporte sin alterar la semántica del agente:
+
+- caché en memoria por `ref + path` durante una ejecución;
+- caché del árbol por `ref`;
+- lectura concurrente acotada de archivos del repositorio;
+- deduplicación de paths antes de solicitar contenido;
+- sin memoria persistente ni cambios en provenance.
+
+La optimización debe medirse nuevamente sobre el caso canónico antes de establecer un objetivo de tiempo de respuesta.
