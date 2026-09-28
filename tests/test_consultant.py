@@ -46,7 +46,22 @@ class FakeLLM:
         self.user_prompt = user_prompt
         import re
         evidence_id = re.search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
-        return f"Respuesta basada en [{evidence_id}]."
+        return (
+            "## Resumen\n"
+            "Respuesta basada en [" + evidence_id + "].\n\n"
+            "## Qué está confirmado\n"
+            "Información confirmada [" + evidence_id + "].\n\n"
+            "## Qué corresponde a nuestra implementación\n"
+            "La evidencia interna correspondiente [" + evidence_id + "].\n\n"
+            "## Qué no está confirmado\n"
+            "No hay información adicional confirmada.\n\n"
+            "## Evidencias\n"
+            "[" + evidence_id + "]\n\n"
+            "## Ticket\n"
+            "No se suministró contexto de ticket.\n\n"
+            "## Próximos pasos\n"
+            "Validar la información pendiente según la evidencia."
+        )
 
 
 def test_consult_builds_traceable_context_and_calls_llm():
@@ -90,10 +105,22 @@ def test_build_context_contains_gaps_and_conflicts():
     assert "Conflicts" in context
 
 
+class InvalidStructureLLM(FakeLLM):
+    def generate(self, *, system_prompt, user_prompt):
+        return "Respuesta sin estructura requerida."
+
 class HallucinatingLLM(FakeLLM):
     def generate(self, *, system_prompt, user_prompt):
         return "Respuesta con [EVD-NOEXISTE]."
 
+
+def test_consult_rejects_invalid_answer_structure():
+    import pytest
+
+    from src.agent.consultant import ConsultationFormatError
+
+    with pytest.raises(ConsultationFormatError, match="missing required section"):
+        consult(FakeClient(), "Consultá sobre material master", InvalidStructureLLM())
 
 def test_consult_rejects_unknown_evidence_citation():
     import pytest
