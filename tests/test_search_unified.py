@@ -105,3 +105,4 @@ def test_evidence_does_not_count_truncated_source_as_retrieved():
     )
     assessment = assess_evidence(retrieval)
     assert "sap_standard" not in {item.source_layer for item in assessment.items}
+    assert "No SAP Standard evidence was retrieved." in assessment.gaps
