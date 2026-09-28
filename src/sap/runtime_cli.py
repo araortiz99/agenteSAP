@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 from src.sap.mcp_gateway import McpEvidenceGateway
 from src.sap.qas_runtime import SapQasRuntimeConfig
@@ -49,6 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     return parser
 
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
@@ -74,19 +76,33 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "readiness-qas":
         try:
             config = SapQasRuntimeConfig.from_env()
-            config_error = None
         except ValueError as exc:
-            config = SapQasRuntimeConfig(
-                command="",
-                args=(),
-                allowed_tools=(),
-                landscape="",
-                scope="",
-                system=None,
-                discovery_only=False,
-                enabled=True,
+            report = {
+                "enabled": os.getenv("AGENTESAP_SAP_RUNTIME_ENABLED", "false").lower()
+                in {"1", "true", "yes", "on"},
+                "landscape": os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS"),
+                "scope": os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
+                "discovery_only": os.getenv(
+                    "AGENTESAP_SAP_RUNTIME_DISCOVERY_ONLY", "false"
+                ).lower()
+                in {"1", "true", "yes", "on"},
+                "allowlist_configured": bool(
+                    os.getenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "").strip()
+                ),
+                "command_configured": bool(
+                    os.getenv("AGENTESAP_SAP_RUNTIME_COMMAND", "sap-mcp-server").strip()
+                ),
+                "runtime_ready": False,
+                "reason": str(exc),
+            }
+            print(
+                json.dumps(
+                    report,
+                    ensure_ascii=False,
+                    indent=2 if args.pretty else None,
+                )
             )
-            config_error = str(exc)
+            return 2
 
         report = {
             "enabled": config.enabled,
@@ -96,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
             "allowlist_configured": bool(config.allowed_tools),
             "command_configured": bool(config.command),
             "runtime_ready": False,
-            "reason": config_error or "live MCP catalog not verified",
+            "reason": "live MCP catalog not verified",
         }
         if config.landscape != "QAS":
             report["reason"] = "landscape must be QAS"
@@ -108,7 +124,13 @@ def main(argv: list[str] | None = None) -> int:
             report["reason"] = "explicit allowlist or discovery_only is required"
         elif not config.command:
             report["reason"] = "MCP command is not configured"
-        print(json.dumps(report, ensure_ascii=False, indent=2 if args.pretty else None))
+        print(
+            json.dumps(
+                report,
+                ensure_ascii=False,
+                indent=2 if args.pretty else None,
+            )
+        )
         return 0 if report["runtime_ready"] else 2
 
     if args.command == "discover-qas":
