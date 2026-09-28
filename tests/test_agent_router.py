@@ -464,3 +464,53 @@ def test_route_runtime_configuration_without_explicit_question_to_consultant():
 def test_route_runtime_question_is_not_captured_by_standard_search():
     plan = route_intent("¿Qué tiene configurado actualmente ZMM_IMX_0004 según SAP Standard?")
     assert plan.intent == "consult"
+
+
+def test_route_sap_object_analysis_without_ticket_to_consultant():
+    plan = route_intent(
+        "Analizá ZMM_IMX_0004 considerando evidencia SAP Standard, conocimiento interno, relaciones y conflictos."
+    )
+    assert plan.intent == "consult"
+    assert plan.ticket_id is None
+    assert plan.capabilities == (
+        "search_unified",
+        "assess_evidence",
+        "reason_from_evidence",
+        "build_traceability",
+        "consult_llm",
+    )
+
+
+def test_route_sap_object_consultation_without_ticket_to_consultant():
+    plan = route_intent("Explicame qué hace ZMM_IMX_0004")
+    assert plan.intent == "consult"
+    assert plan.ticket_id is None
+    assert "consult_llm" in plan.capabilities
+
+
+def test_route_sap_object_relationship_request_without_ticket_to_consultant():
+    plan = route_intent("Mostrame las relaciones de ZMM_IMX_0004")
+    assert plan.intent == "consult"
+    assert plan.ticket_id is None
+    assert "build_traceability" in plan.capabilities
+
+
+def test_run_agent_sap_object_analysis_without_ticket_uses_consultant():
+    class ObjectLLM(FakeLLM):
+        pass
+
+    response = run_agent(
+        AgentFakeGitHubClient(),
+        "Analizá ZMM_IMX_0004 considerando evidencia SAP Standard, conocimiento interno, relaciones y conflictos.",
+        llm=ObjectLLM(),
+    )
+    assert response.plan.intent == "consult"
+    assert response.plan.ticket_id is None
+    from src.agent.consultant import ConsultationResult
+    assert isinstance(response.result, ConsultationResult)
+    assert response.result.answer.startswith("## Resumen")
+
+
+def test_route_still_rejects_analysis_without_ticket_or_sap_object():
+    with pytest.raises(IntentRoutingError):
+        route_intent("Analizá este incidente")
