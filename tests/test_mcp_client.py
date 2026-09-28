@@ -142,3 +142,25 @@ def test_call_read_tool_uses_empty_arguments_when_omitted():
     asyncio.run(client.call_read_tool("list_packs"))
 
     assert fake_client.calls == [("list_packs", {})]
+
+
+
+def test_call_read_tool_classifies_runtime_observation_as_partial():
+    target = build_target(
+        "sap_mcp_server",
+        command="sap-mcp-server",
+        args=(),
+        allowed_tools=("read_table",),
+        metadata={"system": "S4QAS", "landscape": "QAS"},
+    )
+    client = SapMcpClient(target)
+    client._client = FakeClient()
+
+    evidence = asyncio.run(
+        client.call_read_tool("read_table", {"table": "MARA"})
+    )
+
+    assert evidence.certainty == "partial"
+    assert evidence.observation_type == "runtime_observation"
+    assert evidence.system == "S4QAS"
+    assert evidence.landscape == "QAS"

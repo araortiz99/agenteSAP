@@ -4,7 +4,7 @@ Agente consultivo para conocimiento y documentación funcional SAP.
 
 ## Estado actual
 
-**Baseline funcional avanzada — rama `feature/agent-mvp-search`.**
+**Baseline funcional avanzada — `main`.**
 
 El agente es read-only respecto de SAP y, por defecto, el consultor no persiste
 cambios en Knowledge. La persistencia controlada existe como una capability separada
@@ -111,7 +111,7 @@ cd agenteSAP
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-$env:GITHUB_REF = "feature/agent-mvp-search"
+$env:GITHUB_REF = "main"
 ```
 
 Consulta determinística:
@@ -173,12 +173,17 @@ No se considera todavía parte de esta baseline:
 - memoria conversacional persistente;
 - conexión directa a un sistema SAP productivo.
 
-## Próximo MVP
+## Próximo roadmap
 
-Antes de introducir embeddings o una vector DB, la siguiente etapa recomendada es
-**MVP 7 — SAP MM Knowledge Foundation**: ampliar conocimiento funcional curado de MM,
-objetos, procesos, reglas, tablas, movimientos, integración MM-FI e incidentes
-sanitizados, manteniendo la arquitectura determinística y trazable.
+La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
+
+1. **Cerrar hardening MCP**: contratos, clasificación de evidencia y pruebas de integración opt-in.
+2. **Source / Evidence Selection**: decidir qué capa puede responder cada tipo de afirmación y evitar que una fuente externa se use como confirmación interna.
+3. **MVP 7 — SAP MM Knowledge Foundation**: ampliar conocimiento funcional curado de MM, objetos, procesos, reglas, tablas, movimientos, integración MM-FI e incidentes sanitizados.
+4. **SAP runtime read-only**: habilitar progresivamente `sap-mcp-server` con allowlists y contratos de provenance por sistema/landscape/objeto.
+5. **ABAP custom MCP**: incorporar capacidades específicas sólo cuando exista un caso funcional y un contrato de lectura claramente definido.
+
+Embeddings/vector DB quedan fuera de esta etapa hasta que la cobertura y calidad del conocimiento estructurado justifiquen su incorporación.
 
 
 ## Consultant Regression Benchmark
