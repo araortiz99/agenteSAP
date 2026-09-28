@@ -26,12 +26,12 @@ def test_runtime_preflight_reports_missing_allowlist(monkeypatch):
 
     # Replace construction for this test so the preflight consumes the controlled
     # catalog without opening a real MCP process.
-    original = McpEvidenceGateway.from_qas_runtime_env
-    McpEvidenceGateway.from_qas_runtime_env = classmethod(lambda cls: gateway)
-    try:
-        result = run_preflight()
-    finally:
-        McpEvidenceGateway.from_qas_runtime_env = original
+    monkeypatch.setattr(
+        McpEvidenceGateway,
+        "from_qas_runtime_env",
+        classmethod(lambda cls: gateway),
+    )
+    result = run_preflight()
 
     assert result["ready"] is False
     assert result["missing_allowlisted_tools"] == ["missing_tool"]
