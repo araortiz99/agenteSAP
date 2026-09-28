@@ -214,6 +214,20 @@ El contrato de AgenteSAP agrega una barrera adicional: aunque exista una conexi�
 
 Ejemplo no secreto: config/sap-mcp-qas.example.env.
 
+## QAS Runtime Preflight
+
+Antes de ejecutar una lectura SAP, AgenteSAP puede consultar únicamente el catálogo MCP mediante `tools/list`. El preflight no ejecuta herramientas SAP.
+
+Con runtime habilitado, verifica QAS, `mcp_readonly`, la allowlist explícita y qué herramientas allowlisted están realmente anunciadas por el servidor.
+
+Ejecutar localmente:
+
+```powershell
+python -m src.sap.runtime_preflight
+```
+
+La herramienta concreta debe verificarse contra el catálogo real antes de habilitar una lectura runtime.
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
