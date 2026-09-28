@@ -44,7 +44,7 @@ def test_github_client_cache_is_scoped_by_ref():
 
     assert calls == [
         "git/trees/main?recursive=1",
-        "git/trees/feature/agent-mvp-search?recursive=1",
+        "git/trees/feature%2Fagent-mvp-search?recursive=1",
     ]
 
 
