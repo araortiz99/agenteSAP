@@ -46,3 +46,9 @@ Expected: no fabricated entity is returned.
 ## Closure criteria
 
 All canonical and negative cases must pass. MVP 4.2 regression tests must remain green.
+
+
+## Ejecutabilidad
+
+Los casos KI-N01 a KI-N04 se materializan en `tests/test_knowledge_intelligence.py`.
+El benchmark de MVP 5 debe considerarse válido únicamente si la suite local y el CI coinciden.
