@@ -39,7 +39,11 @@ def decompose_query(query: str, *, max_steps: int = 4) -> QueryPlan:
     configuration = any(x in lowered for x in ("configuración", "configurado", "account determination", "determinación de cuentas", "customizing"))
     standard_custom = any(x in lowered for x in ("standard", "estándar", "custom", " z", "implementación", "desarrollo"))
 
-    if comparison:
+    if standard_custom:
+        intent = "standard_vs_custom"
+        _add(parts, f"SAP Standard relacionado con: {original}")
+        _add(parts, f"implementación interna relacionada con: {original}")
+    elif comparison:
         intent = "comparison"
         _add(parts, f"SAP Standard: {original}")
         _add(parts, f"implementación interna/custom: {original}")
