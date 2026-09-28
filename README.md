@@ -173,6 +173,20 @@ No se considera todavía parte de esta baseline:
 - memoria conversacional persistente;
 - conexión directa a un sistema SAP productivo.
 
+## Source / Evidence Selection
+
+Antes de sintetizar una conclusión, AgenteSAP aplica una política determinística para
+identificar qué capa de evidencia es pertinente a la pregunta:
+
+- consultas genéricas SAP → SAP Standard + Internal;
+- comparación Standard/Custom → ambas capas;
+- preguntas sobre implementación → Internal;
+- preguntas sobre estado/configuración actual → Runtime;
+- la selección de una fuente es una necesidad de evidencia, no evidencia por sí misma.
+
+Si la capa esperada no está disponible, se registra como gap. La ausencia de una
+fuente no se interpreta como prueba de que el dato no exista.
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
