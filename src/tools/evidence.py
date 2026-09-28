@@ -16,6 +16,10 @@ CERTAINTY_WEIGHT = {
     "inferred": 0.3,
     "not_confirmed": 0.0,
     "unknown": 0.0,
+    # External provider provenance is not equivalent to repository-confirmed
+    # knowledge. It receives a bounded weight but cannot support a confirmed
+    # conclusion unless corroborated by stronger evidence.
+    "external_source": 0.4,
 }
 
 SOURCE_PRIORITY = {
