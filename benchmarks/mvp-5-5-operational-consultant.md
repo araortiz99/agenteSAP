@@ -98,4 +98,20 @@ Se incorpora una optimización de transporte sin alterar la semántica del agent
 - deduplicación de paths antes de solicitar contenido;
 - sin memoria persistente ni cambios en provenance.
 
-La optimización debe medirse nuevamente sobre el caso canónico antes de establecer un objetivo de tiempo de respuesta.
+La optimización fue validada nuevamente sobre el caso canónico 31426. El tiempo observado por ejecución local bajó de aproximadamente 5 minutos a aproximadamente 20 segundos, sin cambios funcionales en la respuesta.
+
+
+## Resultado de performance
+
+Caso: ticket 31426, consulta canónica.
+
+- baseline observado: ~5 minutos;
+- resultado después del hardening: ~20 segundos;
+- reducción observada: aproximadamente 93 % del tiempo total;
+- validación funcional: respuesta conservó TKT-*, EVD-*, partial/candidate, conflicto K1/K4 y separación Standard/Custom.
+
+La medición corresponde a una ejecución local y no constituye un SLA productivo.
+
+## Estado de cierre
+
+**CLOSED / APPROVED** — 5.5 queda cerrado funcional y operacionalmente.
