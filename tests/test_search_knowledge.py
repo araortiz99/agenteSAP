@@ -109,3 +109,10 @@ def test_search_filters_prose_stopwords_from_query_terms():
     assert results[0].match_type == "identifier"
     assert "31426" in results[0].matched_terms
     assert all(term not in {"el", "y", "qué", "está", "separá"} for term in results[0].matched_terms)
+\n\ndef test_search_uses_token_boundaries_for_internal_terms():
+    client = FakeGitHubClient(FIXTURES)
+    client.files["knowledge/test-fixtures/unrelated.md"] = "# Unrelated\nThe word ticketing is not a ticket."
+
+    results = search_knowledge(client, "ticket")
+
+    assert all(result.path != "knowledge/test-fixtures/unrelated.md" for result in results)
