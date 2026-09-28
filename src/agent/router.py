@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass
 
 from src.github.client import GitHubClient
+from src.agent.consultant import ConsultationResult, consult
+from src.llm.client import LLMClient
 from src.tools.analyze import AnalysisResult, analyze
 from src.tools.generate_document import GeneratedDocument, generate_document
 from src.tools.get_ticket import TicketContext, get_ticket
@@ -59,6 +61,19 @@ def route_intent(request: str) -> AgentPlan:
 
     lowered = text.lower()
     ticket_id = _extract_ticket_id(text)
+
+    if any(phrase in lowered for phrase in ("consultá", "consulta", "consultar", "explicame", "explicá", "explica")):
+        return AgentPlan(
+            intent="consult",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+                "build_traceability",
+                "consult_llm",
+            ),
+        )
 
     if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
         if not ticket_id:
@@ -200,11 +215,16 @@ def run_agent(
     ref: str = "main",
     date: str = "",
     author: str = "",
+    llm: LLMClient | None = None,
 ) -> AgentResponse:
     """Route and execute the minimum safe capability chain for a request."""
     plan = route_intent(request)
 
-    if plan.intent == "analyze_ticket":
+    if plan.intent == "consult":
+        if llm is None:
+            raise IntentRoutingError("LLM client is required for consult intent.")
+        result = consult(client, request, llm, ref=ref)
+    elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
     elif plan.intent == "get_ticket":
         result = get_ticket(client, plan.ticket_id or "", ref=ref)
