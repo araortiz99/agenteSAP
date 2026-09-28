@@ -23,7 +23,7 @@ knowledge_scope: organization
 certainty: confirmed
 ---
 # Internal
-The customer has a custom inventory process.
+The customer has a custom inventory process involving MARA.
 """,
         }
 
