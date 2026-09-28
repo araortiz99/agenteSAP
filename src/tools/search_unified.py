@@ -62,6 +62,11 @@ def _internal_result(result: SearchResult) -> UnifiedResult:
         knowledge_type=metadata.get("knowledge_type", "unknown"),
         knowledge_scope=metadata.get("knowledge_scope", "unknown"),
         certainty=metadata.get("certainty", "unknown"),
+        provenance=(
+            ("source_layer", "internal"),
+            ("path", result.path),
+            ("source_id", _evidence_source_id(metadata) or ""),
+        ),
     )
 
 
@@ -78,6 +83,11 @@ def _standard_result(result: SAPStandardResult) -> UnifiedResult:
         knowledge_type=metadata.get("knowledge_type", "standard"),
         knowledge_scope=metadata.get("knowledge_scope", "global"),
         certainty=metadata.get("certainty", "unknown"),
+        provenance=(
+            ("source_layer", "sap_standard"),
+            ("path", result.path),
+            ("source_id", _evidence_source_id(metadata) or ""),
+        ),
     )
 
 
