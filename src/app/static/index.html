@@ -165,11 +165,27 @@ function renderWorkbench(data){
     ["LLM",diagnostics.llm_used?"enabled":"disabled"],
     ["Total",diagnostics.total_latency_ms!=null?diagnostics.total_latency_ms+" ms":"—"]
   ];
-  $("diagnostics").innerHTML=labels.map(([k,v])=>"<span><b>"+k+"</b>: "+String(v)+"</span>").join("");
-  $("diagnosticsState").innerHTML=
-    "<span class='badge'>MODE: READ ONLY</span> "+
-    "<span class='badge "+(conflicts.length?"conflict":"")+"'>CONFLICTS: "+conflicts.length+"</span> "+
-    "<span class='badge "+(gaps.length?"gap":"")+"'>GAPS: "+gaps.length+"</span>";
+  const diagnosticsNode=$("diagnostics");
+  diagnosticsNode.replaceChildren();
+  labels.forEach(([k,v])=>{
+    const cell=document.createElement("span");
+    const key=document.createElement("b");
+    key.textContent=k;
+    cell.append(key,document.createTextNode(": "+String(v)));
+    diagnosticsNode.appendChild(cell);
+  });
+  const state=$("diagnosticsState");
+  state.replaceChildren();
+  const mode=document.createElement("span");
+  mode.className="badge";
+  mode.textContent="MODE: READ ONLY";
+  const conflict=document.createElement("span");
+  conflict.className="badge"+(conflicts.length?" conflict":"");
+  conflict.textContent="CONFLICTS: "+conflicts.length;
+  const gap=document.createElement("span");
+  gap.className="badge"+(gaps.length?" gap":"");
+  gap.textContent="GAPS: "+gaps.length;
+  state.append(mode,document.createTextNode(" "),conflict,document.createTextNode(" "),gap);
   $("runtimeState").textContent=JSON.stringify(runtime,null,2);
 }
 async function consult(){
