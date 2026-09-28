@@ -109,3 +109,4 @@ def test_render_preserves_provenance_and_hop():
     assert "source_id:" in rendered
     assert "certainty:" in rendered
     assert "hop=" in rendered
+    assert "### Conflicts" in rendered
