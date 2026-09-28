@@ -115,7 +115,7 @@ def _explicit_conflict_records(
         if not marker:
             continue
 
-        scenarios = tuple(dict.fromkeys(re.findall(r"\bK\d+\b", section, re.IGNORECASE)))
+        scenarios = tuple(dict.fromkeys(re.findall(r"\bK\d+\b", result.content, re.IGNORECASE)))
         key = (result.source_id, "|".join(sorted(s.upper() for s in scenarios)))
         candidates[key].append(result.path)
 
