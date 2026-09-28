@@ -82,9 +82,17 @@ El contrato `WorkbenchAnalysisResponse.retrieval` expone únicamente metadata de
 
 ### Fase 4 — Knowledge Intelligence
 
-- relationships;
-- graph;
-- multi-hop explorer.
+El backend ya dispone de `KnowledgeContext` con resolución determinística de entidades, relaciones explícitas y traversal acotado. La Workbench expone ese resultado sin inferir relaciones nuevas.
+
+- **Entities:** entidades canónicas resueltas con score, match type, certainty y source layer.
+- **Graph:** relaciones explícitamente documentadas con origen, destino, tipo, certainty, status y path.
+- **Multi-hop explorer:** filtra por hop y muestra el límite `max_hops` entregado por backend.
+- gaps de Knowledge Intelligence se muestran como datos del backend.
+- no se fabrican edges cuando no existe una relación documentada.
+
+El contrato `WorkbenchAnalysisResponse.knowledge_intelligence` expone metadata de entidades, relaciones, evidencia derivada, gaps, conflictos y `max_hops`. La UI no ejecuta traversal ni retrieval adicional.
+
+El backend conserva la gobernanza existente: una relación explícita puede confirmar la existencia de la relación, pero no eleva la certainty de la entidad o de la evidencia relacionada.
 
 ### Fase 5 — SAP Workspaces
 
