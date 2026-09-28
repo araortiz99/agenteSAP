@@ -67,17 +67,12 @@ jobs:
           from src.sap.mcp_registry import build_target
 
           async def main():
-              allowed = tuple(
-                  x.strip()
-                  for x in os.environ["AGENTESAP_SAP_RUNTIME_READ_TOOLS"].split(",")
-                  if x.strip()
-              )
               target = build_target(
                   "sap_mcp_server",
                   command=os.environ["AGENTESAP_SAP_MCP_COMMAND"],
                   args=(),
-                  allowed_tools=allowed,
-                  metadata={"landscape": "QAS"},
+                  allowed_tools=(),
+                  metadata={"landscape": "QAS", "discovery_only": True},
               )
               async with SapMcpClient(target) as client:
                   print(f"server={client.server_info().name} version={client.server_info().version}")
