@@ -209,3 +209,23 @@ Hallazgo de implementación:
 Benchmark: benchmarks/mvp-5-4-end-to-end.md
 Test: tests/test_mvp54_e2e.py
 CI: Python Tests — 89 passed.
+
+
+## MVP 5.5 — Operational Knowledge Consultant: CLOSED / APPROVED
+
+MVP 5.5 convierte el Knowledge Consultant validado en MVP 5.4 en una interfaz CLI operativa.
+
+Validado:
+- consulta natural;
+- ticket explícito con prioridad sobre extracción automática;
+- repository ref configurable;
+- max_results configurable;
+- salida humana y JSON;
+- plan de ejecución serializable;
+- validación de parámetros;
+- preservación de los gates de MVP 4.2 y 5.4;
+- comportamiento read-only.
+
+Benchmark: `benchmarks/mvp-5-5-operational-consultant.md`
+Tests: `tests/test_mvp55_operational.py`
+CI: Python Tests — 93 passed.
