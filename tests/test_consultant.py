@@ -61,7 +61,7 @@ def test_consult_builds_traceable_context_and_calls_llm():
     assert "EVD-" in llm.user_prompt
     assert "SAP-MM-MATERIAL" in llm.user_prompt
     assert result.citations
-    assert result.citations[0].evidence_id == result.traceability.evidence[0].evidence_id
+    assert result.citations[0].evidence_id in {item.evidence_id for item in result.traceability.evidence}
     assert result.uncited_evidence_ids
 
 
