@@ -5,15 +5,25 @@ from src.sap.mcp_registry import build_target, get_provider
 
 
 def test_sap_devs_profile_is_read_only_and_explicit():
-    target = build_target(
-        "sap_devs",
-        command="sap-devs",
-        args=("mcp", "serve"),
-    )
+    target = build_target("sap_devs")
 
     assert target.read_only is True
+    assert target.transport == "stdio"
+    assert target.command == "sap-devs"
+    assert target.args == ("mcp", "serve")
     assert target.observation_type == "developer_context"
     assert "search_resources" in target.allowed_tools
+
+
+def test_sap_devs_explicit_command_and_args_can_override_defaults():
+    target = build_target(
+        "sap_devs",
+        command="custom-sap-devs",
+        args=("mcp", "serve", "--profile", "test"),
+    )
+
+    assert target.command == "custom-sap-devs"
+    assert target.args == ("mcp", "serve", "--profile", "test")
 
 
 def test_runtime_provider_requires_explicit_tools():
