@@ -33,9 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     gateway = McpEvidenceGateway.for_qas_catalog_inspection()
     catalog = gateway.inspect_runtime_tools()
 
-    # In catalog-only mode the sentinel intentionally filters everything out,
-    # so inspect the underlying client directly through a dedicated path.
-    # This function is replaced below by the gateway's catalog-only inspector.
+    # Catalog-only mode exposes metadata from tools/list only; no tool call is made.
     print(json.dumps(catalog, ensure_ascii=False, indent=2))
     return 0
 
