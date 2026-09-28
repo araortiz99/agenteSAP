@@ -64,33 +64,7 @@ jobs:
           echo "SAP_MCP_CONFIG=$RUNNER_TEMP/sap-mcp/connections.json" >> "$GITHUB_ENV"
 
       - name: Verify configured QAS MCP catalog
-        run: |
-          python - <<'PY'
-          import asyncio
-          import os
-          from src.sap.mcp_client import SapMcpClient
-          from src.sap.mcp_registry import build_target
-
-          async def main():
-              target = build_target(
-                  "sap_mcp_server",
-                  command=os.environ["AGENTESAP_SAP_MCP_COMMAND"],
-                  args=(),
-                  allowed_tools=(),
-                  metadata={"landscape": "QAS", "discovery_only": True},
-              )
-              async with SapMcpClient(target) as client:
-                  info = client.server_info()
-                  print(f"server={info.name} version={info.version}")
-                  for descriptor in await client.list_tool_descriptors():
-                      print(
-                          f"{descriptor.name}	"
-                          f"read_only={descriptor.read_only_hint}	"
-                          f"destructive={descriptor.destructive_hint}"
-                      )
-
-          asyncio.run(main())
-          PY
+        run: python -m src.sap.runtime_cli readiness-qas --verify-catalog --pretty
 
       - name: Run real QAS read-only smoke test
         run: python -m pytest -q tests/test_qas_live_smoke.py
