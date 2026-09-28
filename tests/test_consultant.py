@@ -100,3 +100,62 @@ def test_consult_rejects_unknown_evidence_citation():
 
     with pytest.raises(ValueError, match="unknown evidence id"):
         consult(FakeClient(), "Consultá sobre material master", HallucinatingLLM())
+
+
+class TicketFakeClient(FakeClient):
+    def __init__(self):
+        super().__init__()
+        self.files.update({
+            "tickets/31426/ticket.md": """---
+ticket_id: "31426"
+title: "Error de XML SNC K1"
+---
+# Ticket
+ZMM_IMX_0004
+EKPO-LOEKZ
+""",
+            "knowledge/relationships/rel-31426-zmm-imx-0004.md": """---
+relationship_id: "REL-31426-001"
+source_id: "31426"
+source_type: "TICKET"
+relation_type: "relacionado_con"
+target_id: "ZMM_IMX_0004"
+target_type: "SAP_OBJECT"
+---
+# Relationship
+""",
+        })
+
+    def get_tree(self, ref="main"):
+        return [{"path": p, "type": "blob"} for p in self.files]
+
+
+def test_consult_includes_ticket_context_and_relationships():
+    llm = FakeLLM()
+    result = consult(
+        TicketFakeClient(),
+        "Consultá el ticket 31426 y explicame qué está confirmado",
+        llm,
+        ticket_id="31426",
+    )
+
+    assert result.ticket_context
+    assert result.ticket_context[0].ticket_id == "31426"
+    assert result.ticket_context[0].reference_id.startswith("TKT-")
+    assert result.ticket_relationships is not None
+    assert result.ticket_relationships.relationships
+    assert "Ticket context" in llm.user_prompt
+    assert "31426" in llm.user_prompt
+
+
+def test_consult_ticket_context_does_not_replace_evidence():
+    llm = FakeLLM()
+    result = consult(
+        TicketFakeClient(),
+        "Consultá el ticket 31426",
+        llm,
+        ticket_id="31426",
+    )
+
+    assert result.traceability.evidence
+    assert result.citations
