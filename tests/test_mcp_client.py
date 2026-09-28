@@ -19,6 +19,26 @@ class FakeResult:
 class FakeClient:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict]] = []
+        self.tools = [
+            type(
+                "Tool",
+                (),
+                {
+                    "name": name,
+                    "description": "test tool",
+                    "inputSchema": {"type": "object"},
+                    "annotations": type(
+                        "Annotations",
+                        (),
+                        {"readOnlyHint": True, "destructiveHint": False},
+                    )(),
+                },
+            )()
+            for name in ("search_resources", "list_packs", "read_table")
+        ]
+
+    async def list_tools(self):
+        return type("ToolsResult", (), {"tools": self.tools})()
 
     async def call_tool(self, tool_name: str, arguments: dict) -> FakeResult:
         self.calls.append((tool_name, arguments))
