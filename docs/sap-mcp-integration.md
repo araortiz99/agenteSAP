@@ -37,9 +37,17 @@ Every MCP result that becomes evidence must retain:
 - landscape when known;
 - SAP object when known;
 - certainty;
+- observation type;
 - provenance/source identifier.
 
-Runtime evidence must not silently become reusable SAP Standard Knowledge. It is evidence about a particular SAP environment.
+The observation type prevents provider category from being confused with the source semantics:
+
+- `developer_context`: curated developer context such as `sap-devs`;
+- `runtime_observation`: an observation obtained from an SAP runtime provider;
+- `custom_runtime_observation`: an organization-specific ABAP MCP runtime observation;
+- `external_source`: an MCP result whose source category has not been classified more specifically.
+
+MCP output does not become SAP Standard Knowledge automatically. Runtime evidence remains tied to the SAP environment from which it was observed.
 
 ## Knowledge flow
 
@@ -117,7 +125,7 @@ Current repository implementation provides:
 - provider profiles;
 - explicit tool allowlisting;
 - read-only contract;
-- normalized evidence provenance;
+- normalized evidence provenance and observation classification;
 - an official Python MCP SDK stdio client adapter;
 - local `sap-devs` handshake and read-tool validation;
 - unit tests for provider boundaries and read-tool normalization.
