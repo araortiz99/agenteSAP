@@ -149,3 +149,8 @@ def test_unified_search_does_not_query_non_runtime_mcp_for_runtime_queries():
 
     assert gateway.called is False
     assert not result.mcp
+
+
+def test_internal_retrieval_preserves_authority():
+    result = search_unified(UnifiedFakeClient(), "material master")
+    assert result.internal[0].authority == "reference"
