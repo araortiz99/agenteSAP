@@ -62,19 +62,10 @@ def route_intent(request: str) -> AgentPlan:
     lowered = text.lower()
     ticket_id = _extract_ticket_id(text)
 
-    if any(phrase in lowered for phrase in ("consultá", "consulta", "consultar", "explicame", "explicá", "explica")):
-        return AgentPlan(
-            intent="consult",
-            ticket_id=ticket_id,
-            capabilities=(
-                "search_unified",
-                "assess_evidence",
-                "reason_from_evidence",
-                "build_traceability",
-                "consult_llm",
-            ),
-        )
-
+    # Prefer specialized deterministic intents before the generic LLM consultant.
+    # This prevents phrases such as "explicame" or "consulta" from swallowing
+    # requests that explicitly ask for analysis, evidence, comparison, relationships,
+    # or document generation.
     if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
         if not ticket_id:
             raise IntentRoutingError(
@@ -199,6 +190,19 @@ def route_intent(request: str) -> AgentPlan:
             intent="get_ticket",
             ticket_id=ticket_id,
             capabilities=("get_ticket",),
+        )
+
+    if any(phrase in lowered for phrase in ("consultá", "consulta", "consultar", "explicame", "explicá", "explica")):
+        return AgentPlan(
+            intent="consult",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+                "build_traceability",
+                "consult_llm",
+            ),
         )
 
     return AgentPlan(
