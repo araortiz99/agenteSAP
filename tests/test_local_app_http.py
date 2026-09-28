@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 import json
 import threading
 import urllib.request
@@ -14,6 +15,7 @@ class FakeResponse:
 
 def test_local_app_http_health_and_consult(monkeypatch):
     import src.app.server as server
+    from pathlib import Path
 
     monkeypatch.setattr(server, "run_agent", lambda *args, **kwargs: FakeResponse("ok"))
 
@@ -70,3 +72,13 @@ def test_local_app_http_health_and_consult(monkeypatch):
         httpd.shutdown()
         thread.join(timeout=2)
         httpd.server_close()
+
+
+def test_workbench_html_has_no_duplicate_result_declaration():
+    html = Path("src/app/static/index.html").read_text(encoding="utf-8")
+    assert html.count("const result=data.result||data;") == 1
+
+
+def test_workbench_html_has_no_duplicate_result_declaration():
+    html = Path("src/app/static/index.html").read_text(encoding="utf-8")
+    assert html.count("const result=data.result||data;") == 1
