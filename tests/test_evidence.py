@@ -8,12 +8,13 @@ def _result(
     certainty: str,
     source_id: str,
     knowledge_type: str,
+    content: str = "content",
 ) -> UnifiedResult:
     return UnifiedResult(
         path=path,
         score=1.0,
         matched_terms=("material",),
-        content="content",
+        content=content,
         source_layer=layer,
         match_type="content",
         source_id=source_id,
@@ -71,4 +72,71 @@ def test_evidence_detects_metadata_conflict():
     )
     assessment = assess_evidence(retrieval)
     assert assessment.conflicts
+    assert assessment.conflicts[0].conflict_type == "metadata_conflict"
+    assert assessment.conflicts[0].status == "requires_analysis"
+    assert assessment.requires_analysis is False
+
+
+def test_evidence_detects_explicit_documented_conflict():
+    content = """# Relationship
+
+## 7. Conflictos
+Existe material posterior que utiliza 31426 para un escenario K4.
+
+## 8. Información pendiente
+Validar contra el registro original.
+"""
+    item = _result(
+        "rel-31426-snc-k1.md",
+        "internal",
+        "partial",
+        "SRC-31426-KB-20260918",
+        "custom",
+        content,
+    )
+    retrieval = UnifiedSearchResult(
+        query="ticket 31426 K1",
+        results=(item,),
+        sap_standard=(),
+        internal=(item,),
+    )
+
+    assessment = assess_evidence(retrieval)
+
+    assert len(assessment.conflicts) == 1
+    conflict = assessment.conflicts[0]
+    assert conflict.conflict_type == "explicit_documented_conflict"
+    assert conflict.status == "requires_analysis"
+    assert "K4" in conflict.description
+    assert conflict.evidence_paths == ("rel-31426-snc-k1.md",)
+    assert assessment.requires_analysis is False
+
+
+def test_evidence_does_not_infer_conflict_from_cooccurrence():
+    content = """# Relationship
+
+## 4. Descripción
+El proceso puede considerar escenarios K1 y K4 según el circuito.
+
+## 5. Evidencia
+Fuente interna.
+"""
+    item = _result(
+        "process.md",
+        "internal",
+        "confirmed",
+        "SRC-1",
+        "custom",
+        content,
+    )
+    retrieval = UnifiedSearchResult(
+        query="K1 K4",
+        results=(item,),
+        sap_standard=(),
+        internal=(item,),
+    )
+
+    assessment = assess_evidence(retrieval)
+
+    assert not assessment.conflicts
     assert assessment.requires_analysis is False
