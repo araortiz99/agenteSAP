@@ -37,8 +37,6 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Pretty-print the JSON validation.",
     )
-    return parser
-
     readiness = subparsers.add_parser(
         "readiness-qas",
         help="Report QAS runtime readiness without executing a SAP tool.",
@@ -48,6 +46,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Pretty-print the JSON readiness report.",
     )
+
+    return parser
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
