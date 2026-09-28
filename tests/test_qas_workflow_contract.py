@@ -22,8 +22,8 @@ def test_qas_workflow_requires_environment_supplied_runtime_configuration():
     assert 'AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT: ' + '${{' + ' vars.AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT }}' in workflow
 
 
-def test_qas_workflow_keeps_discovery_before_live_query():
+def test_qas_workflow_keeps_catalog_verification_before_live_query():
     workflow = QAS_WORKFLOW.read_text(encoding='utf-8')
-    discovery = workflow.index('name: Discover real MCP catalog')
-    smoke = workflow.index('name: Run QAS read-only smoke test')
+    discovery = workflow.index('name: Verify configured QAS MCP catalog')
+    smoke = workflow.index('name: Run real QAS read-only smoke test')
     assert discovery < smoke
