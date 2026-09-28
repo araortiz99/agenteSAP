@@ -19,7 +19,7 @@ pre{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:9px;overf
 details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf0f4;font-size:12px}
 .status{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.status span{padding:5px 9px;border-radius:999px;background:#edf0f4;font-size:12px}
 .status .warn{background:#fff4cc}.status .ok{background:#e8f7ed}
-.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.panel{border:1px solid #e1e5eb;border-radius:10px;padding:12px}.panel h4{margin:0 0 8px;font-size:13px}.panel pre{margin:0;background:#f8f9fb}.badge{font-size:11px;padding:3px 7px;border-radius:999px;background:#edf0f4}.badge.conflict{background:#fff0f0}.badge.gap{background:#fff4cc}.diag{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.diag span{background:#f6f7f9;padding:6px;border-radius:7px}.analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.analysis-card{border:1px solid #e1e5eb;border-radius:10px;padding:13px;background:#fff}.analysis-card h4{margin:0 0 8px;font-size:13px}.analysis-card p{margin:0;line-height:1.45}.analysis-card ul{margin:0;padding-left:18px}.analysis-card li{margin:0 0 6px;line-height:1.4}.analysis-card.wide{grid-column:1/-1}.certainty{font-size:11px;padding:2px 6px;border-radius:999px;background:#edf0f4}.certainty.confirmed{background:#e8f7ed}.certainty.partial{background:#fff4cc}.certainty.under_validation{background:#fff4cc}.certainty.unsupported{background:#fff0f0}.empty{color:#667085;font-style:italic}.error{background:#fff0f0;border:1px solid #f0b7b7;padding:12px;border-radius:9px;white-space:pre-wrap}.explorer-toolbar{display:grid;grid-template-columns:1fr 180px 180px;gap:8px;margin:12px 0}.evidence-list{display:grid;gap:8px}.evidence-row{border:1px solid #e1e5eb;border-radius:9px;padding:10px;cursor:pointer;background:#fff}.evidence-row:hover{background:#f8f9fb}.evidence-row b{font-size:12px}.evidence-meta{font-size:11px;color:#667085;margin-top:4px}.provenance{margin-top:10px;background:#f6f7f9;padding:10px;border-radius:8px;font-size:12px}.layer{font-size:10px;padding:2px 6px;border-radius:999px;background:#edf0f4}.layer.sap_standard{background:#e8f7ed}.layer.internal{background:#e8eefc}.layer.mcp{background:#fff4cc}
+.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.panel{border:1px solid #e1e5eb;border-radius:10px;padding:12px}.panel h4{margin:0 0 8px;font-size:13px}.panel pre{margin:0;background:#f8f9fb}.badge{font-size:11px;padding:3px 7px;border-radius:999px;background:#edf0f4}.badge.conflict{background:#fff0f0}.badge.gap{background:#fff4cc}.diag{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.diag span{background:#f6f7f9;padding:6px;border-radius:7px}.analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.analysis-card{border:1px solid #e1e5eb;border-radius:10px;padding:13px;background:#fff}.analysis-card h4{margin:0 0 8px;font-size:13px}.analysis-card p{margin:0;line-height:1.45}.analysis-card ul{margin:0;padding-left:18px}.analysis-card li{margin:0 0 6px;line-height:1.4}.analysis-card.wide{grid-column:1/-1}.certainty{font-size:11px;padding:2px 6px;border-radius:999px;background:#edf0f4}.certainty.confirmed{background:#e8f7ed}.certainty.partial{background:#fff4cc}.certainty.under_validation{background:#fff4cc}.certainty.unsupported{background:#fff0f0}.empty{color:#667085;font-style:italic}.error{background:#fff0f0;border:1px solid #f0b7b7;padding:12px;border-radius:9px;white-space:pre-wrap}.explorer-toolbar{display:grid;grid-template-columns:1fr 180px 180px;gap:8px;margin:12px 0}.evidence-list{display:grid;gap:8px}.evidence-row{border:1px solid #e1e5eb;border-radius:9px;padding:10px;cursor:pointer;background:#fff}.evidence-row:hover{background:#f8f9fb}.evidence-row b{font-size:12px}.evidence-meta{font-size:11px;color:#667085;margin-top:4px}.provenance{margin-top:10px;background:#f6f7f9;padding:10px;border-radius:8px;font-size:12px}.layer{font-size:10px;padding:2px 6px;border-radius:999px;background:#edf0f4}.layer.sap_standard{background:#e8f7ed}.layer.internal{background:#e8eefc}.layer.mcp{background:#fff4cc}.ki-toolbar{display:grid;grid-template-columns:1fr 180px;gap:8px;margin:12px 0}.ki-list{display:grid;gap:8px}.ki-node,.ki-edge{border:1px solid #e1e5eb;border-radius:9px;padding:10px;background:#fff}.ki-edge{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.hop{font-size:10px;padding:2px 6px;border-radius:999px;background:#edf0f4}
 @media(max-width:800px){.app{grid-template-columns:1fr}aside{display:none}.row{flex-direction:column;align-items:stretch}}
 </style>
 </head>
@@ -60,7 +60,7 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
   </div>
   <details open><summary>Evidence Explorer</summary><div class="explorer-toolbar"><input id="evidenceFilter" placeholder="Filtrar por path, source ID o EVD…"><select id="evidenceLayer"><option value="">Todas las capas</option><option value="sap_standard">SAP Standard</option><option value="internal">Internal</option><option value="mcp">MCP / externo</option></select><select id="evidenceCertainty"><option value="">Toda certainty</option><option value="confirmed">confirmed</option><option value="partial">partial</option><option value="under_validation">under_validation</option><option value="inferred">inferred</option></select></div><div id="evidenceList" class="evidence-list"></div><div id="provenanceViewer" class="provenance">Seleccioná una evidencia para ver su provenance.</div></details>
   <details><summary>Retrieval Explorer</summary><pre id="retrievalExplorer">—</pre></details>
-  <details><summary>Objetos / relaciones</summary><pre id="relations">—</pre></details>
+  <details open><summary>Knowledge Intelligence · Graph & Multi-hop</summary><div class="ki-toolbar"><input id="kiFilter" placeholder="Filtrar entidades o relaciones…"><select id="kiHop"><option value="">Todos los hops</option><option value="0">hop 0</option><option value="1">hop 1</option><option value="2">hop 2</option></select></div><div id="kiEntities" class="ki-list"></div><div id="kiGraph" class="ki-list"></div><div id="kiGaps" class="provenance"></div></details>
 </div>
 <details><summary>Plan y trazabilidad</summary><pre id="trace">—</pre></details>
 </div>
@@ -150,6 +150,35 @@ function renderRetrievalExplorer(retrieval,query){
 }
 function bindEvidenceFilters(evidence){
   ["evidenceFilter","evidenceLayer","evidenceCertainty"].forEach(id=>$(id).oninput=()=>renderEvidenceExplorer(evidence));
+}
+function renderKnowledgeIntelligence(ki){
+  const data=ki||{};
+  const entities=Array.isArray(data.entities)?data.entities:[];
+  const relationships=Array.isArray(data.relationships)?data.relationships:[];
+  const evidence=Array.isArray(data.evidence)?data.evidence:[];
+  const filter=($("kiFilter").value||"").toLowerCase();
+  const hop=$("kiHop").value;
+  const entityList=$("kiEntities");entityList.replaceChildren();
+  const entityRows=entities.filter(x=>!filter||[x.entity_type,x.entity_id,x.path].filter(Boolean).join(" ").toLowerCase().includes(filter));
+  if(!entityRows.length){const p=document.createElement("p");p.className="empty";p.textContent="No hay entidades canónicas resueltas.";entityList.appendChild(p)}
+  entityRows.forEach(item=>{
+    const row=document.createElement("div");row.className="ki-node";
+    row.textContent=item.entity_type+":"+item.entity_id+" · score="+Number(item.score||0).toFixed(3)+" · certainty="+(item.certainty||"unknown")+" · "+(item.source_layer||"unknown");
+    entityList.appendChild(row);
+  });
+  const graph=$("kiGraph");graph.replaceChildren();
+  const relRows=relationships.filter(x=>(!hop||String(x.hop)===hop)&&(!filter||[x.source_id,x.target_id,x.relation_type,x.source_type,x.target_type,x.path].filter(Boolean).join(" ").toLowerCase().includes(filter)));
+  if(!relRows.length){const p=document.createElement("p");p.className="empty";p.textContent="No hay relaciones explícitamente documentadas para este filtro.";graph.appendChild(p)}
+  relRows.forEach(item=>{
+    const row=document.createElement("div");row.className="ki-edge";
+    row.textContent="hop="+item.hop+" · "+item.source_type+":"+item.source_id+" --"+item.relation_type+"--> "+item.target_type+":"+item.target_id+" · certainty="+(item.certainty||"unknown")+" · status="+(item.status||"unknown");
+    graph.appendChild(row);
+  });
+  const gaps=Array.isArray(data.gaps)?data.gaps:[];
+  $("kiGaps").textContent="max_hops="+String(data.max_hops??"—")+" · entities="+entities.length+" · relationships="+relationships.length+" · evidence="+evidence.length+"\n"+(gaps.length?("Gaps: "+gaps.join(" | ")):"Sin gaps adicionales documentados.");
+}
+function bindKnowledgeFilters(ki){
+  ["kiFilter","kiHop"].forEach(id=>$(id).oninput=()=>renderKnowledgeIntelligence(ki));
 }
 function renderConflictsGaps(conflicts,gaps){
   const target=$("conflictsGaps");target.replaceChildren();
