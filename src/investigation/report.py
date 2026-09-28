@@ -24,6 +24,9 @@ class InvestigationReport:
     conclusion_reason: str
     missing_information: tuple[str, ...]
     provenance: tuple[dict[str, Any], ...]
+    schema_version: str = "1.1"
+    evidence_summary: tuple[tuple[str, int], ...] = ()
+    next_actions: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -38,6 +41,9 @@ class InvestigationReport:
             "conclusion_reason": self.conclusion_reason,
             "missing_information": list(self.missing_information),
             "provenance": list(self.provenance),
+            "schema_version": self.schema_version,
+            "evidence_summary": {state: count for state, count in self.evidence_summary},
+            "next_actions": list(self.next_actions),
         }
 
 
@@ -57,6 +63,9 @@ def build_report(
     states = tuple(states)
     hypotheses = tuple(hypotheses)
     state_by_id = {item.evidence_id: item for item in states}
+    state_counts: dict[str, int] = {}
+    for item in states:
+        state_counts[item.state] = state_counts.get(item.state, 0) + 1
 
     evidence_rows = tuple(
         {
@@ -95,6 +104,15 @@ def build_report(
         for item in hypotheses
     )
 
+    unique_missing = tuple(dict.fromkeys(missing_information))
+    next_actions: list[str] = []
+    if decision.status == "BLOCKED":
+        next_actions.append("Resolver las contradicciones o evidencias inválidas antes de cerrar la investigación.")
+    if unique_missing:
+        next_actions.append("Obtener la evidencia requerida: " + ", ".join(unique_missing))
+    if decision.status in {"QUALIFIED", "UNVERIFIED"} and not next_actions:
+        next_actions.append("Obtener o validar evidencia adicional antes de elevar la conclusión.")
+
     return InvestigationReport(
         case_id=case_id,
         intent=intent,
@@ -105,8 +123,10 @@ def build_report(
         conclusion=decision.statement,
         conclusion_status=decision.status,
         conclusion_reason=decision.reason,
-        missing_information=tuple(dict.fromkeys(missing_information)),
+        missing_information=unique_missing,
         provenance=tuple(provenance),
+        evidence_summary=tuple(sorted(state_counts.items())),
+        next_actions=tuple(dict.fromkeys(next_actions)),
     )
 
 
@@ -114,6 +134,7 @@ def render_report(report: InvestigationReport) -> str:
     lines = [
         f"Investigation Report: {report.case_id}",
         f"Intent: {report.intent}",
+        f"Schema version: {report.schema_version}",
         "",
         "Evidence:",
     ]
@@ -122,6 +143,8 @@ def render_report(report: InvestigationReport) -> str:
         f"certainty={item['certainty']} · state={item['state']}"
         for item in report.evidence
     ) or lines.append("- None")
+    lines.extend(["", "Evidence summary:"])
+    lines.extend(f"- {state}: {count}" for state, count in report.evidence_summary) or lines.append("- None")
     lines.extend(["", "Hypotheses:"])
     lines.extend(
         f"- [{item['hypothesis_id']}] {item['status']}: {item['statement']}"
@@ -138,4 +161,6 @@ def render_report(report: InvestigationReport) -> str:
         "Missing information:",
     ])
     lines.extend(f"- {item}" for item in report.missing_information) or lines.append("- None")
+    lines.extend(["", "Next actions:"])
+    lines.extend(f"- {item}" for item in report.next_actions) or lines.append("- None")
     return "\n".join(lines) + "\n"

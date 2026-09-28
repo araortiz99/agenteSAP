@@ -45,3 +45,38 @@ def test_report_render_preserves_gate_status_and_gaps():
     rendered = render_report(report)
     assert "Conclusion status: UNVERIFIED" in rendered
     assert "capability:current_stock" in rendered
+
+
+
+def test_report_exposes_version_state_summary_and_next_actions():
+    report = build_report(
+        case_id="INV-TEST",
+        intent="consult",
+        evidence=(ev(),),
+        states=(EvidenceState("E1", "AVAILABLE", "observed"), EvidenceState("E2", "MISSING", "not retrieved")),
+        hypotheses=(),
+        findings=(),
+        decision=ConclusionDecision("QUALIFIED", "Qualified", "missing evidence"),
+        missing_information=("capability:current_stock",),
+        provenance=(),
+    )
+    payload = report.as_dict()
+    assert payload["schema_version"] == "1.1"
+    assert payload["evidence_summary"] == {"AVAILABLE": 1, "MISSING": 1}
+    assert payload["next_actions"]
+    assert "capability:current_stock" in payload["next_actions"][0]
+
+
+def test_blocked_report_prioritizes_conflict_resolution_action():
+    report = build_report(
+        case_id="INV-TEST",
+        intent="consult",
+        evidence=(),
+        states=(),
+        hypotheses=(),
+        findings=(),
+        decision=ConclusionDecision("BLOCKED", "Blocked", "conflict"),
+        missing_information=(),
+        provenance=(),
+    )
+    assert report.next_actions[0].startswith("Resolver las contradicciones")
