@@ -100,3 +100,14 @@ mención != entidad canónica
 hop != certainty
 
 retrieval != conclusión
+
+
+## 8. Relationship certainty
+
+La relación conserva su propia metadata:
+
+- certainty;
+- status;
+- evidence_source_id.
+
+Una relación partial/candidate no debe convertirse en confirmed por traversal.
