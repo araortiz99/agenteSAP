@@ -25,6 +25,21 @@ IDENTIFIER_FIELDS = (
     "rule_id",
     "relationship_id",
     "source_id",
+    "target_id",
+)
+
+# Query words that carry little retrieval signal. They are excluded from
+# lexical scoring so a specific SAP identifier is not diluted by prose such as
+# "analizá el ticket ... y separá claramente".
+SEARCH_STOPWORDS = frozenset(
+    {
+        "a", "al", "ante", "con", "como", "de", "del", "el", "en", "es",
+        "esta", "está", "este", "la", "las", "lo", "los", "para", "por",
+        "que", "qué", "se", "su", "sus", "un", "una", "y",
+        "analiza", "analizá", "analizar", "busca", "buscá", "buscar",
+        "revisa", "revisá", "revisar", "separa", "separá",
+        "claramente", "indica", "indicá", "indicar",
+    }
 )
 
 
@@ -42,7 +57,11 @@ def _normalize(value: str) -> str:
 
 
 def _terms(query: str) -> list[str]:
-    return [term for term in _normalize(query).split() if len(term) >= 2]
+    return [
+        term
+        for term in _normalize(query).split()
+        if len(term) >= 2 and term not in SEARCH_STOPWORDS
+    ]
 
 
 def _is_searchable(path: str) -> bool:
