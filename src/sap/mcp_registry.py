@@ -8,15 +8,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.sap.mcp_contracts import McpProvider, McpTarget
+from src.sap.mcp_contracts import (
+    McpObservationType,
+    McpProvider,
+    McpTarget,
+    McpTransport,
+)
 
 
 @dataclass(frozen=True)
 class ProviderProfile:
     provider: McpProvider
     purpose: str
-    transport: str
+    transport: McpTransport
     default_read_tools: tuple[str, ...]
+    observation_type: McpObservationType
 
 
 PROVIDERS: dict[McpProvider, ProviderProfile] = {
@@ -24,6 +30,7 @@ PROVIDERS: dict[McpProvider, ProviderProfile] = {
         provider="sap_devs",
         purpose="Current curated SAP developer knowledge and SAP resources.",
         transport="stdio",
+        observation_type="developer_context",
         default_read_tools=(
             "list_packs",
             "get_context",
@@ -38,12 +45,14 @@ PROVIDERS: dict[McpProvider, ProviderProfile] = {
         provider="sap_mcp_server",
         purpose="Read-only runtime access to SAP ABAP/BTP services through a compatible backend.",
         transport="stdio",
+        observation_type="runtime_observation",
         default_read_tools=(),
     ),
     "abap_ai": ProviderProfile(
         provider="abap_ai",
         purpose="Organization-specific MCP servers hosted in ABAP.",
         transport="streamable_http",
+        observation_type="custom_runtime_observation",
         default_read_tools=(),
     ),
 }
@@ -66,13 +75,18 @@ def build_target(
     definition = get_provider(provider)
     target = McpTarget(
         provider=provider,
-        transport=definition.transport,  # type: ignore[arg-type]
+        transport=definition.transport,
         command=command,
         args=args,
         url=url,
-        allowed_tools=allowed_tools or definition.default_read_tools,
+        allowed_tools=(
+            definition.default_read_tools
+            if allowed_tools is None
+            else allowed_tools
+        ),
         profile=profile,
         read_only=True,
+        observation_type=definition.observation_type,
         metadata=metadata or {},
     )
     target.validate()
