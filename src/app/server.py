@@ -93,9 +93,6 @@ def _workbench_payload(
 
     if not isinstance(response, ConsultationResult):
         return {
-            "request_id": request_id,
-            "query": getattr(response, "request", ""),
-            "intent": intent,
             **legacy,
             "workbench": {
                 "request_id": request_id,
@@ -115,19 +112,6 @@ def _workbench_payload(
                     "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
                     "runtime_status": runtime["status"],
                 },
-            },
-            "diagnostics": {
-                "request_id": request_id,
-                "trace_id": None,
-                "intent": intent,
-                "evidence_count": 0,
-                "conflicts": 0,
-                "gaps": 0,
-                "llm_used": False,
-                "llm_latency_ms": None,
-                "retrieval_latency_ms": None,
-                "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
-                "runtime_status": runtime["status"],
             },
         }
 
