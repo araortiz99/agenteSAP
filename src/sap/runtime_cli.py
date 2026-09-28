@@ -9,6 +9,7 @@ import argparse
 import json
 
 from src.sap.mcp_gateway import McpEvidenceGateway
+from src.sap.qas_runtime import SapQasRuntimeConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,6 +61,31 @@ def main(argv: list[str] | None = None) -> int:
         if not all(bool(item.get("valid")) for item in results):
             return 2
         return 0
+
+    if args.command == "readiness-qas":
+        config = SapQasRuntimeConfig.from_env()
+        report = {
+            "enabled": config.enabled,
+            "landscape": config.landscape,
+            "scope": config.scope,
+            "discovery_only": config.discovery_only,
+            "allowlist_configured": bool(config.allowed_tools),
+            "command_configured": bool(config.command),
+            "runtime_ready": False,
+            "reason": "live MCP catalog not verified",
+        }
+        if config.landscape != "QAS":
+            report["reason"] = "landscape must be QAS"
+        elif config.scope != "mcp_readonly":
+            report["reason"] = "scope must be mcp_readonly"
+        elif not config.enabled:
+            report["reason"] = "runtime disabled"
+        elif not config.allowed_tools and not config.discovery_only:
+            report["reason"] = "explicit allowlist or discovery_only is required"
+        elif not config.command:
+            report["reason"] = "MCP command is not configured"
+        print(json.dumps(report, ensure_ascii=False, indent=2 if args.pretty else None))
+        return 0 if report["runtime_ready"] else 2
 
     if args.command == "discover-qas":
         gateway = McpEvidenceGateway.from_qas_runtime_env()
