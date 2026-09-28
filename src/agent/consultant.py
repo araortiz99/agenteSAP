@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import re
 
 from src.github.client import GitHubClient
 from src.llm.client import LLMClient
@@ -10,6 +12,8 @@ from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.evidence_trace import TraceabilityReport, build_traceability
 from src.tools.reason import ReasoningResult, reason_from_evidence
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
+from src.tools.get_ticket import TicketContext, get_ticket
+from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 
 
 SYSTEM_PROMPT = """You are agenteSAP, a consultative SAP functional assistant.
@@ -36,6 +40,23 @@ Prefer concise, structured answers suitable for a senior SAP functional analyst.
 
 
 @dataclass(frozen=True)
+class Citation:
+    citation_id: str
+    evidence_id: str
+    path: str
+    source_id: str | None
+    certainty: str
+
+
+@dataclass(frozen=True)
+class TicketContextReference:
+    reference_id: str
+    ticket_id: str
+    path: str
+    content: str
+
+
+@dataclass(frozen=True)
 class ConsultationResult:
     request: str
     retrieval: UnifiedSearchResult
@@ -44,6 +65,59 @@ class ConsultationResult:
     traceability: TraceabilityReport
     answer: str
     model: str
+    citations: tuple[Citation, ...]
+    uncited_evidence_ids: tuple[str, ...]
+    ticket_context: tuple[TicketContextReference, ...]
+    ticket_relationships: RelatedKnowledge | None
+
+
+def _ticket_reference(ticket_id: str, path: str) -> str:
+    raw = f"{ticket_id}|{path}"
+    return "TKT-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
+
+
+def _parse_citations(
+    answer: str,
+    traceability: TraceabilityReport,
+) -> tuple[Citation, ...]:
+    by_evidence = {item.evidence_id: item for item in traceability.evidence}
+    cited_ids = dict.fromkeys(re.findall(r"\[(EVD-[A-Z0-9]+)\]", answer))
+    citations = []
+    for evidence_id in cited_ids:
+        item = by_evidence.get(evidence_id)
+        if item is None:
+            raise ValueError(f"LLM cited unknown evidence id: {evidence_id}")
+        citations.append(
+            Citation(
+                citation_id=evidence_id,
+                evidence_id=evidence_id,
+                path=item.path,
+                source_id=item.source_id,
+                certainty=item.certainty,
+            )
+        )
+    return tuple(citations)
+
+
+def _ticket_context(
+    client: GitHubClient,
+    ticket_id: str | None,
+    ref: str,
+) -> tuple[tuple[TicketContextReference, ...], RelatedKnowledge | None]:
+    if not ticket_id:
+        return (), None
+    ticket = get_ticket(client, ticket_id, ref=ref)
+    references = tuple(
+        TicketContextReference(
+            reference_id=_ticket_reference(ticket.ticket_id, document.path),
+            ticket_id=ticket.ticket_id,
+            path=document.path,
+            content=document.content,
+        )
+        for document in ticket.documents
+    )
+    relationships = get_related_knowledge(client, "TICKET", ticket.ticket_id, ref=ref)
+    return references, relationships
 
 
 def _snippet(result: UnifiedResult, limit: int = 3500) -> str:
@@ -97,6 +171,7 @@ def consult(
     *,
     ref: str = "main",
     max_results: int = 8,
+    ticket_id: str | None = None,
 ) -> ConsultationResult:
     """Retrieve, assess, trace and synthesize a consultative answer."""
     if not request or not request.strip():
@@ -106,7 +181,16 @@ def consult(
     evidence = assess_evidence(retrieval)
     reasoning = reason_from_evidence(evidence)
     traceability = build_traceability(reasoning)
+    ticket_context, ticket_relationships = _ticket_context(client, ticket_id, ref)
     context = build_context(retrieval, traceability)
+    if ticket_context:
+        context += "\n\n## Ticket context\n"
+        for item in ticket_context:
+            context += f"\n### {item.reference_id}\npath: {item.path}\n{item.content.strip()}\n"
+    if ticket_relationships and ticket_relationships.relationships:
+        context += "\n## Ticket relationships\n"
+        for relation in ticket_relationships.relationships:
+            context += f"\n- {relation.source_id} --{relation.relation_type}--> {relation.target_id}\n"
 
     user_prompt = (
         "User request:\n"
@@ -115,6 +199,12 @@ def consult(
         f"{context}"
     )
     answer = llm.generate(system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt)
+    citations = _parse_citations(answer, traceability)
+    cited_ids = {citation.evidence_id for citation in citations}
+    uncited = tuple(
+        item.evidence_id for item in traceability.evidence
+        if item.role == "supporting" and item.evidence_id not in cited_ids
+    )
     model = getattr(llm, "model", llm.__class__.__name__)
 
     return ConsultationResult(
@@ -125,4 +215,8 @@ def consult(
         traceability=traceability,
         answer=answer,
         model=str(model),
+        citations=citations,
+        uncited_evidence_ids=uncited,
+        ticket_context=ticket_context,
+        ticket_relationships=ticket_relationships,
     )
