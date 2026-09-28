@@ -61,6 +61,7 @@ def build_target(
     url: str | None = None,
     allowed_tools: tuple[str, ...] | None = None,
     profile: str | None = None,
+    metadata: dict[str, str] | None = None,
 ) -> McpTarget:
     definition = get_provider(provider)
     target = McpTarget(
@@ -72,6 +73,7 @@ def build_target(
         allowed_tools=allowed_tools or definition.default_read_tools,
         profile=profile,
         read_only=True,
+        metadata=metadata or {},
     )
     target.validate()
     return target
