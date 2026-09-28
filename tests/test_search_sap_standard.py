@@ -51,7 +51,7 @@ def test_standard_retrieval_filters_generic_prose_and_preserves_short_sap_terms(
 
 def test_standard_retrieval_uses_token_boundaries():
     client = FakeClient()
-    client.files["knowledge/sap-standard/mm/unrelated.md"] = "# Unrelated\nThis document mentions materialize only, never the standalone term."
+    client.files["knowledge/sap-standard/mm/unrelated.md"] = "# Unrelated\nThis document mentions materialize only."
 
     results = search_sap_standard(client, "material")
 
