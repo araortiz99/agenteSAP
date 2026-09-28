@@ -41,7 +41,7 @@ def _infer_capability(descriptor: dict[str, Any]) -> ToolCapability:
     operations = tuple(
         operation for operation, markers in {
             "read_stock": {"stock", "inventory", "inventario", "mard", "labst"},
-            "read_movements": {"movement", "movimiento", "mseg", "materialdocument"},
+            "read_movements": {"movement", "movements", "movimiento", "movimientos", "mseg", "materialdocument", "documents"},
             "read_master": {"material", "matnr", "master", "maestro", "plant", "werks"},
         }.items()
         if tokens.intersection(markers)
