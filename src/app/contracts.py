@@ -22,7 +22,9 @@ class WorkbenchAnalysisResponse:
     confirmed: tuple[str, ...]
     implementation: tuple[str, ...]
     not_confirmed: tuple[str, ...]
-    hypotheses: tuple[str, ...]
+    hypotheses: tuple[dict[str, Any], ...]
+    findings: tuple[str, ...]
+    evidence_states: tuple[dict[str, Any], ...]
     evidence: tuple[dict[str, Any], ...]
     retrieval: tuple[dict[str, Any], ...]
     knowledge_intelligence: dict[str, Any]
@@ -160,9 +162,28 @@ def build_workbench_analysis(
         "## Resumen",
         ("## Qué está confirmado",),
     )
-    hypotheses = ()
+    hypotheses = tuple(
+        {
+            "hypothesis_id": item.hypothesis_id,
+            "statement": item.statement,
+            "status": item.status,
+            "evidence_ids": item.evidence_ids,
+            "reason": item.reason,
+        }
+        for item in (result.investigation.hypotheses if result.investigation else ())
+    )
+    findings = tuple(result.investigation.findings if result.investigation else ())
+    evidence_states = tuple(
+        {
+            "evidence_id": item.evidence_id,
+            "state": item.state,
+            "reason": item.reason,
+        }
+        for item in (result.investigation.evidence_states if result.investigation else ())
+    )
 
     ticket = None
+
     if result.ticket_context:
         ticket = {
             "references": [asdict(item) for item in result.ticket_context],
@@ -179,6 +200,8 @@ def build_workbench_analysis(
         implementation=_items(implementation) or ((implementation,) if implementation else ()),
         not_confirmed=_items(not_confirmed) or ((not_confirmed,) if not_confirmed else ()),
         hypotheses=hypotheses,
+        findings=findings,
+        evidence_states=evidence_states,
         evidence=_evidence(result),
         retrieval=_retrieval(result),
         knowledge_intelligence=_knowledge_intelligence(result),

@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.investigation.correlation import EvidenceCorrelation
+    from src.investigation.evidence_state import EvidenceState
+    from src.investigation.hypothesis import Hypothesis
 
 
 @dataclass(frozen=True)
@@ -52,6 +54,8 @@ class Investigation:
     evidence_collected: list[InvestigationEvidence] = field(default_factory=list)
     evidence_missing: list[str] = field(default_factory=list)
     hypotheses: list[str] = field(default_factory=list)
+    hypothesis_records: list["Hypothesis"] = field(default_factory=list)
+    evidence_states: list["EvidenceState"] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
     conclusion: str = ""
     confidence: str = "LOW"
@@ -71,6 +75,8 @@ class Investigation:
             "evidence_collected": [item.__dict__ for item in self.evidence_collected],
             "evidence_missing": list(self.evidence_missing),
             "hypotheses": list(self.hypotheses),
+            "hypothesis_records": [item.__dict__ for item in self.hypothesis_records],
+            "evidence_states": [item.__dict__ for item in self.evidence_states],
             "findings": list(self.findings),
             "conclusion": self.conclusion,
             "confidence": self.confidence,

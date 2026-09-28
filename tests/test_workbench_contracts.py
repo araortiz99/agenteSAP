@@ -166,6 +166,9 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.implementation == ("Implementación documentada.",)
     assert result.gaps == ()
     assert result.runtime["writes_exposed"] is False
+    assert result.hypotheses == ()
+    assert result.findings == ()
+    assert result.evidence_states == ()
 
 
 def test_workbench_html_has_evidence_and_provenance_explorer():
