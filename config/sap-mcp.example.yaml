@@ -33,6 +33,8 @@ providers:
     # Runtime credentials belong in the provider's local connections.json.
     # Runtime credentials belong in the provider's local connections.json.
     # Never use a guessed tool name; discover the live catalog first.
+    # Runtime credentials belong in the provider's local connections.json.
+    # Never use a guessed tool name; discover the live catalog first.
     allowed_tools: []
     read_only: true
 
