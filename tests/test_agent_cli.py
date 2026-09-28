@@ -14,6 +14,7 @@ def test_cli_json_output(monkeypatch, capsys):
 
     @dataclass
     class FakeResponse:
+        request: str
         result: FakeResult
 
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
@@ -25,7 +26,7 @@ def test_cli_json_output(monkeypatch, capsys):
     monkeypatch.setattr(
         cli,
         "run_agent",
-        lambda client, request, ref: FakeResponse(FakeResult()),
+        lambda client, request, ref: FakeResponse(request=request, result=FakeResult()),
     )
     monkeypatch.setattr(
         "sys.argv",
