@@ -82,7 +82,7 @@ def _item(result: UnifiedResult) -> EvidenceItem:
 def _conflict_section(content: str) -> str:
     """Extract an explicit Markdown conflict section, if present."""
     match = re.search(
-        r"(?ims)^##\s+(?:Conflictos|Contradicciones|Discrepancias)\s*$"
+        r"(?ims)^##\s+(?:\d+[.)]\s*)?(?:Conflictos|Contradicciones|Discrepancias)\s*$"
         r"(.*?)(?=^##\s+|\Z)",
         content,
     )
