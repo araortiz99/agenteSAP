@@ -197,6 +197,23 @@ La selección de evidencia y la selección de proveedor MCP son capas separadas:
 - La estrategia de proveedor no ejecuta herramientas ni eleva certainty; únicamente determina elegibilidad y readiness.
 - Una pregunta de runtime sin un proveedor read-only listo debe conservar el gap de runtime en lugar de degradar silenciosamente a contexto externo.
 
+## QAS Runtime Read-only Contract
+
+La primera etapa de runtime está deliberadamente limitada a **QAS + mcp_readonly**.
+El proveedor sap_mcp_server sólo puede activarse cuando se cumplen simultáneamente estas condiciones:
+
+- AGENTESAP_SAP_RUNTIME_ENABLED=true;
+- AGENTESAP_SAP_RUNTIME_LANDSCAPE=QAS;
+- AGENTESAP_SAP_RUNTIME_SCOPE=mcp_readonly;
+- existe una allowlist explícita de herramientas de lectura;
+- el nombre concreto de la herramienta fue verificado contra el catálogo del binario instalado.
+
+El repositorio no fija un nombre de herramienta inventado: sap-mcp-server distribuye su catálogo de herramientas dentro del binario y documenta que la capacidad incluye lectura de tablas y ADT SQL/Open SQL/DDIC. La configuración de conexión y sus secretos permanecen fuera de Git; el servidor oficial indica que connections.json es local y que la autenticación se realiza mediante credenciales OAuth2 del backend.
+
+El contrato de AgenteSAP agrega una barrera adicional: aunque exista una conexión, un proveedor runtime no se considera listo si no está en QAS, no usa mcp_readonly o no tiene una allowlist explícita. La ausencia de configuración no se convierte en una falsa observación runtime.
+
+Ejemplo no secreto: config/sap-mcp-qas.example.env.
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
