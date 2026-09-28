@@ -110,8 +110,23 @@ def _merge_evidence_results(
             add(item)
             break
 
+    requested_layers = set(requested)
+    runtime_requested = "runtime" in requested_layers
+    eligible_mcp = [
+        item
+        for item in mcp
+        if (
+            item.knowledge_type == "runtime_observation"
+            and runtime_requested
+        )
+        or (
+            item.knowledge_type != "runtime_observation"
+            and not runtime_requested
+        )
+    ]
+
     remaining = sorted(
-        standard + internal + mcp,
+        standard + internal + eligible_mcp,
         key=lambda x: (
             -x.score,
             0 if x.source_layer == "sap_standard"
