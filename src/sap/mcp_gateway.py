@@ -71,7 +71,7 @@ class McpEvidenceGateway:
                 path=f"mcp://{evidence.provider}/{evidence.operation}",
                 score=0.9,
                 matched_terms=tuple(query.strip().split()),
-                content=_render_content(evidence.content),
+                content=rendered,
                 source_layer="mcp",
                 match_type="mcp",
                 source_id=f"{evidence.provider}:{evidence.operation}",
