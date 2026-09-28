@@ -44,7 +44,9 @@ class FakeLLM:
     def generate(self, *, system_prompt, user_prompt):
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
-        return "Respuesta basada en [EVD-TEST]."
+        import re
+        evidence_id = re.search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
+        return f"Respuesta basada en [{evidence_id}]."
 
 
 def test_consult_builds_traceable_context_and_calls_llm():
@@ -58,6 +60,9 @@ def test_consult_builds_traceable_context_and_calls_llm():
     assert "source_layer:" in llm.user_prompt
     assert "EVD-" in llm.user_prompt
     assert "SAP-MM-MATERIAL" in llm.user_prompt
+    assert result.citations
+    assert result.citations[0].evidence_id == result.traceability.evidence[0].evidence_id
+    assert result.uncited_evidence_ids
 
 
 def test_build_context_contains_gaps_and_conflicts():
@@ -83,3 +88,15 @@ def test_build_context_contains_gaps_and_conflicts():
 
     assert "Gaps" in context
     assert "Conflicts" in context
+
+
+class HallucinatingLLM(FakeLLM):
+    def generate(self, *, system_prompt, user_prompt):
+        return "Respuesta con [EVD-NOEXISTE]."
+
+
+def test_consult_rejects_unknown_evidence_citation():
+    import pytest
+
+    with pytest.raises(ValueError, match="unknown evidence id"):
+        consult(FakeClient(), "Consultá sobre material master", HallucinatingLLM())
