@@ -170,3 +170,8 @@ Antes de introducir embeddings o una vector DB, la siguiente etapa recomendada e
 **MVP 7 — SAP MM Knowledge Foundation**: ampliar conocimiento funcional curado de MM,
 objetos, procesos, reglas, tablas, movimientos, integración MM-FI e incidentes
 sanitizados, manteniendo la arquitectura determinística y trazable.
+
+
+## Consultant Regression Benchmark
+
+Además de la suite automatizada, el proyecto mantiene `benchmarks/consultant-regression.md` con diez casos para validar el comportamiento consultivo del agente: evidencia, certeza, separación Standard/Custom, conflictos, multi-hop y límites de ejecución. Debe revisarse cuando cambien routing, retrieval, evidence, reasoning, Consultant o generación documental.
