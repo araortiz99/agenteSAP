@@ -44,3 +44,19 @@ Un documento de S/4HANA 2025 no debe presentarse como evidencia universal de 202
 - Runtime vs SAP Help → `runtime_vs_documentation_difference`
 
 Ninguno debe resolverse automáticamente por el LLM.
+
+## Public SAP Developer Center MCP
+
+AgenteSAP can optionally use the official SAP Developer Center hosted MCP as **external evidence**. The public search mount is read-only and uses Streamable HTTP.
+
+Enable it locally with:
+
+- `AGENTESAP_SAP_PUBLIC_MCP_ENABLED=true`
+- `AGENTESAP_SAP_PUBLIC_MCP_URL=https://developers.sap.com/mcp/search` (default)
+- `AGENTESAP_SAP_PUBLIC_MCP_READ_TOOLS=search_tutorials,get_tutorial,list_missions,get_mission`
+
+For a live connectivity check, set `AGENTESAP_SAP_PUBLIC_MCP_LIVE_TESTS=true` and run:
+
+`python -m pytest -q tests/test_public_sap_mcp_live.py`
+
+The live smoke test performs only `tools/list` and one allowlisted `search_tutorials` call. It does not modify SAP or SAP Developer Center state.
