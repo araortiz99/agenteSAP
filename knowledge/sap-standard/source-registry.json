@@ -26,6 +26,15 @@
       "release": "2025 FPS01",
       "language": "en",
       "status": "active"
+    },
+    {
+      "source_id": "SAP-HELP-S4-MM-2025-INVOICE-VERIFICATION",
+      "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/af9ef57f504840d2b81be8667206d485/8d6fb6531de6b64ce10000000a174cb4.html?locale=en-us",
+      "product": "SAP S/4HANA",
+      "module": "MM-IV-LIV",
+      "release": "2025 FPS01",
+      "language": "en",
+      "status": "active"
     }
   ]
 }
