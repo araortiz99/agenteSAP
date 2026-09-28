@@ -58,6 +58,21 @@ class SapMcpClient:
         result = await self._require_connected().list_tools()
         return tuple(tool.name for tool in result.tools)
 
+    async def tool_catalog(self) -> tuple[dict[str, object], ...]:
+        """Return the advertised MCP tool catalog without invoking any tool."""
+        result = await self._require_connected().list_tools()
+        catalog: list[dict[str, object]] = []
+        for tool in result.tools:
+            catalog.append(
+                {
+                    "name": getattr(tool, "name", ""),
+                    "description": getattr(tool, "description", "") or "",
+                    "input_schema": getattr(tool, "inputSchema", None),
+                    "annotations": getattr(tool, "annotations", None),
+                }
+            )
+        return tuple(catalog)
+
     def server_info(self) -> McpServerInfo | None:
         info = self._require_connected().server_info
         if info is None:

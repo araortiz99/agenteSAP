@@ -171,3 +171,56 @@ def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
     assert gateway.supports_source("runtime") is False
     assert gateway.provider_plan("runtime").ready is False
     assert gateway.provider_plan("external").ready is True
+
+
+def test_runtime_tool_inspection_is_allowlist_bound(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv(
+        "AGENTESAP_SAP_RUNTIME_READ_TOOLS",
+        "verified_table_read",
+    )
+
+    gateway = McpEvidenceGateway.from_qas_runtime_env()
+    assert gateway is not None
+
+    async def fake_inspect():
+        return (
+            {"name": "verified_table_read", "description": "read"},
+            {"name": "unlisted_tool", "description": "other"},
+        )
+
+    gateway._inspect_runtime_tools = fake_inspect
+    catalog = gateway.inspect_runtime_tools()
+
+    assert [item["name"] for item in catalog] == ["verified_table_read"]
+
+
+def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", raising=False)
+
+    gateway = McpEvidenceGateway.for_qas_catalog_inspection()
+
+    assert gateway.target.allowed_tools == ("__catalog_only__",)
+    assert gateway.target.read_only is True
+
+    async def fake_inspect():
+        return (
+            {"name": "table_read", "description": "read table"},
+            {"name": "write_tool", "description": "write"},
+        )
+
+    gateway._inspect_runtime_tools = fake_inspect
+    catalog = gateway.inspect_runtime_tools()
+
+    assert [item["name"] for item in catalog] == ["table_read", "write_tool"]
+
+    try:
+        gateway.read_runtime("table_read", {})
+    except PermissionError as exc:
+        assert "not allowlisted" in str(exc)
+    else:
+        raise AssertionError("catalog-only mode must not allow SAP tool calls")
