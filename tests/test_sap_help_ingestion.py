@@ -32,7 +32,9 @@ def test_normalization_and_hash_are_deterministic():
 
 def test_metadata_requires_provenance_for_git_identity():
     try:
-        validate_metadata(metadata(repository=None, commit_sha="abc123"))
+        validate_metadata(
+            metadata(repository=None, branch=None, commit_sha="abc123", path=None)
+        )
     except ValueError as exc:
         assert "commit_sha requires repository" in str(exc)
     else:
