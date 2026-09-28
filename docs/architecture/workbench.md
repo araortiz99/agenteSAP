@@ -2,7 +2,7 @@
 
 ## Propósito
 
-El Workbench es la consola local de observabilidad, análisis y trazabilidad de agenteSAP. La UI consume contratos estructurados del backend y mantiene el payload legado para compatibilidad.
+El Workbench es la consola local de observabilidad, análisis y trazabilidad de agenteSAP. La UI consume contratos estructurados del backend y mantiene el payload legado en su forma original para compatibilidad. El nuevo contrato estructurado se expone bajo `workbench`.
 
 ## Arquitectura actual
 
@@ -133,7 +133,7 @@ El Markdown es una representación legible; la UI debe preferir el contrato estr
 
 ## Compatibilidad
 
-El endpoint existente \`POST /api/consult\` continúa devolviendo \`result\`. La nueva estructura se expone en paralelo para permitir migración incremental del frontend.
+El endpoint existente \`POST /api/consult\` continúa devolviendo \`result\`. La nueva estructura se expone en paralelo bajo `workbench`, sin cambiar la forma del payload legado. Esto permite migración incremental del frontend.
 
 ## Próximas fases
 

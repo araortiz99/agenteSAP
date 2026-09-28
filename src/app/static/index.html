@@ -150,15 +150,16 @@ async function loadStatus(){
   }catch(e){$("status").innerHTML="<span class='warn'>No se pudo leer el estado local</span>"}
 }
 function renderWorkbench(data){
-  const diagnostics=data?.diagnostics||{};
-  const runtime=data?.runtime||{};
+  const workbench=data?.workbench||data||{};
+  const diagnostics=workbench?.diagnostics||{};
+  const runtime=workbench?.runtime||{};
   const evidence=Array.isArray(data?.evidence)?data.evidence:[];
   const conflicts=Array.isArray(data?.conflicts)?data.conflicts:[];
   const gaps=Array.isArray(data?.gaps)?data.gaps:[];
   const labels=[
-    ["Request",data?.request_id||"—"],
-    ["Trace",data?.trace_id||"—"],
-    ["Intent",data?.intent||"—"],
+    ["Request",workbench?.request_id||"—"],
+    ["Trace",workbench?.trace_id||"—"],
+    ["Intent",workbench?.intent||"—"],
     ["Evidence",diagnostics.evidence_count??evidence.length],
     ["Conflicts",diagnostics.conflicts??conflicts.length],
     ["Gaps",diagnostics.gaps??gaps.length],
@@ -200,6 +201,7 @@ async function consult(){
     if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
     renderWorkbench(data);
+    const result=data.result||data;
     const answer=normalizeAnswer(result.answer||"");
     $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
