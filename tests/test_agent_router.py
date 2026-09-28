@@ -272,3 +272,9 @@ def test_route_generic_explanation_still_uses_consultant():
     plan = route_intent("Explicame el proceso de inventario")
     assert plan.intent == "consult"
     assert "consult_llm" in plan.capabilities
+
+def test_route_document_generation_before_analysis_keyword():
+    plan = route_intent("Generá un análisis del ticket 31426")
+    assert plan.intent == "generate_document"
+    assert plan.ticket_id == "31426"
+    assert "generate_document" in plan.capabilities
