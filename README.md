@@ -202,3 +202,30 @@ Compará SAP Standard y nuestra implementación sobre material master
 ```
 
 This is retrieval only. The MVP does not infer that a customer implementation is equivalent to SAP Standard merely because both sources mention the same concept.
+
+
+### MVP 3.1 — Evidence & Reasoning
+
+The agent now separates:
+
+```
+Unified Retrieval
+      ↓
+Evidence Assessment
+      ↓
+Bounded Reasoning
+      ↓
+Conclusion Status
+```
+
+Conclusion states:
+
+- `supported`
+- `partial`
+- `requires_analysis`
+- `conflict`
+- `insufficient`
+
+The engine does not treat Standard vs Custom as a conflict. When both layers exist, it returns `requires_analysis` because functional comparison is required.
+
+Evidence retains provenance, source ID, knowledge classification, scope and certainty.
