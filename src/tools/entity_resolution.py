@@ -11,6 +11,7 @@ from src.tools.search_sap_standard import search_sap_standard
 
 ENTITY_FIELDS = (
     ("object_id", "SAP_OBJECT"),
+    ("object_name", "SAP_OBJECT"),
     ("process_id", "PROCESS"),
     ("rule_id", "BUSINESS_RULE"),
     ("ticket_id", "TICKET"),
