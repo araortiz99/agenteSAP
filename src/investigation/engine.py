@@ -12,7 +12,11 @@ from src.tools.evidence import assess_evidence
 from src.tools.reason import reason_from_evidence
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
 
-from src.investigation.capabilities import discover_capabilities, match_capabilities
+from src.investigation.capabilities import (
+    discover_capabilities,
+    match_capabilities,
+    validate_query_arguments,
+)
 from src.investigation.case_id import build_case_id
 from src.investigation.correlation import correlate_evidence
 from src.investigation.contracts import (
@@ -207,7 +211,11 @@ def investigate(
                 investigation.evidence_missing.append("QAS allowlist validation failed")
             else:
                 capabilities = discover_capabilities(gateway)
-                selected = match_capabilities(plan.required_evidence, capabilities)
+                selected = match_capabilities(
+                    plan.required_evidence,
+                    capabilities,
+                    required_entities=plan.required_entities,
+                )
         except (PermissionError, ValueError, OSError) as exc:
             investigation.stop_reason = "missing_capability"
             investigation.evidence_missing.append(f"QAS capability discovery unavailable: {exc}")
@@ -232,6 +240,16 @@ def investigate(
             if arguments is None:
                 investigation.evidence_missing.append(
                     f"query_arguments:{evidence_type}:{capability.name}"
+                )
+                continue
+            valid_arguments, validation_reason = validate_query_arguments(
+                capability,
+                arguments,
+                entities,
+            )
+            if not valid_arguments:
+                investigation.evidence_missing.append(
+                    f"query_arguments_invalid:{evidence_type}:{capability.name}:{validation_reason}"
                 )
                 continue
             try:
