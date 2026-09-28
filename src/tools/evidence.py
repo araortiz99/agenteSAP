@@ -7,6 +7,7 @@ from collections import defaultdict
 import re
 
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
+from src.tools.source_selection import select_evidence_sources
 
 
 CERTAINTY_WEIGHT = {
@@ -203,10 +204,25 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
     conflicts = list(unique_conflicts.values())
 
     gaps: list[str] = []
-    if not retrieval.sap_standard:
+    selection = select_evidence_sources(retrieval.query)
+    selected = set(selection.requested)
+
+    if "sap_standard" in selected and not retrieval.sap_standard:
         gaps.append("No SAP Standard evidence was retrieved.")
-    if not retrieval.internal:
+        gaps.append(
+            "Source-selection policy: SAP Standard evidence is expected for this query."
+        )
+    if "internal" in selected and not retrieval.internal:
         gaps.append("No internal evidence was retrieved.")
+        gaps.append(
+            "Source-selection policy: internal implementation evidence is expected for this query."
+        )
+    if "runtime" in selected and not any(
+        item.knowledge_type == "runtime_observation" for item in items
+    ):
+        gaps.append(
+            "The query asks about current/runtime state, but no runtime observation was retrieved."
+        )
     if not confirmed:
         gaps.append("No confirmed evidence was retrieved.")
 
