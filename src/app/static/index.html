@@ -17,6 +17,9 @@ button.secondary{background:#edf0f4;border:0;border-radius:9px;padding:11px 18px
 .history button{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 pre{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:9px;overflow:auto}
 details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf0f4;font-size:12px}
+.status{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.status span{padding:5px 9px;border-radius:999px;background:#edf0f4;font-size:12px}
+.status .warn{background:#fff4cc}.status .ok{background:#e8f7ed}
+.error{background:#fff0f0;border:1px solid #f0b7b7;padding:12px;border-radius:9px;white-space:pre-wrap}
 @media(max-width:800px){.app{grid-template-columns:1fr}aside{display:none}.row{flex-direction:column;align-items:stretch}}
 </style>
 </head>
@@ -33,12 +36,13 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
 <div class="card">
 <h2 id="title">Consultor SAP</h2>
 <div class="meta">La interfaz usa el agente existente; no contiene lógica SAP propia.</div>
+<div class="status" id="status"><span>Estado: verificando…</span></div>
 <label>Ticket / incidente (opcional)</label>
 <input id="ticket" placeholder="Ej.: 31426" inputmode="numeric">
 <br><br>
 <textarea id="request" placeholder="Ej.: Analizá el ticket 31426 y separá hechos confirmados, implementación, gaps y próximos pasos."></textarea>
 <div class="row">
-<button class="primary" onclick="consult()">Consultar al agente</button>
+<button class="primary" id="consultButton" onclick="consult()">Consultar al agente</button>
 <button class="secondary" onclick="newConsult()">Limpiar</button>
 </div>
 </div>
@@ -79,41 +83,81 @@ function loadHistory(i){
   $("trace").textContent=JSON.stringify(x.trace||{},null,2);
 }
 function newConsult(){
-  $("request").value="";$("ticket").value="";$("answer").textContent="Esperando consulta…";$("trace").textContent="—";$("request").focus();
+  $("request").value="";$("ticket").value="";$("answer").textContent="Esperando consulta…";$("trace").textContent="—";
+  $("ticketPanels").style.display="none";$("request").focus();
 }
 function ticketWorkspace(){
   const ticket=$("ticket").value.trim();
-  if(!ticket){$("answer").textContent="Ingresá primero el ID del ticket.";return}
+  if(!ticket){showError("Ingresá primero el ID del ticket.");return}
   $("request").value="Analizá el ticket "+ticket+" y estructurá el análisis separando: hechos confirmados, evidencia disponible, hipótesis, gaps de información, objetos SAP relacionados y próximos pasos.";
   consult();
 }
+function normalizeAnswer(text){
+  return String(text||"").replace(/\\##/g,"##").replace(/\\*\\*/g,"**");
+}
+function extractSection(text,title,nextTitles){
+  const normalized=normalizeAnswer(text);
+  const start=normalized.indexOf(title);
+  if(start<0)return "";
+  const body=normalized.slice(start+title.length);
+  let end=body.length;
+  for(const next of nextTitles){
+    const i=body.indexOf(next);
+    if(i>=0) end=Math.min(end,i);
+  }
+  return body.slice(0,end).trim();
+}
+function showError(message){
+  $("answer").innerHTML="";
+  const box=document.createElement("div");box.className="error";box.textContent=message;
+  $("answer").appendChild(box);
+}
+function explainError(data){
+  if(data?.error_type==="github_api"){
+    if(data.status_code===401) return data.error+"\n\nRevisá GITHUB_TOKEN y reiniciá AgenteSAP.";
+    if(data.status_code===403 || data.status_code===429){
+      if(data.github_rate_limit_remaining===0) return data.error+"\n\nConfigurá GITHUB_TOKEN para ampliar el límite de API o esperá el reset indicado. No se reintentará automáticamente.";
+      return data.error+"\n\nRevisá autenticación/permisos de GitHub.";
+    }
+    return data.error+"\n\nLa fuente de conocimiento de GitHub no está disponible.";
+  }
+  return data?.error||"Error del agente";
+}
+async function loadStatus(){
+  try{
+    const r=await fetch("/api/status");const s=await r.json();
+    const auth=s.github_auth_configured?"GitHub autenticado":"GitHub sin token";
+    const qas=s.qas_runtime_enabled?"QAS runtime habilitado":"QAS runtime deshabilitado";
+    const llm=s.openai_api_key_configured?"LLM configurado":"LLM sin API key";
+    const write=s.sap_writes_exposed?"SAP writes EXPUESTAS":"SAP writes deshabilitadas";
+    $("status").innerHTML=
+      "<span class='"+(s.github_auth_configured?"ok":"warn")+"'>"+auth+"</span>"+
+      "<span class='"+(s.qas_runtime_enabled?"warn":"ok")+"'>"+qas+"</span>"+
+      "<span class='"+(s.openai_api_key_configured?"ok":"warn")+"'>"+llm+"</span>"+
+      "<span class='ok'>"+write+"</span>"+
+      "<span>Cache: "+s.github_cache_files+" archivos / "+s.github_cache_trees+" árboles</span>";
+  }catch(e){$("status").innerHTML="<span class='warn'>No se pudo leer el estado local</span>"}
+}
 async function consult(){
   const request=$("request").value.trim();
-  if(!request){$("answer").textContent="Ingresá una consulta.";return}
-  $("answer").textContent="Consultando…";
+  if(!request){showError("Ingresá una consulta.");return}
+  $("answer").textContent="Consultando…";$("consultButton").disabled=true;
   try{
     const body={request};
     if($("ticket").value.trim()) body.ticket_id=$("ticket").value.trim();
     const r=await fetch("/api/consult",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
     const data=await r.json();
-    if(!r.ok) throw new Error(data.error||"Error del agente");
+    if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
-    $("answer").textContent=result.answer||JSON.stringify(result,null,2);
+    const answer=normalizeAnswer(result.answer||"");\n    $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
     $("ticketPanels").style.display=isTicket?"block":"none";
-    function section(text,title,next){
-  const start=text.indexOf(title);
-  if(start<0)return "";
-  const body=text.slice(start+title.length);
-  const end=next?body.indexOf(next):-1;
-  return (end>=0?body.slice(0,end):body).trim();
-}
     $("confirmed").textContent=
-      section(result.answer||"","## Qué está confirmado","## Qué corresponde a nuestra implementación")+
-      "\n\n"+section(result.answer||"","## Qué corresponde a nuestra implementación","## Qué no está confirmado");
-    $("gaps").textContent=(result.traceability?.gaps||[]).join("\n")||"No hay gaps estructurados disponibles.";
-    $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n")||"No hay citas.";
-    const rels=result.ticket_relationships?.relationships||[];
+      extractSection(answer,"## Qué está confirmado",["## Qué corresponde a nuestra implementación","## Qué no está confirmado"])+
+      "\n\n"+extractSection(answer,"## Qué corresponde a nuestra implementación",["## Qué no está confirmado","## Evidencias"]);
+    $("gaps").textContent=(result.traceability?.gaps||[]).join("\n") || extractSection(answer,"## Qué no está confirmado",["## Evidencias","## Ticket"]) || "No hay gaps estructurados disponibles.";
+    $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n") || extractSection(answer,"## Evidencias",["## Ticket","## Próximos pasos"]) || "No hay citas.";
+    const rels=result.ticket_relationships?.relationships||result.relationships?.relationships||[];
     $("relations").textContent=rels.length
       ? rels.map(x=>x.source_id+" --"+x.relation_type+"--> "+x.target_id+" ["+x.certainty+"/"+x.status+"]").join("\n")
       : "No hay relaciones explícitamente documentadas para este ticket.";
@@ -128,9 +172,10 @@ async function consult(){
       plan:result.plan,citations:result.citations,uncited_evidence_ids:result.uncited_evidence_ids,
       relationships:result.ticket_relationships?.relationships||[]
     }});
-  }catch(e){$("answer").textContent="Error: "+e.message}
+  }catch(e){showError(e.message)}
+  finally{$("consultButton").disabled=false;loadStatus()}
 }
-renderHistory();
+loadStatus();renderHistory();
 </script>
 </body>
 </html>
