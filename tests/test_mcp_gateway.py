@@ -92,3 +92,27 @@ def test_mcp_evidence_has_explicit_external_priority():
     assert assessment.items[0].weight == 2 * 0.4
     assert assessment.items[0].supports is False
     assert assessment.items[0].certainty == "external_source"
+
+
+def test_gateway_search_resources_works_inside_active_event_loop(monkeypatch):
+    gateway = McpEvidenceGateway(McpGatewayConfig())
+
+    class FakeEvidence:
+        provider = "sap_devs"
+        operation = "search_resources"
+        content = ['{"count": 1, "results": [{"title": "ABAP"}]}']
+        certainty = "external_source"
+
+    async def fake_search(query):
+        return FakeEvidence()
+
+    monkeypatch.setattr(gateway, "_search_resources", fake_search)
+
+    async def invoke():
+        return gateway.search_resources("ABAP")
+
+    import asyncio
+
+    result = asyncio.run(invoke())
+    assert result
+    assert result[0].source_layer == "mcp"
