@@ -33,6 +33,7 @@ def test_local_app_http_health_and_consult(monkeypatch):
             assert status["agent"] == "ready"
             assert status["sap_writes_exposed"] is False
             assert status["qas_runtime_enabled"] is False
+            assert "openai_api_key_configured" in status
 
         payload = json.dumps({"request": "test"}).encode()
         request = urllib.request.Request(
