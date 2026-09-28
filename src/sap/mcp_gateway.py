@@ -65,7 +65,12 @@ class McpEvidenceGateway:
     def search_resources(self, query: str) -> tuple[UnifiedResult, ...]:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
+
         evidence = asyncio.run(self._search_resources(query.strip()))
+        if _has_zero_results(evidence.content):
+            return ()
+
+        rendered = _render_content(evidence.content)
         return (
             UnifiedResult(
                 path=f"mcp://{evidence.provider}/{evidence.operation}",
@@ -80,6 +85,23 @@ class McpEvidenceGateway:
                 certainty=evidence.certainty,
             ),
         )
+
+
+def _has_zero_results(content: object) -> bool:
+    items = content if isinstance(content, (list, tuple)) else [content]
+    for item in items:
+        if isinstance(item, str):
+            try:
+                item = json.loads(item)
+            except json.JSONDecodeError:
+                continue
+        if isinstance(item, dict):
+            if item.get("count") == 0 or item.get("total") == 0:
+                return True
+            results = item.get("results")
+            if isinstance(results, list) and not results:
+                return True
+    return False
 
 
 def _render_content(content: object) -> str:
