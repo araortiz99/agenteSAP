@@ -229,3 +229,23 @@ Conclusion states:
 The engine does not treat Standard vs Custom as a conflict. When both layers exist, it returns `requires_analysis` because functional comparison is required.
 
 Evidence retains provenance, source ID, knowledge classification, scope and certainty.
+
+
+### MVP 3.2 — Evidence Traceability
+
+Evidence can now be represented as a deterministic audit trace.
+
+Each evidence item receives a stable `EVD-...` identifier derived from provenance rather than retrieval order.
+
+A trace report preserves:
+
+- evidence identity;
+- source layer and source ID;
+- path;
+- knowledge classification;
+- certainty;
+- evidence role;
+- supporting and unresolved evidence IDs;
+- gaps and conflicts.
+
+The trace can be rendered as a human-readable audit artifact and is designed to become structured context for a future LLM without losing provenance.
