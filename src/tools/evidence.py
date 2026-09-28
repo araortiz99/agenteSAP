@@ -230,7 +230,10 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
 
     has_standard = "sap_standard" in retrieved_layers
     has_internal = "internal" in retrieved_layers
-    requires_analysis = has_standard and has_internal and not conflicts
+    # Any explicit or metadata conflict is a hard governance signal. A
+    # mixed-layer comparison also requires analysis, but conflicts must never
+    # downgrade that state back to False.
+    requires_analysis = bool(conflicts) or (has_standard and has_internal)
 
     if has_standard and has_internal:
         gaps.append(

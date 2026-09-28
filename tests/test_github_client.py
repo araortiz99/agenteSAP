@@ -69,3 +69,20 @@ def test_github_client_get_files_deduplicates_and_uses_cache():
         "contents/a.md?ref=feature%2Ftest",
         "contents/b.md?ref=feature%2Ftest",
     ]
+
+
+def test_github_rate_limit_model_and_auth_state():
+    from src.github.client import GitHubRateLimit, GitHubAPIError
+
+    client = GitHubClient("owner", "repo", token="secret")
+    assert client.authenticated is True
+
+    limit = GitHubRateLimit(limit=60, remaining=0, reset_epoch=1900000000)
+    error = GitHubAPIError(
+        "GitHub API rate limit exhausted.",
+        status_code=403,
+        rate_limit=limit,
+    )
+    assert error.status_code == 403
+    assert error.rate_limit.remaining == 0
+    assert error.rate_limit.reset_epoch == 1900000000
