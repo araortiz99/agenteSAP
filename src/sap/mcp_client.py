@@ -116,6 +116,14 @@ class SapMcpClient:
             raise PermissionError(
                 f"MCP tool '{tool_name}' is not advertised by the connected server"
             )
+        runtime_observation = self.target.observation_type in {
+            "runtime_observation",
+            "custom_runtime_observation",
+        }
+        if runtime_observation and descriptor.read_only_hint is not True:
+            raise PermissionError(
+                f"MCP runtime tool '{tool_name}' lacks an explicit read-only hint"
+            )
         if descriptor.read_only_hint is False:
             raise PermissionError(
                 f"MCP tool '{tool_name}' is not marked read-only by the server"
