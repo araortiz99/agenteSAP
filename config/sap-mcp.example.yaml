@@ -1,6 +1,11 @@
 # Example only. Never place credentials or client secrets here.
 #
-## Runtime configuration must be supplied through the local MCP client/provider.\n# The gateway is disabled by default; enable it explicitly in the local environment.\n# AGENTESAP_MCP_ENABLED=true\n# AGENTESAP_MCP_COMMAND=sap-devs\n# AGENTESAP_MCP_ARGS="mcp serve"\n# AGENTESAP_MCP_MAX_RESULTS=5
+# Runtime configuration must be supplied through the local MCP client/provider.
+# The gateway is disabled by default; enable it explicitly in the local environment.
+# AGENTESAP_MCP_ENABLED=true
+# AGENTESAP_MCP_COMMAND=sap-devs
+# AGENTESAP_MCP_ARGS="mcp serve"
+# AGENTESAP_MCP_MAX_RESULTS=5
 
 providers:
   sap_devs:
