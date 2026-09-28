@@ -16,9 +16,29 @@ class FakeResult:
         self.content = content
 
 
+class FakeTool:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.description = "read-only test tool"
+        self.inputSchema = {"type": "object"}
+        self.annotations = type(
+            "Annotations",
+            (),
+            {"readOnlyHint": True, "destructiveHint": False},
+        )()
+
+
+class FakeToolsResult:
+    def __init__(self) -> None:
+        self.tools = [FakeTool("read_test")]
+
+
 class FakeClient:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict]] = []
+
+    async def list_tools(self) -> FakeToolsResult:
+        return FakeToolsResult()
 
     async def call_tool(self, tool_name: str, arguments: dict) -> FakeResult:
         self.calls.append((tool_name, arguments))
@@ -164,3 +184,22 @@ def test_call_read_tool_classifies_runtime_observation_as_partial():
     assert evidence.observation_type == "runtime_observation"
     assert evidence.system == "S4QAS"
     assert evidence.landscape == "QAS"
+
+
+def test_list_tool_descriptors_preserves_readonly_annotations():
+    target = build_target(
+        "sap_mcp_server",
+        command="sap-mcp-server",
+        allowed_tools=("read_test",),
+        metadata={"landscape": "QAS"},
+    )
+    client = SapMcpClient(target)
+    client._client = FakeClient()
+
+    descriptors = asyncio.run(client.list_tool_descriptors())
+
+    assert len(descriptors) == 1
+    assert descriptors[0].name == "read_test"
+    assert descriptors[0].read_only_hint is True
+    assert descriptors[0].destructive_hint is False
+    assert descriptors[0].input_schema == {"type": "object"}
