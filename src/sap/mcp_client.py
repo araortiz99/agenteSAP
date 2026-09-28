@@ -20,6 +20,15 @@ class McpServerInfo:
     version: str
 
 
+@dataclass(frozen=True)
+class McpToolDescriptor:
+    """Safe, non-executing description returned by MCP tools/list."""
+
+    name: str
+    description: str
+    input_schema: object
+
+
 class SapMcpClient:
     """Async read-only client for an MCP stdio target."""
 
@@ -58,6 +67,18 @@ class SapMcpClient:
         result = await self._require_connected().list_tools()
         return tuple(tool.name for tool in result.tools)
 
+    async def list_tool_descriptors(self) -> tuple[McpToolDescriptor, ...]:
+        """Return the provider tool catalog without executing any tool."""
+        result = await self._require_connected().list_tools()
+        return tuple(
+            McpToolDescriptor(
+                name=tool.name,
+                description=getattr(tool, "description", "") or "",
+                input_schema=getattr(tool, "inputSchema", None),
+            )
+            for tool in result.tools
+        )
+
     def server_info(self) -> McpServerInfo | None:
         info = self._require_connected().server_info
         if info is None:
@@ -75,6 +96,16 @@ class SapMcpClient:
             raise PermissionError(
                 f"MCP tool '{tool_name}' is not allowed for provider "
                 f"'{self.target.provider}'"
+            )
+
+        descriptors = await self.list_tool_descriptors()
+        descriptor = next(
+            (item for item in descriptors if item.name == tool_name),
+            None,
+        )
+        if descriptor is None:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not advertised by the connected server"
             )
 
         result = await self._require_connected().call_tool(
