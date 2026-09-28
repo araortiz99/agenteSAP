@@ -6,6 +6,7 @@ Authentication is supplied through the GITHUB_TOKEN environment variable.
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import urllib.error
@@ -29,6 +30,13 @@ class GitHubClient:
         self.repo = repo
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.api_version = api_version
+        # A single agent execution performs several retrieval passes over the
+        # same ref. Keep an in-memory cache so repeated searches do not repeat
+        # identical GitHub API calls. The cache is scoped to this client
+        # instance and therefore never becomes persistent agent memory.
+        self._repository_cache: dict[str, dict] = {}
+        self._tree_cache: dict[str, list[dict]] = {}
+        self._file_cache: dict[tuple[str, str], str] = {}
 
     def _request(self, path: str) -> object:
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/{path.lstrip('/')}"
@@ -53,15 +61,31 @@ class GitHubClient:
         except urllib.error.URLError as exc:
             raise GitHubAPIError(f"GitHub API unavailable: {exc.reason}") from exc
 
-    def get_repository(self) -> dict:
-        return self._request("")  # type: ignore[return-value]
+    def get_repository(self, ref: str = "") -> dict:
+        cache_key = ref
+        if cache_key in self._repository_cache:
+            return self._repository_cache[cache_key]
+
+        data = self._request("")
+        repository = data  # type: ignore[assignment]
+        self._repository_cache[cache_key] = repository
+        return repository
 
     def get_tree(self, ref: str = "main") -> list[dict]:
+        if ref in self._tree_cache:
+            return self._tree_cache[ref]
+
         encoded_ref = urllib.parse.quote(ref, safe="")
         data = self._request(f"git/trees/{encoded_ref}?recursive=1")
-        return data.get("tree", [])  # type: ignore[union-attr]
+        tree = data.get("tree", [])  # type: ignore[union-attr]
+        self._tree_cache[ref] = tree
+        return tree
 
     def get_file(self, path: str, ref: str = "main") -> str:
+        cache_key = (ref, path)
+        if cache_key in self._file_cache:
+            return self._file_cache[cache_key]
+
         encoded_path = urllib.parse.quote(path, safe="/")
         encoded_ref = urllib.parse.quote(ref, safe="")
         data = self._request(f"contents/{encoded_path}?ref={encoded_ref}")
@@ -69,6 +93,6 @@ class GitHubClient:
         if not isinstance(data, dict) or data.get("type") != "file":
             raise GitHubAPIError(f"Repository path is not a file: {path}")
 
-        import base64
-
-        return base64.b64decode(data["content"]).decode("utf-8")
+        content = base64.b64decode(data["content"]).decode("utf-8")
+        self._file_cache[cache_key] = content
+        return content
