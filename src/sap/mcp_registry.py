@@ -23,6 +23,8 @@ class ProviderProfile:
     transport: McpTransport
     default_read_tools: tuple[str, ...]
     observation_type: McpObservationType
+    default_command: str | None = None
+    default_args: tuple[str, ...] = ()
 
 
 PROVIDERS: dict[McpProvider, ProviderProfile] = {
@@ -40,6 +42,8 @@ PROVIDERS: dict[McpProvider, ProviderProfile] = {
             "search_tutorials",
             "search_learning_journeys",
         ),
+        default_command="sap-devs",
+        default_args=("mcp", "serve"),
     ),
     "sap_mcp_server": ProviderProfile(
         provider="sap_mcp_server",
@@ -73,11 +77,17 @@ def build_target(
     metadata: dict[str, str] | None = None,
 ) -> McpTarget:
     definition = get_provider(provider)
+    resolved_command = (
+        definition.default_command if command is None else command
+    )
+    resolved_args = (
+        definition.default_args if not args else args
+    )
     target = McpTarget(
         provider=provider,
         transport=definition.transport,
-        command=command,
-        args=args,
+        command=resolved_command,
+        args=resolved_args,
         url=url,
         allowed_tools=(
             definition.default_read_tools
