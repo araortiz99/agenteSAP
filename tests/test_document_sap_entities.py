@@ -17,3 +17,11 @@ def test_entity_limit_is_bounded():
     s=DocumentSource("s","x.txt","MIGO MARA MARC MARD EKKO EKPO BKPF BSEG ACDOCA")
     c=chunk_document(parse_text_structure(s))[0]
     assert len(extract_sap_entities(chunk_to_record(c,s.filename),max_entities=2))==2
+
+
+def test_document_links_are_bounded():
+    from src.document.links import document_links
+    class E:
+        value="MARA"
+        entity_type="TABLE"
+    assert document_links("DOC-1",(E(),),"R")[0][1]=="MARA"
