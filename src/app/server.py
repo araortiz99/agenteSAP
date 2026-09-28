@@ -14,7 +14,7 @@ import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from src.agent.router import run_agent
 from src.llm.client import LLMConfigurationError
@@ -215,7 +215,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             return
         object_prefix = "/api/object/"
         if path.startswith(object_prefix):
-            object_id = path[len(object_prefix):].strip()
+            object_id = unquote(path[len(object_prefix):]).strip()
             if not object_id:
                 self._send_json(400, {"error": "object_id is required"})
                 return
