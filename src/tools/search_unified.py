@@ -117,10 +117,14 @@ def _merge_evidence_results(
     eligible_mcp = [
         item
         for item in mcp
-        if item.knowledge_type == "runtime_observation"
-        and "runtime" in requested_layers
-        or item.knowledge_type != "runtime_observation"
-        and "external" in requested_layers
+        if (
+            item.knowledge_type == "runtime_observation"
+            and "runtime" in requested_layers
+        )
+        or (
+            item.knowledge_type != "runtime_observation"
+            and "external" in requested_layers
+        )
     ]
     remaining = sorted(
         standard + internal + eligible_mcp,
