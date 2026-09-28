@@ -22,6 +22,7 @@ from src.investigation.correlation import correlate_evidence
 from src.investigation.conclusion import build_conclusion
 from src.investigation.evidence_state import EvidenceState
 from src.investigation.hypothesis import build_hypotheses
+from src.investigation.report import build_report
 from src.investigation.contracts import (
     Investigation,
     InvestigationEntity,
@@ -352,7 +353,7 @@ def investigate(
     investigation.conclusion_reason = decision.reason
     investigation.conclusion_evidence_ids = decision.evidence_ids
     investigation.conclusion = decision.statement
-
+    investigation.report = build_report(\n        case_id=investigation.case_id,\n        intent=investigation.intent,\n        evidence=investigation.evidence_collected,\n        states=investigation.evidence_states,\n        hypotheses=investigation.hypothesis_records,\n        findings=investigation.findings,\n        decision=decision,\n        missing_information=investigation.evidence_missing,\n        provenance=investigation.provenance,\n    )\n
     investigation.confidence, investigation.confidence_reason = _confidence(
         investigation.evidence_collected,
         investigation.evidence_missing,
