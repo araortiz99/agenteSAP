@@ -12,7 +12,11 @@ from src.tools.evidence import assess_evidence
 from src.tools.reason import reason_from_evidence
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
 
-from src.investigation.capabilities import discover_capabilities, match_capabilities
+from src.investigation.capabilities import (
+    discover_capabilities,
+    match_capabilities,
+    validate_query_arguments,
+)
 from src.investigation.case_id import build_case_id
 from src.investigation.correlation import correlate_evidence
 from src.investigation.contracts import (
@@ -207,7 +211,11 @@ def investigate(
                 investigation.evidence_missing.append("QAS allowlist validation failed")
             else:
                 capabilities = discover_capabilities(gateway)
-                selected = match_capabilities(plan.required_evidence, capabilities)
+                selected = match_capabilities(
+                    plan.required_evidence,
+                    capabilities,
+                    required_entities=plan.required_entities,
+                )
         except (PermissionError, ValueError, OSError) as exc:
             investigation.stop_reason = "missing_capability"
             investigation.evidence_missing.append(f"QAS capability discovery unavailable: {exc}")
@@ -220,9 +228,10 @@ def investigate(
         f"capability:{item}" for item in missing_capabilities
     )
 
+    runtime_steps = 0
     if gateway is not None and not investigation.stop_reason and selected:
         for evidence_type in plan.required_evidence:
-            if len(investigation.steps) > max_steps:
+            if runtime_steps >= max_steps:
                 investigation.stop_reason = "max_steps_reached"
                 break
             capability = selected.get(evidence_type)
@@ -234,8 +243,19 @@ def investigate(
                     f"query_arguments:{evidence_type}:{capability.name}"
                 )
                 continue
+            valid_arguments, validation_reason = validate_query_arguments(
+                capability,
+                arguments,
+                entities,
+            )
+            if not valid_arguments:
+                investigation.evidence_missing.append(
+                    f"query_arguments_invalid:{evidence_type}:{capability.name}:{validation_reason}"
+                )
+                continue
             try:
                 runtime = gateway.read_runtime(capability.name, arguments)
+                runtime_steps += 1
             except (PermissionError, ValueError, OSError) as exc:
                 investigation.evidence_missing.append(
                     f"runtime_call:{evidence_type}:{capability.name}:{exc}"
