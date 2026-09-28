@@ -1,15 +1,23 @@
 ---
+source_type: SAP_STANDARD
+source_system: SAP_HELP
 knowledge_type: standard
 knowledge_scope: global
-source_id: SAP-HELP-S4-MM-2025-MATERIAL-MASTER
-source_type: sap_documentation
-origin: sap
+source_id: SAP-HELP-S4-MM-2023-MATERIAL-MASTER
 product: SAP S/4HANA
-module: MM
-release: "2025 FPS01"
+component: MM
+release: "2023 Latest"
+version: "2023 Latest"
 language: en
 certainty: confirmed
 status: validated
+authority_level: official
+metadata_origin: source
+help_url: https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/f7fddfe4caca43dd967ac4c9ce6a70e4/1eab9ca4-c056-42c6-a723-31a89c483118.html
+repository: null
+branch: null
+commit_sha: null
+license: null
 ---
 
 # Material Master
@@ -26,6 +34,6 @@ This document records SAP Standard concepts only. It does not assert that a spec
 
 ## Source
 
-SAP Help Portal — Product Master, SAP S/4HANA on-premise 2025 FPS01.
+SAP Help Portal — Product Master / Material Master, SAP S/4HANA on-premise 2023 Latest.
 
-Source URL: https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/b724ba53422bb54ce10000000a174cb4.html
+Source URL: https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/f7fddfe4caca43dd967ac4c9ce6a70e4/1eab9ca4-c056-42c6-a723-31a89c483118.html
