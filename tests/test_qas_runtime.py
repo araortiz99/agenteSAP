@@ -138,3 +138,15 @@ def test_qas_runtime_query_tool_must_be_allowlisted(monkeypatch):
         assert "query tool must be explicitly allowlisted" in str(exc)
     else:
         raise AssertionError("query tool outside the allowlist must be rejected")
+
+
+def test_qas_runtime_query_tool_is_optional_for_manual_read_calls(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "read_table")
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_QUERY_TOOL", raising=False)
+
+    config = SapQasRuntimeConfig.from_env()
+
+    assert config.allowed_tools == ("read_table",)
+    assert config.query_tool is None
