@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from src.github.client import GitHubClient
 from src.agent.consultant import ConsultationResult, consult
-from src.llm.client import LLMClient
+from src.llm.client import LLMClient, OpenAIResponsesClient
 from src.tools.analyze import AnalysisResult, analyze
 from src.tools.generate_document import GeneratedDocument, generate_document
 from src.tools.get_ticket import TicketContext, get_ticket
@@ -221,9 +221,8 @@ def run_agent(
     plan = route_intent(request)
 
     if plan.intent == "consult":
-        if llm is None:
-            raise IntentRoutingError("LLM client is required for consult intent.")
-        result = consult(client, request, llm, ref=ref)
+        llm_client = llm or OpenAIResponsesClient.from_env()
+        result = consult(client, request, llm_client, ref=ref)
     elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
     elif plan.intent == "get_ticket":
