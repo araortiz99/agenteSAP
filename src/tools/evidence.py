@@ -42,6 +42,7 @@ class EvidenceItem:
     weight: float
     supports: bool
     reason: str
+    provenance: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -83,6 +84,7 @@ def _item(result: UnifiedResult) -> EvidenceItem:
         weight=weight,
         supports=supports,
         reason=reason,
+        provenance=result.provenance,
     )
 
 
