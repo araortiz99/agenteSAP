@@ -131,7 +131,7 @@ function explainError(data){
 async function loadStatus(){
   try{
     const r=await fetch("/api/status");const s=await r.json();
-    const auth=s.github_auth_configured?"GitHub autenticado":"GitHub sin token";
+    const auth=s.github_token_configured?"GitHub token configurado":"GitHub sin token";
     const qas=s.qas_runtime_enabled?"QAS runtime habilitado":"QAS runtime deshabilitado";
     const llm=s.openai_api_key_configured?"LLM configurado":"LLM sin API key";
     const write=s.sap_writes_exposed?"SAP writes EXPUESTAS":"SAP writes deshabilitadas";
