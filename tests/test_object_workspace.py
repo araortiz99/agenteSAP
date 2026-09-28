@@ -92,7 +92,7 @@ def test_runtime_payload_only_marks_observed_from_runtime_evidence():
 
 def test_runtime_payload_without_runtime_evidence_is_not_observed():
     payload = _runtime_payload(_context())
-    assert payload["status"] == "not_observed"
+    assert payload["status"] == "disabled"
     assert payload["landscape"] == "QAS"
 
 
