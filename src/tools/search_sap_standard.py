@@ -30,6 +30,15 @@ def _terms(query: str) -> list[str]:
     ]
 
 
+def _load_contents(client: GitHubClient, paths: list[str], ref: str) -> dict[str, str]:
+    """Use concurrent transport when available; keep test-double compatibility."""
+    get_files = getattr(client, "get_files", None)
+    if callable(get_files):
+        return get_files(paths, ref=ref)
+
+    return {path: client.get_file(path, ref=ref) for path in paths}
+
+
 def search_sap_standard(
     client: GitHubClient,
     query: str,
@@ -51,7 +60,7 @@ def search_sap_standard(
         if item.get("path", "").startswith(ROOT)
         and item.get("path", "").endswith(".md")
     ]
-    contents = client.get_files(paths, ref=ref)
+    contents = _load_contents(client, paths, ref)
 
     results: list[SAPStandardResult] = []
     for path in paths:
