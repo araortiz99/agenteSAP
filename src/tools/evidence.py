@@ -40,10 +40,10 @@ class EvidenceItem:
     knowledge_type: str
     knowledge_scope: str
     certainty: str
-    authority: str
     weight: float
     supports: bool
     reason: str
+    authority: str = "reference"
     provenance: tuple[tuple[str, str], ...] = ()
 
 
