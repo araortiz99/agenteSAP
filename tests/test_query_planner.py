@@ -33,3 +33,14 @@ def test_empty_query_rejected():
     except ValueError:
         return
     raise AssertionError("empty query must raise ValueError")
+
+
+def test_max_steps_is_explicit_and_enforced():
+    plan = decompose_query("¿Por qué una entrada no genera documento contable?", max_steps=2)
+    assert plan.max_steps == 2
+    assert len(plan.subqueries) == 2
+
+
+def test_query_whitespace_is_normalized():
+    plan = decompose_query("  ¿Qué   es   MIRO?  ")
+    assert plan.original_query == "¿Qué es MIRO?"
