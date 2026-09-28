@@ -40,7 +40,7 @@ class EvidenceItem:
     knowledge_type: str
     knowledge_scope: str
     certainty: str
-    authority: str = "reference"
+    authority: str
     weight: float
     supports: bool
     reason: str
