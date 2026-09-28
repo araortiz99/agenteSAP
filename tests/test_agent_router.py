@@ -181,3 +181,29 @@ def test_run_agent_unified_search():
     )
     assert response.plan.intent == "search_unified"
     assert isinstance(response.result, UnifiedSearchResult)
+
+
+def test_route_evidence_reasoning():
+    plan = route_intent("Evaluá la evidencia y decime qué está confirmado y qué falta sobre material master")
+    assert plan.intent == "evidence_reasoning"
+    assert plan.capabilities == (
+        "search_unified",
+        "assess_evidence",
+        "reason_from_evidence",
+    )
+
+
+def test_run_agent_evidence_reasoning():
+    client = AgentFakeGitHubClient()
+    response = run_agent(
+        client,
+        "Evaluá la evidencia y decime qué está confirmado y qué falta sobre material master",
+    )
+    assert response.plan.intent == "evidence_reasoning"
+    assert response.result.conclusion_status in {
+        "requires_analysis",
+        "supported",
+        "partial",
+        "insufficient",
+        "conflict",
+    }
