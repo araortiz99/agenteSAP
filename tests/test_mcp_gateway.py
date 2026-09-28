@@ -89,4 +89,6 @@ def test_mcp_evidence_has_explicit_external_priority():
             )(),
         )
     )
-    assert assessment.items[0].weight == 2 * 0.0
+    assert assessment.items[0].weight == 2 * 0.4
+    assert assessment.items[0].supports is False
+    assert assessment.items[0].certainty == "external_source"
