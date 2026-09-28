@@ -155,3 +155,11 @@ def test_gateway_maps_runtime_observation_metadata(monkeypatch):
     assert results[0].knowledge_scope == "runtime"
     assert results[0].source_id == "MARA"
     assert results[0].certainty == "partial"
+    assert dict(results[0].provenance) == {
+        "provider": "sap_mcp_server",
+        "operation": "read_table",
+        "system": "S4QAS",
+        "landscape": "QAS",
+        "object_id": "MARA",
+        "observation_type": "runtime_observation",
+    }
