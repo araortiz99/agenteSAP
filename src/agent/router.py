@@ -216,13 +216,23 @@ def run_agent(
     date: str = "",
     author: str = "",
     llm: LLMClient | None = None,
+    ticket_id: str | None = None,
+    max_results: int = 8,
 ) -> AgentResponse:
     """Route and execute the minimum safe capability chain for a request."""
+    if max_results < 1:
+        raise ValueError("max_results must be greater than zero")
     plan = route_intent(request)
+    if ticket_id:
+        plan = AgentPlan(
+            intent=plan.intent,
+            ticket_id=ticket_id.strip(),
+            capabilities=plan.capabilities,
+        )
 
     if plan.intent == "consult":
         llm_client = llm or OpenAIResponsesClient.from_env()
-        result = consult(client, request, llm_client, ref=ref, ticket_id=plan.ticket_id)
+        result = consult(client, request, llm_client, ref=ref, ticket_id=plan.ticket_id, max_results=max_results)
     elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
     elif plan.intent == "get_ticket":
