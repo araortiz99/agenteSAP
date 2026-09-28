@@ -92,6 +92,8 @@ class McpEvidenceGateway:
         permission to invoke any discovered tool.
         """
         config = SapQasRuntimeConfig.from_env()
+        if not config.enabled:
+            raise PermissionError("QAS runtime catalog inspection is disabled")
         if config.landscape != "QAS":
             raise ValueError("runtime catalog inspection is restricted to QAS")
         if config.scope != "mcp_readonly":
@@ -156,6 +158,18 @@ class McpEvidenceGateway:
     async def _discover_tools(self) -> tuple[McpToolDescriptor, ...]:
         async with SapMcpClient(self.target) as client:
             return await client.list_tool_descriptors()
+
+    def runtime_tool_catalog(self) -> tuple[dict[str, object], ...]:
+        """Discover QAS MCP tools without executing any SAP tool."""
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("runtime catalog requires sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("runtime catalog is restricted to QAS")
+        return _run_async(self._list_runtime_tools())
+
+    async def _list_runtime_tools(self) -> tuple[dict[str, object], ...]:
+        async with SapMcpClient(self.target) as client:
+            return await client.tool_catalog()
 
     def inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
         """Inspect QAS MCP tool metadata without invoking any tool."""
