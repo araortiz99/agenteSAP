@@ -86,7 +86,7 @@ class McpEvidenceGateway:
                 source_layer="mcp",
                 match_type="mcp",
                 source_id=(
-                    evidence.object_id
+                    getattr(evidence, "object_id", None)
                     or f"{evidence.provider}:{evidence.operation}"
                 ),
                 knowledge_type=(
