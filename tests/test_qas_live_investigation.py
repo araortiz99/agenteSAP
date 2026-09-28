@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from src.agent.cli import main
+from src.github.client import GitHubClient
 from src.investigation.engine import investigate
 
 
@@ -15,12 +15,16 @@ def test_real_qas_consultative_investigation():
         "AGENTESAP_QAS_LIVE_INVESTIGATION_QUERY",
         "¿Por qué el material 100123 tiene stock diferente al esperado en el centro 5023?",
     )
-    result = investigate(None, question, max_steps=5)
+    token = os.getenv("GITHUB_TOKEN")
+    assert token, "GITHUB_TOKEN is required for Knowledge retrieval"
+    client = GitHubClient(os.getenv("GITHUB_OWNER", "araortiz99"), os.getenv("GITHUB_REPO", "agenteSAP"), token=token)
+    result = investigate(client, question, max_steps=5)
     assert result.stop_reason != "missing_entity"
     assert result.case_id.startswith("INV-")
-    assert all(item.landscape == "QAS" for item in result.evidence_collected)
-    assert all(item.provider == "sap_mcp_server" for item in result.evidence_collected)
-    assert all(item.provenance for item in result.evidence_collected)
+    runtime = [item for item in result.evidence_collected if item.landscape == "QAS"]
+    assert runtime, "real QAS investigation must collect runtime evidence"
+    assert all(item.provider == "sap_mcp_server" for item in runtime)
+    assert all(item.provenance for item in runtime)
     assert result.confidence in {"HIGH", "MEDIUM", "LOW"}
 
 
