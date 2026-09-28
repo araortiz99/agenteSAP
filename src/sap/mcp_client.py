@@ -94,6 +94,10 @@ class SapMcpClient:
             source=f"MCP provider: {self.target.provider}",
             system=self.target.metadata.get("system"),
             landscape=self.target.metadata.get("landscape"),
-            certainty="runtime_observation",
+            certainty="runtime_observation"
+            if self.target.observation_type
+            in {"runtime_observation", "custom_runtime_observation"}
+            else "external_source",
+            observation_type=self.target.observation_type,
             provenance={"transport": self.target.transport},
         )
