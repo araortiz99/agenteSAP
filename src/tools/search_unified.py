@@ -73,7 +73,7 @@ def _standard_result(result: SAPStandardResult) -> UnifiedResult:
         matched_terms=result.matched_terms,
         content=result.content,
         source_layer="sap_standard",
-        match_type="content",
+        match_type=result.match_type,
         source_id=_evidence_source_id(metadata),
         knowledge_type=metadata.get("knowledge_type", "standard"),
         knowledge_scope=metadata.get("knowledge_scope", "global"),

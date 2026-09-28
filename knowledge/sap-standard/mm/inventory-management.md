@@ -1,18 +1,25 @@
 ---
+source_type: SAP_STANDARD
+source_system: SAP_HELP
 knowledge_id: sap-s4hana-2025-mm-inventory-management
 knowledge_type: standard
 knowledge_scope: global
 origin: sap
-source_type: sap_documentation
 product: SAP S/4HANA
-product_version: 2025 FPS01
-module: MM-IM
+product_version: "2025 FPS01"
+version: "2025 FPS01"
+component: MM-IM
 topic: Inventory Management and Inventory
+language: en
 certainty: confirmed
 status: active
-date: 2026-09-27
-author: agenteSAP
-source_url: https://help.sap.com/docs/SAP_S4HANA_ON-PREMI-SE/91b21005dded4984bcccf4a69ae1300c
+authority_level: official
+metadata_origin: source
+help_url: https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/742e46e570984d9aa74e468838f6e1ff.html
+repository: null
+branch: null
+commit_sha: null
+license: null
 ---
 
 # Inventory Management and Inventory
@@ -47,4 +54,4 @@ La fuente oficial identificada corresponde a la documentación de SAP S/4HANA on
 SAP Help Portal — SAP S/4HANA on-premise, Inventory Management and Inventory.
 
 URL oficial:
-https://help.sap.com/docs/SAP_S4HANA_ON-PREMI-SE/91b21005dded4984bcccf4a69ae1300c
+https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/742e46e570984d9aa74e468838f6e1ff.html
