@@ -196,15 +196,13 @@ def _direct_results(client, query, max_results, ref):
 def _with_retrieval_patch():
     import src.agent.consultant as module
     import src.tools.knowledge_context as context_module
-    original = (module.search_unified, context_module.search_unified)
-    module.search_unified = _direct_results
-    context_module.search_unified = _direct_results
-    return (module, context_module), original
+    import src.tools.entity_resolution as entity_module
+    original = (\n        module.search_unified,\n        context_module.search_unified,\n        entity_module.search_knowledge,\n        entity_module.search_sap_standard,\n    )\n    module.search_unified = _direct_results\n    context_module.search_unified = _direct_results\n\n    def _internal(client, query, max_results=8, ref="main"):\n        return tuple(\n            SearchResult(\n                path=path,\n                score=1.0,\n                matched_terms=tuple(query.split()),\n                content=content,\n                match_type="content",\n            )\n            for path, content in client.files.items()\n            if not path.startswith("knowledge/sap-standard")\n        )[:max_results]\n\n    def _standard(client, query, max_results=8, ref="main"):\n        return tuple(\n            SearchResult(\n                path=path,\n                score=1.0,\n                matched_terms=tuple(query.split()),\n                content=content,\n                match_type="content",\n            )\n            for path, content in client.files.items()\n            if path.startswith("knowledge/sap-standard")\n        )[:max_results]\n\n    entity_module.search_knowledge = _internal\n    entity_module.search_sap_standard = _standard\n    return (module, context_module, entity_module), original
 
 
 def test_mvp54_canonical_31426_end_to_end():
     client = Canonical31426Client()
-    (module, context_module), original = _with_retrieval_patch()
+    (module, context_module, entity_module), original = _with_retrieval_patch()
     try:
         llm = E2E31426LLM()
         request = (
@@ -238,7 +236,7 @@ def test_mvp54_canonical_31426_end_to_end():
         assert "K1" in llm.user_prompt
         assert "K4" in llm.user_prompt
     finally:
-        module.search_unified, context_module.search_unified = original
+        (module.search_unified, context_module.search_unified, entity_module.search_knowledge, entity_module.search_sap_standard) = original
 
 
 def test_mvp54_rejects_missing_ticket_reference():
