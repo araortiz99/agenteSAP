@@ -133,3 +133,14 @@ def test_publish_creates_branch_commit_and_pr_without_merge():
         "pr",
     ]
     assert all(call[0] != "merge" for call in writer.calls)
+
+
+def test_metadata_gate_accepts_utf8_bom():
+    proposal = build_change_proposal(
+        path="knowledge/test.md",
+        content="﻿" + VALID,
+        base_ref="main",
+        branch="docs/knowledge-test",
+    )
+    assert proposal.operation == "create"
+    assert proposal.new_version == "1.0"
