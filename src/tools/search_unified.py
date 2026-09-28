@@ -33,6 +33,16 @@ class UnifiedSearchResult:
     mcp: tuple[UnifiedResult, ...] = ()
 
 
+def unified_result_key(result: UnifiedResult) -> tuple[str, str, str, tuple[tuple[str, str], ...]]:
+    """Return a provenance-aware identity for a retrieved evidence record."""
+    return (
+        result.source_layer,
+        result.path,
+        result.source_id or "",
+        tuple(sorted(result.provenance)),
+    )
+
+
 def _evidence_source_id(metadata: dict[str, str]) -> str | None:
     """Return the provenance source without confusing it with entity source_id."""
     return metadata.get("evidence_source_id") or metadata.get("source_id")
