@@ -17,6 +17,7 @@ class ContextRelationship:
     hop: int
 
 
+
 @dataclass(frozen=True)
 class ContextEvidence:
     result: UnifiedResult
@@ -288,7 +289,8 @@ def render_knowledge_context(
             f"- hop={item.hop} {relation.source_type}:{relation.source_id} "
             f"--{relation.relation_type}--> "
             f"{relation.target_type}:{relation.target_id} "
-            f"(path={relation.path})"
+            f"(certainty={relation.certainty}, status={relation.status}, "
+            f"path={relation.path})"
         )
 
     lines.extend(["", "### Evidence"])
