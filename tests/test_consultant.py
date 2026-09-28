@@ -135,6 +135,9 @@ def test_build_context_contains_gaps_and_conflicts():
 
     assert "Gaps" in context
     assert "Conflicts" in context
+    assert "Source selection requirement" in context
+    assert "Requested evidence layers: sap_standard, internal" in context
+    assert "This is a retrieval requirement, not evidence or a conclusion." in context
 
 
 class InvalidStructureLLM(FakeLLM):
