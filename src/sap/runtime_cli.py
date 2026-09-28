@@ -72,7 +72,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "readiness-qas":
-        config = SapQasRuntimeConfig.from_env()
+        try:
+            config = SapQasRuntimeConfig.from_env()
+            config_error = None
+        except ValueError as exc:
+            config = SapQasRuntimeConfig(
+                command="",
+                args=(),
+                allowed_tools=(),
+                landscape="",
+                scope="",
+                system=None,
+                discovery_only=False,
+                enabled=True,
+            )
+            config_error = str(exc)
+
         report = {
             "enabled": config.enabled,
             "landscape": config.landscape,
@@ -81,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             "allowlist_configured": bool(config.allowed_tools),
             "command_configured": bool(config.command),
             "runtime_ready": False,
-            "reason": "live MCP catalog not verified",
+            "reason": config_error or "live MCP catalog not verified",
         }
         if config.landscape != "QAS":
             report["reason"] = "landscape must be QAS"
