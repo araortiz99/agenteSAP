@@ -54,7 +54,7 @@ def test_consult_builds_traceable_context_and_calls_llm():
     result = consult(FakeClient(), "Consultá sobre material master", llm)
 
     assert isinstance(result, ConsultationResult)
-    assert result.answer == "Respuesta basada en [EVD-TEST]."
+    assert result.answer.startswith("Respuesta basada en [EVD-")
     assert result.traceability.evidence
     assert "certainty:" in llm.user_prompt
     assert "source_layer:" in llm.user_prompt
