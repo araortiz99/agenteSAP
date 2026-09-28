@@ -1,0 +1,37 @@
+# Example only. Never place credentials or client secrets here.
+#
+# Runtime configuration must be supplied through the local MCP client/provider.
+
+providers:
+  sap_devs:
+    enabled: true
+    transport: stdio
+    command: sap-devs
+    args:
+      - mcp
+      - serve
+    allowed_tools:
+      - list_packs
+      - get_context
+      - search_resources
+      - get_known_errors
+      - get_samples
+      - search_tutorials
+      - search_learning_journeys
+    read_only: true
+
+  sap_mcp_server:
+    enabled: false
+    transport: stdio
+    command: sap-mcp-server
+    args: []
+    # Runtime credentials belong in the provider's local connections.json.
+    allowed_tools: []
+    read_only: true
+
+  abap_ai:
+    enabled: false
+    transport: streamable_http
+    url: "https://example.invalid/mcp"
+    allowed_tools: []
+    read_only: true
