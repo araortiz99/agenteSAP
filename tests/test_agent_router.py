@@ -64,7 +64,29 @@ class FakeLLM:
     model = "fake"
 
     def generate(self, *, system_prompt, user_prompt):
-        return "respuesta"
+        import re
+
+        evidence_match = re.search(r"(EVD-[A-Z0-9]+)", user_prompt)
+        ticket_match = re.search(r"(TKT-[A-Z0-9]+)", user_prompt)
+        evidence_id = evidence_match.group(1) if evidence_match else "EVD-TEST"
+        ticket_id = ticket_match.group(1) if ticket_match else "TKT-TEST"
+
+        return (
+            "## Resumen\n"
+            "Respuesta de prueba basada en la evidencia recuperada.\n\n"
+            "## Qué está confirmado\n"
+            f"Existe evidencia recuperada [{evidence_id}].\n\n"
+            "## Qué corresponde a nuestra implementación\n"
+            f"El contexto interno recuperado está referenciado [{evidence_id}].\n\n"
+            "## Qué no está confirmado\n"
+            "La prueba no establece hechos adicionales fuera de la evidencia recuperada.\n\n"
+            "## Evidencias\n"
+            f"[{evidence_id}]\n\n"
+            "## Ticket\n"
+            f"Contexto del ticket [{ticket_id}].\n\n"
+            "## Próximos pasos\n"
+            "Validar la información pendiente contra la evidencia disponible."
+        )
 
 def test_route_analyze_ticket_31426_builds_capability_plan():
     plan = route_intent("Analizá el ticket 31426")
@@ -77,6 +99,17 @@ def test_route_analyze_ticket_31426_builds_capability_plan():
         "analyze",
     )
 
+
+
+
+def test_route_rich_ticket_analysis_to_consultant():
+    plan = route_intent(
+        "Analizá el ticket 31426 y separá hechos confirmados, evidencias, "
+        "qué corresponde a nuestra implementación y próximos pasos."
+    )
+    assert plan.intent == "consult"
+    assert plan.ticket_id == "31426"
+    assert "consult_llm" in plan.capabilities
 
 def test_run_agent_executes_analysis_chain_without_manual_capability_calls():
     client = AgentFakeGitHubClient()
@@ -133,35 +166,34 @@ def test_route_rejects_empty_request():
         route_intent("   ")
 
 
-def test_realistic_multi_step_request_routes_to_analysis_chain():
+def test_realistic_multi_step_request_routes_to_consultant():
     client = AgentFakeGitHubClient()
     request = (
         "Revisá el ticket 31426, buscá qué objetos SAP están relacionados "
         "y preparame un análisis indicando qué está confirmado y qué información falta."
     )
 
-    response = run_agent(client, request)
+    response = run_agent(client, request, llm=FakeLLM())
 
-    assert response.plan.intent == "analyze_ticket"
+    assert response.plan.intent == "consult"
     assert response.plan.ticket_id == "31426"
     assert response.plan.capabilities == (
-        "get_ticket",
-        "get_related_knowledge",
-        "analyze",
+        "search_unified",
+        "assess_evidence",
+        "reason_from_evidence",
+        "build_traceability",
+        "consult_llm",
     )
 
+    from src.agent.consultant import ConsultationResult
+
     result = response.result
-    assert isinstance(result, AnalysisResult)
-    assert result.ticket_id == "31426"
-    assert result.facts
-    assert result.relationships.relationships
-    assert any(
-        relation.target_id == "ZMM_IMX_0004"
-        for relation in result.relationships.relationships
-    )
-    assert result.hypotheses == ()
-    assert result.missing_information == ()
-    assert "must not be inferred" in result.conclusion
+    assert isinstance(result, ConsultationResult)
+    assert result.ticket_context
+    assert result.ticket_context[0].ticket_id == "31426"
+    assert result.answer.startswith("## Resumen")
+    assert result.traceability.evidence
+    assert result.citations
 
 
 def test_route_sap_standard_search():
