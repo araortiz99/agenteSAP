@@ -52,3 +52,25 @@ All canonical and negative cases must pass. MVP 4.2 regression tests must remain
 
 Los casos KI-N01 a KI-N04 se materializan en `tests/test_knowledge_intelligence.py`.
 El benchmark de MVP 5 debe considerarse válido únicamente si la suite local y el CI coinciden.
+
+
+## Procedimiento de ejecución
+
+Desde la raíz del repositorio:
+
+```powershell
+python -m pytest -q tests/test_knowledge_intelligence.py
+python -m pytest -q
+```
+
+El segundo comando es el **Regression Gate**: debe permanecer verde junto con el benchmark de MVP 5.
+
+Para inspección directa de relaciones reales:
+
+```text
+TICKET:31426
+  ├── relacionado_con → SAP_OBJECT:ZMM_IMX_0004 [confirmed / confirmed]
+  └── participa_en → PROCESS:PROC-0001 [partial / candidate]
+```
+
+La segunda relación no debe ser elevada a confirmed durante el traversal. Además, la fuente asociada declara un conflicto K1/K4 que debe conservarse en la capa de evidencia.
