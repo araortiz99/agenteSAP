@@ -26,7 +26,7 @@ def test_cli_json_output(monkeypatch, capsys):
     monkeypatch.setattr(
         cli,
         "run_agent",
-        lambda client, request, ref: FakeResponse(request=request, result=FakeResult()),
+        lambda client, request, ref, ticket_id=None, max_results=8: FakeResponse(request=request, result=FakeResult()),
     )
     monkeypatch.setattr(
         "sys.argv",
