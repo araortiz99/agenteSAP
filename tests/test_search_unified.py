@@ -126,3 +126,26 @@ def test_unified_search_excludes_external_mcp_for_runtime_queries():
     )
 
     assert selected == [runtime]
+
+
+def test_unified_search_does_not_query_non_runtime_mcp_for_runtime_queries():
+    class NonRuntimeGateway:
+        def __init__(self):
+            self.called = False
+
+        def supports_source(self, source):
+            return False
+
+        def search_resources(self, query):
+            self.called = True
+            raise AssertionError("non-runtime MCP gateway must not be queried for runtime")
+
+    gateway = NonRuntimeGateway()
+    result = search_unified(
+        UnifiedFakeClient(),
+        "¿Qué está configurado actualmente en QAS?",
+        mcp_gateway=gateway,
+    )
+
+    assert gateway.called is False
+    assert not result.mcp
