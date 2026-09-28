@@ -65,7 +65,7 @@ def test_unified_search_reserves_requested_layers(monkeypatch):
     )
 
     monkeypatch.setattr(module, "search_sap_standard", lambda *args, **kwargs: [
-        type("R", (), {"path": "sap.md", "score": 0.95, "matched_terms": ("x",), "content": """---
+        type("R", (), {"path": "sap.md", "score": 0.95, "matched_terms": ("x",), "match_type": "content", "content": """---
 knowledge_type: standard
 source_id: SAP-1
 certainty: confirmed
