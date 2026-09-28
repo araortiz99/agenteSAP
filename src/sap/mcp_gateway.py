@@ -68,6 +68,20 @@ class McpEvidenceGateway:
                 {"query": query, "limit": self.config.max_results},
             )
 
+    def supports_source(self, source: str) -> bool:
+        """Return whether this gateway can provide the requested evidence layer."""
+        if source == "runtime":
+            return self.target.observation_type in {
+                "runtime_observation",
+                "custom_runtime_observation",
+            }
+        if source == "external":
+            return self.target.observation_type in {
+                "developer_context",
+                "external_source",
+            }
+        return False
+
     def search_resources(self, query: str) -> tuple[UnifiedResult, ...]:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
