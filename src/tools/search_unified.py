@@ -110,8 +110,20 @@ def _merge_evidence_results(
             add(item)
             break
 
+    # Explicit source selection is a retrieval boundary. When the query
+    # asks for specific evidence layers, do not fill the bounded context
+    # with an unrelated MCP layer merely because it has a high score.
+    requested_layers = set(requested)
+    eligible_mcp = [
+        item
+        for item in mcp
+        if item.knowledge_type == "runtime_observation"
+        and "runtime" in requested_layers
+        or item.knowledge_type != "runtime_observation"
+        and "external" in requested_layers
+    ]
     remaining = sorted(
-        standard + internal + mcp,
+        standard + internal + eligible_mcp,
         key=lambda x: (
             -x.score,
             0 if x.source_layer == "sap_standard"
