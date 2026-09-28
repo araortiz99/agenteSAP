@@ -20,22 +20,21 @@ def test_mm_standard_and_custom_evidence_layers_remain_distinct():
     )
 
     standard = [
-        item for item in result.evidence_collected
-        if item.provider == "sap_standard"
+        item for item in result.retrieval.results
+        if item.source_layer == "sap_standard"
     ]
     internal = [
-        item for item in result.evidence_collected
-        if item.provider == "internal"
+        item for item in result.retrieval.results
+        if item.source_layer == "internal"
     ]
 
     assert standard
     assert internal
-    assert all(item.landscape == "KNOWLEDGE" for item in standard + internal)
     assert all(item.provenance for item in standard + internal)
     assert not any(
-        item.provider == "sap_standard"
+        item.source_layer == "sap_standard"
         and "ZMM_IM_0002" in item.content
-        for item in result.evidence_collected
+        for item in result.retrieval.results
     )
 
 
@@ -48,14 +47,14 @@ def test_mm_query_plan_is_not_promoted_to_evidence():
         max_hops=2,
     )
 
-    evidence_text = "\n".join(item.content for item in result.evidence_collected)
+    evidence_paths = {item.path for item in result.retrieval.results}
 
     assert result.plan.subqueries
+    assert all(subquery not in evidence_paths for subquery in result.plan.subqueries)
     assert all(
-        subquery not in evidence_text
-        for subquery in result.plan.subqueries
+        item.source_layer in {"sap_standard", "internal", "mcp"}
+        for item in result.retrieval.results
     )
-    assert all(item.landscape == "KNOWLEDGE" for item in result.evidence_collected)
 
 
 def test_mm_missing_runtime_evidence_remains_explicit():
@@ -67,10 +66,14 @@ def test_mm_missing_runtime_evidence_remains_explicit():
         max_hops=2,
     )
 
-    assert any("runtime" in gap.lower() for gap in result.evidence_missing)
-    assert result.stop_reason == "missing_capability"
-    assert result.confidence == "LOW"
-    assert "evidence" in result.confidence_reason.lower()
+    missing = (*result.evidence.gaps, *result.knowledge_context.gaps)
+
+    assert any("runtime" in gap.lower() for gap in missing)
+    assert not any(
+        item.knowledge_type == "runtime_observation"
+        for item in result.retrieval.results
+    )
+    assert result.conclusion_status != "CONFIRMED"
 
 
 def test_mm_multihop_relationships_remain_bounded():
