@@ -21,6 +21,7 @@ class UnifiedResult:
     knowledge_type: str
     knowledge_scope: str
     certainty: str
+    provenance: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
