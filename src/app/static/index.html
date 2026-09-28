@@ -128,10 +128,12 @@ async function loadStatus(){
     const r=await fetch("/api/status");const s=await r.json();
     const auth=s.github_auth_configured?"GitHub autenticado":"GitHub sin token";
     const qas=s.qas_runtime_enabled?"QAS runtime habilitado":"QAS runtime deshabilitado";
+    const llm=s.openai_api_key_configured?"LLM configurado":"LLM sin API key";
     const write=s.sap_writes_exposed?"SAP writes EXPUESTAS":"SAP writes deshabilitadas";
     $("status").innerHTML=
       "<span class='"+(s.github_auth_configured?"ok":"warn")+"'>"+auth+"</span>"+
       "<span class='"+(s.qas_runtime_enabled?"warn":"ok")+"'>"+qas+"</span>"+
+      "<span class='"+(s.openai_api_key_configured?"ok":"warn")+"'>"+llm+"</span>"+
       "<span class='ok'>"+write+"</span>"+
       "<span>Cache: "+s.github_cache_files+" archivos / "+s.github_cache_trees+" árboles</span>";
   }catch(e){$("status").innerHTML="<span class='warn'>No se pudo leer el estado local</span>"}
