@@ -57,6 +57,19 @@ def test_qas_runtime_config_parses_explicit_read_tools(monkeypatch):
     assert config.args == ("--profile", "qas readonly")
 
 
+def test_qas_runtime_config_supports_discovery_mode(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_DISCOVERY", "true")
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", raising=False)
+
+    config = SapQasRuntimeConfig.from_env()
+
+    assert config.discovery_only is True
+    assert config.allowed_tools == ()
+
+
 def test_qas_runtime_gateway_requires_allowlisted_tool(monkeypatch):
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
@@ -96,3 +109,17 @@ def test_qas_runtime_config_rejects_non_readonly_scope(monkeypatch):
         assert "mcp_readonly scope" in str(exc)
     else:
         raise AssertionError("QAS runtime integration must require mcp_readonly")
+
+
+def test_qas_runtime_gateway_can_discover_tools_without_allowlist(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_DISCOVERY", "true")
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", raising=False)
+
+    gateway = McpEvidenceGateway.from_qas_runtime_env()
+
+    assert gateway is not None
+    assert gateway.target.discovery_only is True
+    assert gateway.target.allowed_tools == ()
