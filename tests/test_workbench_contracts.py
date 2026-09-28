@@ -4,7 +4,7 @@ from src.tools.evidence import EvidenceAssessment, EvidenceItem
 from src.tools.evidence_trace import TraceabilityReport, EvidenceTrace
 from src.tools.reason import ReasoningResult
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
-from src.tools.get_related_knowledge import RelatedKnowledge, Relationship
+from src.tools.get_related_knowledge import RelatedKnowledge, Relationship\nfrom src.tools.entity_resolution import ResolvedEntity\nfrom src.tools.knowledge_context import ContextRelationship, ContextEvidence, KnowledgeContext
 
 
 def _consultation() -> ConsultationResult:
@@ -147,7 +147,7 @@ def test_workbench_response_is_structured_and_traceable():
 def test_workbench_html_has_evidence_and_provenance_explorer():
     from pathlib import Path
     html = Path("src/app/static/index.html").read_text(encoding="utf-8")
-    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer"):
+    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer", "kiEntities", "kiGraph", "renderKnowledgeIntelligence"):
         assert marker in html
     assert "source_layer" in html
     assert "provenance" in html
