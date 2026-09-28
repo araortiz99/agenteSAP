@@ -129,6 +129,12 @@ class McpEvidenceGateway:
         config = SapQasRuntimeConfig.from_env()
         if not config.enabled:
             return None
+        if (
+            not config.discovery_only
+            and config.query_tool
+            and config.query_tool not in config.allowed_tools
+        ):
+            raise ValueError("QAS runtime query tool must be explicitly allowlisted")
 
         gateway = cls.__new__(cls)
         gateway.config = McpGatewayConfig(
