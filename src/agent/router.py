@@ -13,6 +13,8 @@ from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowle
 from src.tools.search_knowledge import SearchResult, search_knowledge
 from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
 from src.tools.search_unified import UnifiedSearchResult, search_unified
+from src.tools.evidence import EvidenceAssessment, assess_evidence
+from src.tools.reason import ReasoningResult, reason_from_evidence
 
 
 class IntentRoutingError(ValueError):
@@ -99,6 +101,30 @@ def route_intent(request: str) -> AgentPlan:
     if any(
         phrase in lowered
         for phrase in (
+            "evaluá la evidencia",
+            "evalua la evidencia",
+            "evaluar evidencia",
+            "analizá la evidencia",
+            "analiza la evidencia",
+            "qué está confirmado",
+            "que esta confirmado",
+            "qué está confirmado y qué falta",
+            "que esta confirmado y que falta",
+        )
+    ):
+        return AgentPlan(
+            intent="evidence_reasoning",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+            ),
+        )
+
+    if any(
+        phrase in lowered
+        for phrase in (
             "sap standard y",
             "sap estándar y",
             "standard y custom",
@@ -167,6 +193,10 @@ def run_agent(
         result = search_sap_standard(client, request, ref=ref)
     elif plan.intent == "search_unified":
         result = search_unified(client, request, ref=ref)
+    elif plan.intent == "evidence_reasoning":
+        retrieval = search_unified(client, request, ref=ref)
+        evidence = assess_evidence(retrieval)
+        result = reason_from_evidence(evidence)
     elif plan.intent == "search_knowledge":
         result = search_knowledge(client, request, ref=ref)
     elif plan.intent == "generate_document":
