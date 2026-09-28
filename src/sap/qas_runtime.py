@@ -50,6 +50,11 @@ class SapQasRuntimeConfig:
             raise ValueError("QAS runtime integration requires a server command")
         if not self.discovery_only and not self.query_tool:
             raise ValueError("QAS runtime integration requires an explicit query tool")
+        if (
+            not self.discovery_only
+            and self.query_tool not in self.allowed_tools
+        ):
+            raise ValueError("QAS runtime query tool must be explicitly allowlisted")
         if not self.query_argument.strip():
             raise ValueError("QAS runtime integration requires a non-empty query argument")
 
