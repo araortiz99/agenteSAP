@@ -35,6 +35,10 @@ IDENTIFIER_FIELDS = (
     "table", "cds_view", "movement_type", "app", "object_id",
 )
 
+def _tokenize(value: str) -> set[str]:
+    return set(re.sub(r"[^a-z0-9áéíóúüñ_-]+", " ", value.lower()).split())
+
+
 def _terms(query: str) -> list[str]:
     return [
         x
@@ -66,10 +70,11 @@ def _rank(content: str, terms: list[str], lexical_score: float):
         return 1.0, identifier_matches, "identifier"
 
     title = next(
-        (line[2:].strip().lower() for line in content.splitlines() if line.startswith("# ")),
+        (line[2:].strip() for line in content.splitlines() if line.startswith("# ")),
         "",
     )
-    title_matches = tuple(term for term in terms if term in title)
+    title_tokens = _tokenize(title)
+    title_matches = tuple(term for term in terms if term in title_tokens)
     if title_matches:
         return lexical_score, title_matches, "title"
 
@@ -111,8 +116,8 @@ def search_sap_standard(
     results: list[SAPStandardResult] = []
     for path in paths:
         content = contents[path]
-        normalized = content.lower()
-        matched = tuple(term for term in terms if term in normalized)
+        content_tokens = _tokenize(content)
+        matched = tuple(term for term in terms if term in content_tokens)
         if not matched:
             continue
 
