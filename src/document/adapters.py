@@ -151,7 +151,7 @@ def load_xlsx_file(
     try:
         for worksheet in workbook.worksheets:
             rows = 0
-            for row in worksheet.iter_rows():
+            for row in worksheet.iter_rows(values_only=True):
                 if rows >= max_rows or cells >= max_cells or total_chars >= max_chars:
                     break
                 values = ["" if value is None else str(value) for value in row]
