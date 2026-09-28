@@ -109,3 +109,14 @@ def test_object_workspace_does_not_invent_runtime(monkeypatch):
     result = build_object_workspace(FakeClient(), "ZMM_IMX_0004")
     assert result.runtime["status"] == "disabled"
     assert result.runtime["evidence_count"] == 0
+
+
+def test_object_workspace_rejects_oversized_query():
+    from src.tools.object_workspace import build_object_workspace
+
+    try:
+        build_object_workspace(FakeClient(), "X" * 257)
+    except ValueError as exc:
+        assert "256" in str(exc)
+    else:
+        raise AssertionError("oversized object query must be rejected")
