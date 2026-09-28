@@ -97,7 +97,7 @@ def build_workbench_analysis(
         "## Resumen",
         ("## Qué está confirmado",),
     )
-    hypotheses = tuple(result.reasoning.hypotheses)
+    hypotheses = ()
 
     ticket = None
     if result.ticket_context:
