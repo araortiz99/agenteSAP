@@ -8,6 +8,7 @@ import re
 
 from src.github.client import GitHubClient
 from src.llm.client import LLMClient
+from src.sap.mcp_gateway import McpEvidenceGateway
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.evidence_trace import TraceabilityReport, build_traceability
 from src.tools.reason import ReasoningResult, reason_from_evidence
@@ -245,7 +246,10 @@ def consult(
     if not request or not request.strip():
         raise ValueError("request must not be empty")
 
-    retrieval = search_unified(\n        client, request, max_results=max_results, ref=ref, mcp_gateway=mcp_gateway\n    )
+    mcp_gateway = McpEvidenceGateway.from_env()
+    retrieval = search_unified(
+        client, request, max_results=max_results, ref=ref, mcp_gateway=mcp_gateway
+    )
     evidence = assess_evidence(retrieval)
     reasoning = reason_from_evidence(evidence)
     traceability = build_traceability(reasoning)
