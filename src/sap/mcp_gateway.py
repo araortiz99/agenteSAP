@@ -17,6 +17,7 @@ from typing import Coroutine, TypeVar
 
 from src.sap.mcp_client import SapMcpClient
 from src.sap.mcp_registry import build_target
+from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.sap.mcp_strategy import McpEvidenceLayer, McpProviderPlan, plan_mcp_provider
 from src.tools.search_unified import UnifiedResult
 
@@ -81,6 +82,61 @@ class McpEvidenceGateway:
         if source not in {"runtime", "external"}:
             return False
         return self.provider_plan(source).ready
+
+    @classmethod
+    def from_qas_runtime_env(cls) -> "McpEvidenceGateway | None":
+        """Build the opt-in QAS runtime gateway without exposing credentials."""
+        config = SapQasRuntimeConfig.from_env()
+        if not config.enabled:
+            return None
+
+        gateway = cls.__new__(cls)
+        gateway.config = McpGatewayConfig(
+            command=config.command,
+            args=config.args,
+            max_results=5,
+        )
+        gateway.target = build_target(
+            "sap_mcp_server",
+            command=config.command,
+            args=config.args,
+            allowed_tools=config.allowed_tools,
+            metadata={
+                "landscape": config.landscape,
+                **({"system": config.system} if config.system else {}),
+            },
+        )
+        return gateway
+
+    def read_runtime(
+        self,
+        tool_name: str,
+        arguments: dict[str, object] | None = None,
+    ) -> SapMcpEvidence:
+        """Execute one explicitly allowlisted QAS read tool."""
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("runtime reads require sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("runtime reads are restricted to QAS")
+        if tool_name not in self.target.allowed_tools:
+            raise PermissionError(
+                f"MCP runtime tool '{tool_name}' is not allowlisted"
+            )
+
+        evidence = _run_async(
+            self._call_runtime_tool(tool_name, arguments or {})
+        )
+        if evidence.landscape != "QAS":
+            raise ValueError("runtime evidence must identify landscape QAS")
+        return evidence
+
+    async def _call_runtime_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, object],
+    ) -> SapMcpEvidence:
+        async with SapMcpClient(self.target) as client:
+            return await client.call_read_tool(tool_name, arguments)
 
     def search_resources(self, query: str) -> tuple[UnifiedResult, ...]:
         if not query or not query.strip():
