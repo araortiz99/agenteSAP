@@ -24,7 +24,7 @@ def test_object_workspace_http_endpoint(monkeypatch):
             "evidence": (),
             "tickets": (),
             "runtime": {
-                "status": "not_observed",
+                "status": "disabled",
                 "landscape": "QAS",
                 "access": "read-only",
             },
