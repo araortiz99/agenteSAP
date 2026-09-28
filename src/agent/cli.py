@@ -9,6 +9,8 @@ import os
 import sys
 
 from src.agent.router import run_agent
+from src.document.file_input import load_document_file
+from src.document.ingestion import ingest_document
 from src.github.client import GitHubClient
 from src.investigation.engine import investigate, render_investigation
 
@@ -51,10 +53,48 @@ def _run_investigation(argv: list[str]) -> int:
     return 0
 
 
+def _run_file_ingestion(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="agenteSAP bounded local document ingestion")
+    parser.add_argument("path", help="Local text document path")
+    parser.add_argument("--max-bytes", type=int, default=2_000_000)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    if args.max_bytes < 1:
+        parser.error("--max-bytes debe ser mayor que cero")
+
+    source = load_document_file(args.path, max_bytes=args.max_bytes)
+    result = ingest_document(source)
+
+    payload = {
+        "document_id": source.document_id,
+        "filename": source.filename,
+        "file_type": source.file_type,
+        "media_type": source.media_type,
+        "size": source.size,
+        "content_hash": source.content_hash,
+        "chunks": len(result.chunks),
+        "records": len(result.records),
+        "evidence": [asdict(item) for item in result.evidence],
+        "entities": [asdict(item) for item in result.entities],
+    }
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"Document: {payload['document_id']}")
+        print(f"File: {payload['filename']}")
+        print(f"Chunks: {payload['chunks']}")
+        print(f"Evidence: {len(payload['evidence'])}")
+        print(f"Entities: {len(result.entities)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     raw = list(sys.argv[1:] if argv is None else argv)
     if raw and raw[0] == "investigate":
         return _run_investigation(raw[1:])
+    if raw and raw[0] == "ingest-file":
+        return _run_file_ingestion(raw[1:])
 
     parser = _build_parser()
     args = parser.parse_args(raw)
