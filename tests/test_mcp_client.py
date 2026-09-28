@@ -107,7 +107,8 @@ def test_call_read_tool_normalizes_result_and_preserves_provenance():
     assert evidence.provider == "sap_devs"
     assert evidence.operation == "search_resources"
     assert evidence.source == "MCP provider: sap_devs"
-    assert evidence.certainty == "runtime_observation"
+    assert evidence.certainty == "external_source"
+    assert evidence.observation_type == "developer_context"
     assert evidence.system == "sap-devs-local"
     assert evidence.landscape == "local"
     assert evidence.provenance == {"transport": "stdio"}

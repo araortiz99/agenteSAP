@@ -12,6 +12,12 @@ from typing import Literal
 
 McpProvider = Literal["sap_devs", "sap_mcp_server", "abap_ai"]
 McpTransport = Literal["stdio", "streamable_http"]
+McpObservationType = Literal[
+    "developer_context",
+    "runtime_observation",
+    "custom_runtime_observation",
+    "external_source",
+]
 
 
 @dataclass(frozen=True)
@@ -26,6 +32,7 @@ class McpTarget:
     allowed_tools: tuple[str, ...] = ()
     profile: str | None = None
     read_only: bool = True
+    observation_type: McpObservationType = "external_source"
     metadata: dict[str, str] = field(default_factory=dict)
 
     def validate(self) -> None:
@@ -53,6 +60,7 @@ class SapMcpEvidence:
     landscape: str | None = None
     object_id: str | None = None
     certainty: str = "under_validation"
+    observation_type: str = "external_source"
     provenance: dict[str, str] = field(default_factory=dict)
 
     def as_metadata(self) -> dict[str, str]:
@@ -61,6 +69,7 @@ class SapMcpEvidence:
             "operation": self.operation,
             "source": self.source,
             "certainty": self.certainty,
+            "observation_type": self.observation_type,
         }
         if self.system:
             result["system"] = self.system
