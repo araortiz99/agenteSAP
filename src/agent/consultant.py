@@ -16,7 +16,7 @@ from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_
 from src.tools.source_selection import select_evidence_sources
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
-from src.tools.knowledge_context import build_knowledge_context, render_knowledge_context
+from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context, render_knowledge_context
 
 
 SYSTEM_PROMPT = """You are agenteSAP, a consultative SAP functional assistant.
@@ -87,6 +87,7 @@ class ConsultationResult:
     uncited_evidence_ids: tuple[str, ...]
     ticket_context: tuple[TicketContextReference, ...]
     ticket_relationships: RelatedKnowledge | None
+    knowledge_context: KnowledgeContext | None = None
 
 
 def _ticket_reference(ticket_id: str, path: str) -> str:
@@ -320,4 +321,5 @@ def consult(
         uncited_evidence_ids=uncited,
         ticket_context=ticket_context,
         ticket_relationships=ticket_relationships,
+        knowledge_context=knowledge_context,
     )

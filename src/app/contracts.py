@@ -25,6 +25,7 @@ class WorkbenchAnalysisResponse:
     hypotheses: tuple[str, ...]
     evidence: tuple[dict[str, Any], ...]
     retrieval: tuple[dict[str, Any], ...]
+    knowledge_intelligence: dict[str, Any]
     relationships: tuple[dict[str, Any], ...]
     conflicts: tuple[dict[str, Any], ...]
     gaps: tuple[str, ...]
@@ -78,6 +79,49 @@ def _retrieval(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
         }
         for item in result.retrieval.results
     )
+
+
+
+def _knowledge_intelligence(result: ConsultationResult) -> dict[str, Any]:
+    context = result.knowledge_context
+    if context is None:
+        return {
+            "query": result.request,
+            "entities": (),
+            "relationships": (),
+            "evidence": (),
+            "gaps": (),
+            "conflicts": (),
+            "max_hops": 0,
+        }
+    return {
+        "query": context.query,
+        "max_hops": context.max_hops,
+        "entities": tuple(asdict(item) for item in context.entities),
+        "relationships": tuple(
+            {
+                **asdict(item.relationship),
+                "hop": item.hop,
+            }
+            for item in context.relationships
+        ),
+        "evidence": tuple(
+            {
+                "path": item.result.path,
+                "score": item.result.score,
+                "source_layer": item.result.source_layer,
+                "source_id": item.result.source_id,
+                "knowledge_type": item.result.knowledge_type,
+                "knowledge_scope": item.result.knowledge_scope,
+                "certainty": item.result.certainty,
+                "hop": item.hop,
+                "discovery": item.discovery,
+            }
+            for item in context.evidence
+        ),
+        "gaps": context.gaps,
+        "conflicts": tuple(asdict(item) for item in context.conflicts),
+    }
 
 
 def _relationships(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
@@ -137,6 +181,7 @@ def build_workbench_analysis(
         hypotheses=hypotheses,
         evidence=_evidence(result),
         retrieval=_retrieval(result),
+        knowledge_intelligence=_knowledge_intelligence(result),
         relationships=_relationships(result),
         conflicts=tuple(asdict(item) for item in result.evidence.conflicts),
         gaps=result.traceability.gaps,
