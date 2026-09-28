@@ -19,6 +19,7 @@ class SapQasRuntimeConfig:
     args: tuple[str, ...]
     allowed_tools: tuple[str, ...]
     landscape: str
+    scope: str
     system: str | None = None
     enabled: bool = False
 
@@ -28,6 +29,10 @@ class SapQasRuntimeConfig:
         if self.landscape != "QAS":
             raise ValueError(
                 "SAP runtime integration is currently restricted to landscape QAS"
+            )
+        if self.scope != "mcp_readonly":
+            raise ValueError(
+                "QAS runtime integration requires the mcp_readonly scope"
             )
         if not self.allowed_tools:
             raise ValueError(
@@ -57,6 +62,7 @@ class SapQasRuntimeConfig:
             ),
             allowed_tools=allowed_tools,
             landscape=os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS").upper(),
+            scope=os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
             system=os.getenv("AGENTESAP_SAP_RUNTIME_SYSTEM") or None,
             enabled=enabled,
         )
