@@ -64,7 +64,29 @@ class FakeLLM:
     model = "fake"
 
     def generate(self, *, system_prompt, user_prompt):
-        return "respuesta"
+        import re
+
+        evidence_match = re.search(r"(EVD-[A-Z0-9]+)", user_prompt)
+        ticket_match = re.search(r"(TKT-[A-Z0-9]+)", user_prompt)
+        evidence_id = evidence_match.group(1) if evidence_match else "EVD-TEST"
+        ticket_id = ticket_match.group(1) if ticket_match else "TKT-TEST"
+
+        return (
+            "## Resumen\n"
+            "Respuesta de prueba basada en la evidencia recuperada.\n\n"
+            "## Qué está confirmado\n"
+            f"Existe evidencia recuperada [{evidence_id}].\n\n"
+            "## Qué corresponde a nuestra implementación\n"
+            f"El contexto interno recuperado está referenciado [{evidence_id}].\n\n"
+            "## Qué no está confirmado\n"
+            "La prueba no establece hechos adicionales fuera de la evidencia recuperada.\n\n"
+            "## Evidencias\n"
+            f"[{evidence_id}]\n\n"
+            "## Ticket\n"
+            f"Contexto del ticket [{ticket_id}].\n\n"
+            "## Próximos pasos\n"
+            "Validar la información pendiente contra la evidencia disponible."
+        )
 
 def test_route_analyze_ticket_31426_builds_capability_plan():
     plan = route_intent("Analizá el ticket 31426")
