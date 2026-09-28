@@ -249,3 +249,55 @@ A trace report preserves:
 - gaps and conflicts.
 
 The trace can be rendered as a human-readable audit artifact and is designed to become structured context for a future LLM without losing provenance.
+
+
+### MVP 4 — LLM Consultant
+
+The agent now supports an explicit consultative LLM layer on top of the existing
+deterministic retrieval, evidence assessment, bounded reasoning and evidence
+traceability.
+
+Flow:
+
+```
+Request
+  ↓
+Unified Retrieval
+  ↓
+Evidence Assessment
+  ↓
+Bounded Reasoning
+  ↓
+Evidence Traceability
+  ↓
+Bounded LLM Context
+  ↓
+Consultative Answer
+```
+
+The LLM does not retrieve arbitrary repository content and is not the source of
+truth. It receives evidence records with provenance, certainty and stable
+`EVD-*` identifiers.
+
+The provider boundary is implemented in `src/llm/client.py`. The current
+implementation uses the OpenAI Responses API through standard-library HTTP.
+Credentials are runtime-only:
+
+```bash
+export OPENAI_API_KEY="..."
+```
+
+No API key is stored in the repository.
+
+Explicit requests such as:
+
+```
+Consultá sobre material master
+Explicame qué está confirmado sobre SNC
+```
+
+are routed through the LLM consultant. Existing deterministic intents remain
+available.
+
+The consultant is read-only and must not claim SAP execution, configuration
+changes, code changes or GitHub modifications.
