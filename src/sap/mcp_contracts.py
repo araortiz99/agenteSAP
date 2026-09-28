@@ -32,6 +32,7 @@ class McpTarget:
     allowed_tools: tuple[str, ...] = ()
     profile: str | None = None
     read_only: bool = True
+    discovery_only: bool = False
     observation_type: McpObservationType = "external_source"
     metadata: dict[str, str] = field(default_factory=dict)
 
@@ -40,8 +41,10 @@ class McpTarget:
             raise ValueError("stdio targets require command")
         if self.transport == "streamable_http" and not self.url:
             raise ValueError("streamable_http targets require url")
-        if not self.allowed_tools:
+        if not self.allowed_tools and not self.discovery_only:
             raise ValueError("allowed_tools must be explicit; empty means deny-all")
+        if self.discovery_only and not self.read_only:
+            raise ValueError("discovery-only targets must remain read-only")
         if not self.read_only:
             raise ValueError(
                 "AgenteSAP currently permits only read-only MCP integration"
