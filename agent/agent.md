@@ -270,3 +270,53 @@ INVENTAR
 
 Entrega únicamente el contenido completo final.
 
+
+
+==================================================
+15. UNIFIED RETRIEVAL
+==================================================
+
+Cuando una consulta requiera comparar SAP Standard con conocimiento interno:
+
+utilizar el retrieval unificado.
+
+Las capas deben mantenerse separadas:
+
+### SAP Standard
+Fuente: conocimiento derivado de documentación oficial SAP.
+
+### Internal
+Fuente: knowledge, tickets, procesos, reglas y documentación interna.
+
+No combinar ambos resultados en una única afirmación sin conservar su procedencia.
+
+Para cada evidencia, conservar cuando exista:
+
+- source_layer;
+- source_id;
+- knowledge_type;
+- knowledge_scope;
+- certainty;
+- path.
+
+Una coincidencia textual no demuestra equivalencia funcional.
+
+La presencia de un objeto o concepto en SAP Standard no demuestra que la organización lo utilice de la misma forma.
+
+==================================================
+16. EVIDENCE BOUNDARY
+==================================================
+
+El agente debe distinguir:
+
+SAP documenta X
+≠
+La organización implementa X
+
+y:
+
+La organización implementa X
+≠
+X es SAP Standard.
+
+Cuando ambas capas estén disponibles, presentarlas separadamente antes de cualquier análisis.
