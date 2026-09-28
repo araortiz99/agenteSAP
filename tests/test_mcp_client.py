@@ -236,3 +236,38 @@ def test_call_read_tool_accepts_advertised_read_only_tool():
     asyncio.run(client.call_read_tool("safe_read", {"table": "MARA"}))
 
     assert fake_client.calls == [("safe_read", {"table": "MARA"})]
+
+
+def test_runtime_tool_requires_explicit_readonly_hint():
+    import pytest
+    from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
+    from src.sap.mcp_contracts import McpTarget
+
+    target = McpTarget(
+        provider="sap_mcp_server",
+        transport="stdio",
+        command="sap-mcp-server",
+        allowed_tools=("read_table",),
+        observation_type="runtime_observation",
+    )
+    client = SapMcpClient(target)
+
+    class FakeClient:
+        async def list_tools(self):
+            class Result:
+                tools = [
+                    McpToolDescriptor(
+                        name="read_table",
+                        description="read",
+                        input_schema={"type": "object"},
+                        read_only_hint=None,
+                        destructive_hint=None,
+                    )
+                ]
+            return Result()
+
+    client._client = FakeClient()
+
+    with pytest.raises(PermissionError, match="explicit read-only hint"):
+        import asyncio
+        asyncio.run(client.call_read_tool("read_table", {}))
