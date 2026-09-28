@@ -1,4 +1,4 @@
-"""Unified retrieval across SAP Standard and internal Knowledge."""
+"""Unified retrieval across SAP Standard, internal Knowledge and optional MCP evidence."""
 
 from __future__ import annotations
 
