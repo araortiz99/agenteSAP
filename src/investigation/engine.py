@@ -19,6 +19,7 @@ from src.investigation.capabilities import (
 )
 from src.investigation.case_id import build_case_id
 from src.investigation.correlation import correlate_evidence
+from src.investigation.conclusion import build_conclusion
 from src.investigation.evidence_state import EvidenceState
 from src.investigation.hypothesis import build_hypotheses
 from src.investigation.contracts import (
@@ -342,22 +343,15 @@ def investigate(
         else:
             investigation.stop_reason = "evidence_sufficient"
 
-    if investigation.stop_reason == "evidence_sufficient":
-        investigation.conclusion = (
-            "La evidencia disponible permite continuar la correlación funcional, "
-            "pero la causa raíz solo debe afirmarse cuando los valores de stock y "
-            "movimientos relevantes estén directamente observados y sean consistentes."
-        )
-    elif investigation.stop_reason == "conflicting_evidence":
-        investigation.conclusion = reasoning.conclusion
-    elif investigation.stop_reason == "missing_entity":
-        pass
-    else:
-        investigation.conclusion = (
-            "No se pudo determinar una causa raíz con la evidencia disponible. "
-            "La investigación queda acotada a los datos observados y a las capacidades "
-            "que el entorno QAS anunció y autorizó."
-        )
+    decision = build_conclusion(
+        investigation.hypothesis_records,
+        investigation.evidence_states,
+        missing=investigation.evidence_missing,
+    )
+    investigation.conclusion_status = decision.status
+    investigation.conclusion_reason = decision.reason
+    investigation.conclusion_evidence_ids = decision.evidence_ids
+    investigation.conclusion = decision.statement
 
     investigation.confidence, investigation.confidence_reason = _confidence(
         investigation.evidence_collected,
