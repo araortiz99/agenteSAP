@@ -36,6 +36,7 @@ GitHub Knowledge Base
 |---|---|
 | `search_knowledge` | ✅ |
 | `search_sap_standard` | ✅ |
+| `search_unified` | ✅ |
 | `get_ticket` | ✅ |
 | `get_related_knowledge` | ✅ |
 | `analyze` | ✅ |
@@ -183,3 +184,21 @@ Example:
 ```bash
 python -m src.sap.promote_cli staging/sap-standard/<candidate>.md
 ```
+
+
+### MVP 3 — Unified Retrieval
+
+The agent now supports a unified retrieval layer that queries:
+
+- SAP Standard Knowledge;
+- internal/custom Knowledge.
+
+The result preserves the source layer and available evidence metadata instead of merging both sources into an undifferentiated answer.
+
+Example intent:
+
+```
+Compará SAP Standard y nuestra implementación sobre material master
+```
+
+This is retrieval only. The MVP does not infer that a customer implementation is equivalent to SAP Standard merely because both sources mention the same concept.
