@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections import defaultdict
+import re
 
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
 
@@ -37,6 +38,14 @@ class EvidenceItem:
 
 
 @dataclass(frozen=True)
+class ConflictRecord:
+    conflict_type: str
+    status: str
+    description: str
+    evidence_paths: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class EvidenceAssessment:
     query: str
     items: tuple[EvidenceItem, ...]
@@ -44,7 +53,7 @@ class EvidenceAssessment:
     partial: tuple[EvidenceItem, ...]
     under_validation: tuple[EvidenceItem, ...]
     unsupported: tuple[EvidenceItem, ...]
-    conflicts: tuple[str, ...]
+    conflicts: tuple[ConflictRecord, ...]
     gaps: tuple[str, ...]
     requires_analysis: bool
 
@@ -70,8 +79,72 @@ def _item(result: UnifiedResult) -> EvidenceItem:
     )
 
 
+def _conflict_section(content: str) -> str:
+    """Extract an explicit Markdown conflict section, if present."""
+    match = re.search(
+        r"(?ims)^##\s+(?:Conflictos|Contradicciones|Discrepancias)\s*$"
+        r"(.*?)(?=^##\s+|\Z)",
+        content,
+    )
+    return match.group(1).strip() if match else ""
+
+
+def _explicit_conflict_records(
+    results: tuple[UnifiedResult, ...],
+) -> tuple[ConflictRecord, ...]:
+    """Detect only contradictions explicitly declared by retrieved evidence."""
+    candidates: dict[tuple[str | None, str], list[str]] = defaultdict(list)
+
+    for result in results:
+        section = _conflict_section(result.content)
+        if not section:
+            continue
+
+        lowered = section.lower()
+        marker = any(
+            token in lowered
+            for token in (
+                "contradic",
+                "discrep",
+                "conflict",
+                "no resuelve",
+                "pendiente de validación",
+                "pendiente de validar",
+            )
+        )
+        if not marker:
+            continue
+
+        scenarios = tuple(dict.fromkeys(re.findall(r"\bK\d+\b", section, re.IGNORECASE)))
+        key = (result.source_id, "|".join(sorted(s.upper() for s in scenarios)))
+        candidates[key].append(result.path)
+
+    records: list[ConflictRecord] = []
+    for (source_id, scenarios), paths in candidates.items():
+        scenario_text = (
+            f" Escenarios explícitamente mencionados: {scenarios.replace('|', ', ')}."
+            if scenarios
+            else ""
+        )
+        source_text = source_id or "fuente no identificada"
+        description = (
+            f"La fuente {source_text} documenta explícitamente una contradicción o "
+            f"discrepancia no resuelta en la evidencia recuperada.{scenario_text}"
+        )
+        records.append(
+            ConflictRecord(
+                conflict_type="explicit_documented_conflict",
+                status="requires_analysis",
+                description=description,
+                evidence_paths=tuple(dict.fromkeys(paths)),
+            )
+        )
+
+    return tuple(records)
+
+
 def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
-    """Evaluate provenance and certainty without inventing semantic conclusions."""
+    """Evaluate provenance, certainty and explicitly documented conflicts."""
     items = tuple(_item(result) for result in retrieval.results)
 
     confirmed = tuple(x for x in items if x.certainty == "confirmed")
@@ -81,17 +154,41 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
         x for x in items if x.certainty in {"inferred", "not_confirmed", "unknown"}
     )
 
-    conflicts: list[str] = []
+    conflicts: list[ConflictRecord] = []
+
     by_source: dict[str, set[str]] = defaultdict(set)
+    source_paths: dict[str, list[str]] = defaultdict(list)
     for item in items:
         if item.source_id:
             by_source[item.source_id].add(item.knowledge_type)
+            source_paths[item.source_id].append(item.path)
+
     for source_id, types in by_source.items():
         if len(types) > 1:
             conflicts.append(
-                f"Source {source_id} has inconsistent knowledge_type values: "
-                + ", ".join(sorted(types))
+                ConflictRecord(
+                    conflict_type="metadata_conflict",
+                    status="requires_analysis",
+                    description=(
+                        f"Source {source_id} has inconsistent knowledge_type values: "
+                        + ", ".join(sorted(types))
+                    ),
+                    evidence_paths=tuple(dict.fromkeys(source_paths[source_id])),
+                )
             )
+
+    conflicts.extend(_explicit_conflict_records(retrieval.results))
+
+    # Deduplicate equivalent conflict records deterministically.
+    unique_conflicts: dict[tuple[str, str, tuple[str, ...]], ConflictRecord] = {}
+    for conflict in conflicts:
+        key = (
+            conflict.conflict_type,
+            conflict.description,
+            conflict.evidence_paths,
+        )
+        unique_conflicts[key] = conflict
+    conflicts = list(unique_conflicts.values())
 
     gaps: list[str] = []
     if not retrieval.sap_standard:
@@ -109,6 +206,12 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
         gaps.append(
             "Presence of both layers requires functional comparison; "
             "retrieval alone does not establish equivalence or difference."
+        )
+
+    if conflicts:
+        gaps.append(
+            "One or more explicit evidence conflicts require functional validation "
+            "before a definitive conclusion."
         )
 
     return EvidenceAssessment(
