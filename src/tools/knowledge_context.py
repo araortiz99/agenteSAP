@@ -6,8 +6,9 @@ from dataclasses import dataclass
 
 from src.github.client import GitHubClient
 from src.tools.entity_resolution import ResolvedEntity, resolve_entities
+from src.tools.evidence import ConflictRecord, assess_evidence
 from src.tools.get_related_knowledge import Relationship, get_related_knowledge
-from src.tools.search_unified import UnifiedResult, search_unified
+from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class KnowledgeContext:
     relationships: tuple[ContextRelationship, ...]
     evidence: tuple[ContextEvidence, ...]
     gaps: tuple[str, ...]
+    conflicts: tuple[ConflictRecord, ...]
     max_hops: int
 
 
@@ -89,6 +91,7 @@ def build_knowledge_context(
     max_relationships: int = 16,
     max_evidence: int = 12,
     ref: str = "main",
+    direct_retrieval: UnifiedSearchResult | None = None,
 ) -> KnowledgeContext:
     """Build a bounded, provenance-preserving knowledge context."""
     if not query or not query.strip():
@@ -105,7 +108,7 @@ def build_knowledge_context(
         ref=ref,
     )
 
-    direct = search_unified(
+    direct = direct_retrieval or search_unified(
         client,
         query,
         max_results=max_evidence,
@@ -140,10 +143,8 @@ def build_knowledge_context(
             )
 
             for relation in related.relationships:
-                if (
-                    len(relations) >= max_relationships
-                    and _relationship_key(relation) not in relations
-                ):
+                key = _relationship_key(relation)
+                if len(relations) >= max_relationships and key not in relations:
                     continue
 
                 _add_relationship(relations, relation, hop)
@@ -173,13 +174,15 @@ def build_knowledge_context(
 
                 candidate_key = _entity_key(candidate_type, candidate_id)
 
+                # The relationship itself is explicit and therefore confirmed
+                # as a relationship. The entity's own certainty is not upgraded.
                 candidate = ResolvedEntity(
                     entity_id=candidate_id,
                     entity_type=candidate_type,
                     path=relation.path,
                     score=1.0 / hop,
                     match_type="relationship",
-                    certainty="confirmed",
+                    certainty="unknown",
                     source_layer="internal",
                 )
 
@@ -225,6 +228,22 @@ def build_knowledge_context(
         ),
     )[:max_evidence]
 
+    evidence_results = tuple(item.result for item in ordered_evidence)
+    assessment = assess_evidence(
+        UnifiedSearchResult(
+            query=query.strip(),
+            results=evidence_results,
+            sap_standard=tuple(
+                item for item in evidence_results
+                if item.source_layer == "sap_standard"
+            ),
+            internal=tuple(
+                item for item in evidence_results
+                if item.source_layer == "internal"
+            ),
+        )
+    )
+
     return KnowledgeContext(
         query=query.strip(),
         entities=entities,
@@ -235,7 +254,8 @@ def build_knowledge_context(
             )
         ),
         evidence=tuple(ordered_evidence),
-        gaps=tuple(dict.fromkeys(gaps)),
+        gaps=tuple(dict.fromkeys((*gaps, *assessment.gaps))),
+        conflicts=assessment.conflicts,
         max_hops=max_hops,
     )
 
@@ -296,4 +316,17 @@ def render_knowledge_context(
 
     lines.extend(["", "### Gaps"])
     lines.extend(f"- {gap}" for gap in context.gaps)
+
+    lines.extend(["", "### Conflicts"])
+    for conflict in context.conflicts:
+        lines.extend(
+            [
+                f"- type: {conflict.conflict_type}",
+                f"  status: {conflict.status}",
+                f"  description: {conflict.description}",
+                "  evidence_paths:",
+                *[f"    - {path}" for path in conflict.evidence_paths],
+            ]
+        )
+
     return "\n".join(lines)
