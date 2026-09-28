@@ -40,7 +40,7 @@ class EvidenceItem:
     knowledge_type: str
     knowledge_scope: str
     certainty: str
-    authority: str
+    authority: str = "reference"
     weight: float
     supports: bool
     reason: str
@@ -71,8 +71,23 @@ class EvidenceAssessment:
 def _item(result: UnifiedResult) -> EvidenceItem:
     certainty = result.certainty if result.certainty in CERTAINTY_WEIGHT else "unknown"
     authority = result.authority if result.authority in {"candidate", "reference", "authoritative", "superseded"} else "reference"
-    authority_weight = {"authoritative": 1.0, "reference": 0.8, "candidate": 0.6, "superseded": 0.2}[authority]
-    weight = CERTAINTY_WEIGHT[certainty] * SOURCE_PRIORITY.get(result.source_layer, 1) * authority_weight
+    authority_weight = {
+        "authoritative": 1.0,
+        "reference": 0.8,
+        "candidate": 0.6,
+        "superseded": 0.2,
+    }[authority]
+    # Authority is a governance property of repository knowledge. External
+    # MCP evidence keeps its existing source/certainty weighting until it is
+    # explicitly modeled as governed knowledge.
+    if result.source_layer == "internal":
+        weight = (
+            CERTAINTY_WEIGHT[certainty]
+            * SOURCE_PRIORITY.get(result.source_layer, 1)
+            * authority_weight
+        )
+    else:
+        weight = CERTAINTY_WEIGHT[certainty] * SOURCE_PRIORITY.get(result.source_layer, 1)
     supports = certainty in {"confirmed", "partial"} and authority != "superseded"
     reason = (
         f"{result.source_layer} evidence with certainty={certainty} "
