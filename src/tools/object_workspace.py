@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from src.github.client import GitHubClient
+from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context
 
 
@@ -157,17 +158,16 @@ def _runtime_payload(context: KnowledgeContext) -> dict[str, Any]:
         if item.result.knowledge_scope == "runtime"
         or item.result.knowledge_type == "runtime_observation"
     )
-    if not runtime_items:
-        return {
-            "status": "not_observed",
-            "landscape": "QAS",
-            "access": "read-only",
-            "evidence_count": 0,
-            "observations": (),
-        }
+    config = SapQasRuntimeConfig.from_env()
+    if runtime_items:
+        status = "observed"
+    elif config.enabled:
+        status = "enabled_not_verified"
+    else:
+        status = "disabled"
 
     return {
-        "status": "observed",
+        "status": status,
         "landscape": "QAS",
         "access": "read-only",
         "evidence_count": len(runtime_items),
