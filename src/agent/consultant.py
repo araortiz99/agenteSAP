@@ -91,6 +91,37 @@ def _ticket_reference(ticket_id: str, path: str) -> str:
     return "TKT-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
 
 
+_REQUIRED_SECTIONS = (
+    "## Resumen",
+    "## Qué está confirmado",
+    "## Qué corresponde a nuestra implementación",
+    "## Qué no está confirmado",
+    "## Evidencias",
+    "## Ticket",
+    "## Próximos pasos",
+)
+
+
+class ConsultationFormatError(ValueError):
+    """Raised when the LLM response violates the MVP 4.2 answer contract."""
+
+
+def _validate_answer_structure(answer: str) -> None:
+    positions = []
+    for section in _REQUIRED_SECTIONS:
+        position = answer.find(section)
+        if position < 0:
+            raise ConsultationFormatError(
+                f"LLM answer is missing required section: {section}"
+            )
+        positions.append(position)
+
+    if positions != sorted(positions):
+        raise ConsultationFormatError(
+            "LLM answer sections are not in the required order."
+        )
+
+
 def _parse_citations(
     answer: str,
     traceability: TraceabilityReport,
@@ -223,7 +254,8 @@ def consult(
         "Use only the following bounded repository evidence.\n\n"
         f"{context}"
     )
-    answer = llm.generate(system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt)
+    answer = llm.generate(system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt).strip()
+    _validate_answer_structure(answer)
     citations = _parse_citations(answer, traceability)
     cited_ids = {citation.evidence_id for citation in citations}
     uncited = tuple(
