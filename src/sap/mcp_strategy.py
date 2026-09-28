@@ -48,24 +48,30 @@ def plan_mcp_provider(
     if layer == "external":
         provider = configured_provider or "sap_devs"
         profile = get_provider(provider)
-        if profile.observation_type not in {"developer_context", "external_source"}:
-            raise ValueError(
-                f"Provider '{provider}' is not valid for external/developer context"
+        if profile.observation_type in {"developer_context", "external_source"}:
+            return McpProviderPlan(
+                layer=layer,
+                provider=provider,
+                ready=True,
+                reason="developer/external MCP context may be used as supplemental evidence",
             )
         return McpProviderPlan(
             layer=layer,
             provider=provider,
-            ready=True,
-            reason="developer/external MCP context may be used as supplemental evidence",
+            ready=False,
+            reason=f"Provider '{provider}' is not eligible for external/developer context",
         )
 
     provider = configured_provider or "sap_mcp_server"
     if provider not in _RUNTIME_PROVIDERS:
-        raise ValueError(
-            f"Provider '{provider}' is not approved for runtime evidence"
+        return McpProviderPlan(
+            layer=layer,
+            provider=provider,
+            ready=False,
+            reason=f"Provider '{provider}' is not approved for runtime evidence",
         )
 
-    profile = get_provider(provider)
+    get_provider(provider)
     return McpProviderPlan(
         layer=layer,
         provider=provider,
