@@ -141,3 +141,34 @@ def test_second_hop_cannot_be_exceeded():
     context = build_knowledge_context(FakeClient(), "ZMM_IMX_0004", max_hops=1)
     assert all(item.hop <= 1 for item in context.relationships)
     assert all(item.hop <= 1 for item in context.evidence)
+
+
+def test_knowledge_context_preserves_mcp_evidence():
+    from src.tools.search_unified import UnifiedResult
+
+    class FakeGateway:
+        def search_resources(self, query):
+            return (
+                UnifiedResult(
+                    path="mcp://sap_devs/search_resources",
+                    score=0.9,
+                    matched_terms=("SAP",),
+                    content="MCP developer context",
+                    source_layer="mcp",
+                    match_type="mcp",
+                    source_id="sap_devs:search_resources",
+                    knowledge_type="developer_context",
+                    knowledge_scope="external",
+                    certainty="external_source",
+                ),
+            )
+
+    context = build_knowledge_context(
+        FakeClient(),
+        "ZMM_IMX_0004",
+        max_hops=0,
+        max_evidence=6,
+        mcp_gateway=FakeGateway(),
+    )
+    assert any(item.result.source_layer == "mcp" for item in context.evidence)
+    assert any(item.result.path.startswith("mcp://") for item in context.evidence)

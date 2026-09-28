@@ -42,13 +42,16 @@ class FakeLLM:
 def test_mvp55_router_keeps_explicit_ticket_in_plan(monkeypatch):
     captured = {}
 
-    def fake_consult(client, request, llm, *, ref, ticket_id, max_results):
+    def fake_consult(client, request, llm, *, ref, ticket_id, max_results, mcp_gateway):
         captured["ticket_id"] = ticket_id
         captured["max_results"] = max_results
+        captured["mcp_gateway"] = mcp_gateway
         return "consulted"
 
     import src.agent.router as router
 
+    sentinel_gateway = object()
+    monkeypatch.setattr(router, "_mcp_gateway", lambda: sentinel_gateway)
     monkeypatch.setattr(router, "consult", fake_consult)
     response = run_agent(
         object(),
@@ -59,4 +62,6 @@ def test_mvp55_router_keeps_explicit_ticket_in_plan(monkeypatch):
     )
     assert response.plan.intent == "consult"
     assert response.plan.ticket_id == "99999"
-    assert captured == {"ticket_id": "99999", "max_results": 12}
+    assert captured["ticket_id"] == "99999"
+    assert captured["max_results"] == 12
+    assert captured["mcp_gateway"] is sentinel_gateway

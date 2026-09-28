@@ -70,12 +70,14 @@ def _related_results(
     hop: int,
     max_results: int,
     ref: str,
+    mcp_gateway=None,
 ) -> tuple[ContextEvidence, ...]:
     retrieved = search_unified(
         client,
         entity.entity_id,
         max_results=max_results,
         ref=ref,
+        mcp_gateway=mcp_gateway,
     )
     return tuple(
         ContextEvidence(result=result, hop=hop, discovery="relationship")
@@ -93,6 +95,7 @@ def build_knowledge_context(
     max_evidence: int = 12,
     ref: str = "main",
     direct_retrieval: UnifiedSearchResult | None = None,
+    mcp_gateway=None,
 ) -> KnowledgeContext:
     """Build a bounded, provenance-preserving knowledge context."""
     if not query or not query.strip():
@@ -114,6 +117,7 @@ def build_knowledge_context(
         query,
         max_results=max_evidence,
         ref=ref,
+        mcp_gateway=mcp_gateway,
     )
 
     evidence: dict[str, ContextEvidence] = {
@@ -198,6 +202,7 @@ def build_knowledge_context(
                         hop=hop,
                         max_results=max(1, max_evidence - len(evidence)),
                         ref=ref,
+                        mcp_gateway=mcp_gateway,
                     ):
                         existing = evidence.get(context_evidence.result.path)
                         if existing is None or context_evidence.hop < existing.hop:
@@ -241,6 +246,10 @@ def build_knowledge_context(
             internal=tuple(
                 item for item in evidence_results
                 if item.source_layer == "internal"
+            ),
+            mcp=tuple(
+                item for item in evidence_results
+                if item.source_layer == "mcp"
             ),
         )
     )
