@@ -224,3 +224,22 @@ def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkey
         assert "not allowlisted" in str(exc)
     else:
         raise AssertionError("catalog-only mode must not allow SAP tool calls")
+
+
+def test_runtime_tool_catalog_requires_qas():
+    gateway = McpEvidenceGateway.__new__(McpEvidenceGateway)
+    gateway.target = type(
+        "Target",
+        (),
+        {
+            "provider": "sap_mcp_server",
+            "metadata": {"landscape": "PRD"},
+        },
+    )()
+
+    try:
+        gateway.runtime_tool_catalog()
+    except PermissionError as exc:
+        assert "restricted to QAS" in str(exc)
+    else:
+        raise AssertionError("runtime catalog must reject non-QAS targets")
