@@ -20,7 +20,7 @@ class _TextParser(HTMLParser):
         elif tag == "title" and self.skip_depth == 0:
             self.in_title = True
         elif tag in {"p", "div", "section", "article", "li", "h1", "h2", "h3", "br"} and self.skip_depth == 0:
-            self.parts.append("\\n")
+            self.parts.append("\n")
 
     def handle_endtag(self, tag: str) -> None:
         if tag in {"script", "style", "noscript", "svg"} and self.skip_depth:
@@ -28,7 +28,7 @@ class _TextParser(HTMLParser):
         elif tag == "title":
             self.in_title = False
         elif tag in {"p", "div", "section", "article", "li", "h1", "h2", "h3"} and self.skip_depth == 0:
-            self.parts.append("\\n")
+            self.parts.append("\n")
 
     def handle_data(self, data: str) -> None:
         if self.skip_depth:
