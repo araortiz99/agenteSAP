@@ -228,9 +228,10 @@ def investigate(
         f"capability:{item}" for item in missing_capabilities
     )
 
+    runtime_steps = 0
     if gateway is not None and not investigation.stop_reason and selected:
         for evidence_type in plan.required_evidence:
-            if len(investigation.steps) > max_steps:
+            if runtime_steps >= max_steps:
                 investigation.stop_reason = "max_steps_reached"
                 break
             capability = selected.get(evidence_type)
@@ -254,6 +255,7 @@ def investigate(
                 continue
             try:
                 runtime = gateway.read_runtime(capability.name, arguments)
+                runtime_steps += 1
             except (PermissionError, ValueError, OSError) as exc:
                 investigation.evidence_missing.append(
                     f"runtime_call:{evidence_type}:{capability.name}:{exc}"
