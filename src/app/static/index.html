@@ -19,7 +19,7 @@ pre{white-space:pre-wrap;background:#f6f7f9;padding:12px;border-radius:9px;overf
 details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf0f4;font-size:12px}
 .status{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.status span{padding:5px 9px;border-radius:999px;background:#edf0f4;font-size:12px}
 .status .warn{background:#fff4cc}.status .ok{background:#e8f7ed}
-.error{background:#fff0f0;border:1px solid #f0b7b7;padding:12px;border-radius:9px;white-space:pre-wrap}
+.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.panel{border:1px solid #e1e5eb;border-radius:10px;padding:12px}.panel h4{margin:0 0 8px;font-size:13px}.panel pre{margin:0;background:#f8f9fb}.badge{font-size:11px;padding:3px 7px;border-radius:999px;background:#edf0f4}.badge.conflict{background:#fff0f0}.badge.gap{background:#fff4cc}.diag{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.diag span{background:#f6f7f9;padding:6px;border-radius:7px}.error{background:#fff0f0;border:1px solid #f0b7b7;padding:12px;border-radius:9px;white-space:pre-wrap}
 @media(max-width:800px){.app{grid-template-columns:1fr}aside{display:none}.row{flex-direction:column;align-items:stretch}}
 </style>
 </head>
@@ -56,6 +56,12 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
   <details><summary>Objetos / relaciones</summary><pre id="relations">—</pre></details>
 </div>
 <details><summary>Plan y trazabilidad</summary><pre id="trace">—</pre></details>
+</div>
+<div class="card">
+<h3>Observabilidad</h3>
+<div id="diagnosticsState" class="meta">Sin análisis ejecutado.</div>
+<div class="diag" id="diagnostics"></div>
+<details><summary>Estado estructurado</summary><pre id="runtimeState">—</pre></details>
 </div>
 </main>
 </div>
@@ -143,6 +149,29 @@ async function loadStatus(){
       "<span>Cache: "+s.github_cache_files+" archivos / "+s.github_cache_trees+" árboles</span>";
   }catch(e){$("status").innerHTML="<span class='warn'>No se pudo leer el estado local</span>"}
 }
+function renderWorkbench(data){
+  const diagnostics=data?.diagnostics||{};
+  const runtime=data?.runtime||{};
+  const evidence=Array.isArray(data?.evidence)?data.evidence:[];
+  const conflicts=Array.isArray(data?.conflicts)?data.conflicts:[];
+  const gaps=Array.isArray(data?.gaps)?data.gaps:[];
+  const labels=[
+    ["Request",data?.request_id||"—"],
+    ["Trace",data?.trace_id||"—"],
+    ["Intent",data?.intent||"—"],
+    ["Evidence",diagnostics.evidence_count??evidence.length],
+    ["Conflicts",diagnostics.conflicts??conflicts.length],
+    ["Gaps",diagnostics.gaps??gaps.length],
+    ["LLM",diagnostics.llm_used?"enabled":"disabled"],
+    ["Total",diagnostics.total_latency_ms!=null?diagnostics.total_latency_ms+" ms":"—"]
+  ];
+  $("diagnostics").innerHTML=labels.map(([k,v])=>"<span><b>"+k+"</b>: "+String(v)+"</span>").join("");
+  $("diagnosticsState").innerHTML=
+    "<span class='badge'>MODE: READ ONLY</span> "+
+    "<span class='badge "+(conflicts.length?"conflict":"")+"'>CONFLICTS: "+conflicts.length+"</span> "+
+    "<span class='badge "+(gaps.length?"gap":"")+"'>GAPS: "+gaps.length+"</span>";
+  $("runtimeState").textContent=JSON.stringify(runtime,null,2);
+}
 async function consult(){
   const request=$("request").value.trim();
   if(!request){showError("Ingresá una consulta.");return}
@@ -154,6 +183,7 @@ async function consult(){
     const data=await r.json();
     if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
+    renderWorkbench(data);
     const answer=normalizeAnswer(result.answer||"");
     $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
