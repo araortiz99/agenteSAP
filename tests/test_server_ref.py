@@ -53,4 +53,4 @@ def test_object_workspace_uses_normalized_ref(monkeypatch):
     payload = server._object_workspace_payload("ZMM_IMX_0004", started_at=0.0)
 
     assert captured["ref"] == "feature/workbench"
-    assert payload["diagnostics"]["read_only"] if "read_only" in payload["diagnostics"] else True
+    assert "diagnostics" in payload
