@@ -34,10 +34,19 @@ def _run_investigation(argv: list[str]) -> int:
     parser.add_argument("--repo", default=os.getenv("GITHUB_REPO", "agenteSAP"))
     parser.add_argument("--ref", default=os.getenv("GITHUB_REF", "main"))
     parser.add_argument("--max-steps", type=int, default=5)
+    parser.add_argument("--file", action="append", default=[], help="Local TXT/MD/CSV evidence file; repeatable")
+    parser.add_argument("--max-file-bytes", type=int, default=2_000_000)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if args.max_steps < 1:
         parser.error("--max-steps debe ser mayor que cero")
+    if args.max_file_bytes < 1:
+        parser.error("--max-file-bytes debe ser mayor que cero")
+
+    document_evidence = []
+    for path in args.file:
+        source = load_document_file(path, max_bytes=args.max_file_bytes)
+        document_evidence.extend(ingest_document(source).evidence)
 
     client = GitHubClient(args.owner, args.repo, token=os.getenv("GITHUB_TOKEN"))
     result = investigate(
@@ -45,6 +54,7 @@ def _run_investigation(argv: list[str]) -> int:
         args.request,
         ref=args.ref,
         max_steps=args.max_steps,
+        additional_evidence=tuple(document_evidence),
     )
     if args.json:
         print(json.dumps(result.as_dict(), ensure_ascii=False, indent=2))

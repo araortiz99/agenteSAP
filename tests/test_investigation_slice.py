@@ -1,4 +1,8 @@
 from datetime import date
+from pathlib import Path
+
+from src.document.file_input import load_document_file
+from src.document.ingestion import ingest_document
 
 from src.investigation.capabilities import ToolCapability, match_capabilities
 from src.investigation.case_id import build_case_id
@@ -160,3 +164,58 @@ def test_investigation_honors_runtime_max_steps():
 
     assert len(gateway.calls) == 2
     assert result.stop_reason == "max_steps_reached"
+
+
+def test_investigation_accepts_bounded_document_evidence(tmp_path: Path):
+    path = tmp_path / "incidente.md"
+    path.write_text(
+        "# Incidente MM\n\nEl material 100123 presenta una diferencia en el centro 5023.",
+        encoding="utf-8",
+    )
+    source = load_document_file(path)
+    ingested = ingest_document(source)
+
+    result = investigate(
+        FakeClient(),
+        "¿Por qué el material 100123 tiene stock diferente al esperado en el centro 5023?",
+        mcp_gateway=None,
+        additional_evidence=ingested.evidence,
+        day=date(2026, 9, 28),
+    )
+
+    document_items = [item for item in result.evidence_collected if item.provider == "document"]
+    assert document_items
+    assert all(item.landscape == "KNOWLEDGE" for item in document_items)
+    assert all(item.provenance for item in document_items)
+    assert any("evidencias documentales locales" in item for item in result.findings)
+
+
+def test_investigation_rejects_non_document_additional_evidence():
+    from src.investigation.contracts import InvestigationEvidence
+
+    invalid = InvestigationEvidence(
+        evidence_id="EVD-INVALID",
+        provider="sap_mcp_server",
+        operation="read_stock",
+        landscape="QAS",
+        system="QAS",
+        object_type="SAP_RUNTIME",
+        object_id="100123",
+        observation_type="runtime_observation",
+        content="stock",
+        certainty="partial",
+    )
+
+    try:
+        investigate(
+            FakeClient(),
+            "¿Por qué el material 100123 tiene stock diferente al esperado en el centro 5023?",
+            mcp_gateway=None,
+            additional_evidence=(invalid,),
+            day=date(2026, 9, 28),
+        )
+    except ValueError as exc:
+        assert "additional_evidence" in str(exc)
+    else:
+        raise AssertionError("non-document evidence must be rejected")
+
