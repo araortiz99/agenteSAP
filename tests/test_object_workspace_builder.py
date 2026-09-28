@@ -78,7 +78,7 @@ def test_object_workspace_reuses_knowledge_context(monkeypatch):
     assert result.object["id"] == "ZMM_IMX_0004"
     assert result.relationships[0]["target_id"] == "31426"
     assert result.tickets[0]["target_id"] == "31426"
-    assert result.runtime["status"] == "not_observed"
+    assert result.runtime["status"] == "disabled"
     assert result.diagnostics["read_only"] is True
 
 
