@@ -170,7 +170,7 @@ def build_workbench_analysis(
             "evidence_ids": item.evidence_ids,
             "reason": item.reason,
         }
-        for item in (result.investigation.hypothesis_records if result.investigation else ())
+        for item in (result.investigation.hypotheses if result.investigation else ())
     )
     findings = tuple(result.investigation.findings if result.investigation else ())
     evidence_states = tuple(
