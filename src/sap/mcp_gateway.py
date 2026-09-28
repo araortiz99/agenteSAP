@@ -57,7 +57,56 @@ class McpEvidenceGateway:
         requested = select_evidence_sources(request).requested
         if "runtime" in requested:
             return cls.from_qas_runtime_env()
+        public = cls.from_public_sap_env()
+        if public is not None:
+            return public
         return cls.from_env()
+
+    @classmethod
+    def from_public_sap_env(cls) -> "McpEvidenceGateway | None":
+        enabled = os.getenv("AGENTESAP_SAP_PUBLIC_MCP_ENABLED", "").lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            return None
+        url = os.getenv(
+            "AGENTESAP_SAP_PUBLIC_MCP_URL",
+            "https://developers.sap.com/mcp/search",
+        ).strip()
+        allowed_tools = tuple(
+            item.strip()
+            for item in os.getenv(
+                "AGENTESAP_SAP_PUBLIC_MCP_READ_TOOLS",
+                "search_tutorials,get_tutorial,list_missions,get_mission",
+            ).split(",")
+            if item.strip()
+        )
+        query_tool = os.getenv(
+            "AGENTESAP_SAP_PUBLIC_MCP_QUERY_TOOL", "search_tutorials"
+        ).strip()
+        query_argument = os.getenv(
+            "AGENTESAP_SAP_PUBLIC_MCP_QUERY_ARGUMENT", "query"
+        ).strip()
+        if not url or not allowed_tools or not query_tool or not query_argument:
+            raise ValueError(
+                "public SAP MCP URL, allowlist, query tool and query argument are required"
+            )
+        if query_tool not in allowed_tools:
+            raise ValueError("public SAP MCP query tool must be explicitly allowlisted")
+
+        gateway = cls.__new__(cls)
+        gateway.config = McpGatewayConfig(max_results=5)
+        gateway.target = build_target(
+            "sap_developer_public",
+            url=url,
+            allowed_tools=allowed_tools,
+            metadata={
+                "landscape": "PUBLIC",
+                "query_tool": query_tool,
+                "query_argument": query_argument,
+            },
+        )
+        return gateway
 
     @classmethod
     def from_env(cls) -> "McpEvidenceGateway | None":
@@ -97,6 +146,8 @@ class McpEvidenceGateway:
         """Return whether this gateway can provide the requested evidence layer."""
         if source not in {"runtime", "external"}:
             return False
+        if source == "external" and self.target.provider == "sap_developer_public":
+            return True
         return self.provider_plan(source).ready
 
     @classmethod
@@ -307,6 +358,28 @@ class McpEvidenceGateway:
         async with SapMcpClient(self.target) as client:
             return await client.call_read_tool(tool_name, arguments)
 
+    def read_public(
+        self,
+        tool_name: str,
+        arguments: dict[str, object] | None = None,
+    ) -> SapMcpEvidence:
+        if self.target.provider != "sap_developer_public":
+            raise PermissionError("public reads require sap_developer_public")
+        if tool_name not in self.target.allowed_tools:
+            raise PermissionError(f"public SAP MCP tool '{tool_name}' is not allowlisted")
+        evidence = _run_async(self._call_public_tool(tool_name, arguments or {}))
+        if evidence.observation_type != "external_source":
+            raise ValueError("public SAP MCP evidence must remain external_source")
+        return evidence
+
+    async def _call_public_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, object],
+    ) -> SapMcpEvidence:
+        async with SapMcpClient(self.target) as client:
+            return await client.call_read_tool(tool_name, arguments)
+
     def search_resources(self, query: str) -> tuple[UnifiedResult, ...]:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
@@ -319,6 +392,14 @@ class McpEvidenceGateway:
             if not tool_name:
                 raise PermissionError("QAS runtime search requires an explicit configured query tool")
             evidence = self.read_runtime(tool_name, {query_argument: query.strip()})
+        elif self.target.provider == "sap_developer_public":
+            tool_name = self.target.metadata.get("query_tool")
+            query_argument = self.target.metadata.get("query_argument", "query")
+            if not tool_name:
+                raise PermissionError(
+                    "public SAP MCP search requires an explicit configured query tool"
+                )
+            evidence = self.read_public(tool_name, {query_argument: query.strip()})
         else:
             evidence = _run_async(self._search_resources(query.strip()))
         if _has_zero_results(evidence.content):
@@ -341,7 +422,11 @@ class McpEvidenceGateway:
                     "runtime_observation"
                     if getattr(evidence, "observation_type", None)
                     in {"runtime_observation", "custom_runtime_observation"}
-                    else "developer_context"
+                    else (
+                        "external_source"
+                        if getattr(evidence, "observation_type", None) == "external_source"
+                        else "developer_context"
+                    )
                 ),
                 knowledge_scope=(
                     "runtime"

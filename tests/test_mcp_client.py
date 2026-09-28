@@ -56,15 +56,16 @@ class FakeClient:
         )
 
 
-def test_client_rejects_non_stdio_target():
+def test_client_accepts_streamable_http_target():
     target = build_target(
         "abap_ai",
         url="https://example.invalid/mcp",
         allowed_tools=("read_object",),
     )
 
-    with pytest.raises(ValueError, match="stdio"):
-        SapMcpClient(target)
+    client = SapMcpClient(target)
+
+    assert client.target.transport == "streamable_http"
 
 
 def test_sap_devs_default_target_is_usable_by_client():
