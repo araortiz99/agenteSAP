@@ -25,7 +25,14 @@ def test_local_app_http_health_and_consult(monkeypatch):
             assert json.loads(response.read()) == {
                 "status": "ok",
                 "mode": "local-read-only",
+                "sap_writes_exposed": False,
             }
+
+        with urllib.request.urlopen(url + "/api/status", timeout=2) as response:
+            status = json.loads(response.read())
+            assert status["agent"] == "ready"
+            assert status["sap_writes_exposed"] is False
+            assert status["qas_runtime_enabled"] is False
 
         payload = json.dumps({"request": "test"}).encode()
         request = urllib.request.Request(
