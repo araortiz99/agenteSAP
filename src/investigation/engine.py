@@ -241,8 +241,12 @@ def investigate(
                     f"runtime_call:{evidence_type}:{capability.name}:{exc}"
                 )
                 continue
-            investigation.evidence_collected.append(_normalize_runtime_evidence(runtime))
-            investigation.provenance.append(_provenance(investigation.evidence_collected[-1]))
+            normalized_runtime = _normalize_runtime_evidence(runtime)
+            if normalized_runtime.evidence_id not in {
+                item.evidence_id for item in investigation.evidence_collected
+            }:
+                investigation.evidence_collected.append(normalized_runtime)
+                investigation.provenance.append(_provenance(normalized_runtime))
 
     investigation.correlation = correlate_evidence(investigation.evidence_collected)
 
