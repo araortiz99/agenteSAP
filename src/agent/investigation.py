@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 from src.github.client import GitHubClient
 from src.sap.mcp_gateway import McpEvidenceGateway
+from src.investigation.correlation import EvidenceCorrelation, correlate_evidence
+from src.investigation.evidence_state import EvidenceState
+from src.investigation.hypothesis import Hypothesis, build_hypotheses
+from src.investigation.semantic import unified_to_investigation_evidence
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context
 from src.tools.query_planner import QueryPlan, decompose_query
@@ -26,6 +30,9 @@ class InvestigationResult:
     evidence: EvidenceAssessment
     reasoning: ReasoningResult
     knowledge_context: KnowledgeContext
+    evidence_states: tuple[EvidenceState, ...] = ()
+    hypotheses: tuple[Hypothesis, ...] = ()
+    correlation: EvidenceCorrelation | None = None
 
 
 def _merge_retrievals(
@@ -117,6 +124,19 @@ def investigate(
         mcp_gateway=gateway,
     )
 
+    semantic_evidence = tuple(unified_to_investigation_evidence(item) for item in retrieval.results)
+    correlation = correlate_evidence(semantic_evidence)
+    contradiction_ids = {evidence_id for pair in correlation.contradictions for evidence_id in pair}
+    evidence_states = tuple(
+        EvidenceState(
+            item.evidence_id,
+            "CONFLICTING" if item.evidence_id in contradiction_ids else "AVAILABLE",
+            "La evidencia participa en una contradicción estructural." if item.evidence_id in contradiction_ids else "La evidencia fue recuperada y normalizada.",
+        )
+        for item in semantic_evidence
+    )
+    hypotheses = build_hypotheses(semantic_evidence, evidence_states, correlation)
+
     return InvestigationResult(
         query=query.strip(),
         plan=plan,
@@ -124,4 +144,7 @@ def investigate(
         evidence=evidence,
         reasoning=reasoning,
         knowledge_context=knowledge_context,
+        evidence_states=evidence_states,
+        hypotheses=hypotheses,
+        correlation=correlation,
     )
