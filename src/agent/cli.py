@@ -18,6 +18,17 @@ def main() -> int:
     parser.add_argument("--repo", default=os.getenv("GITHUB_REPO", "agenteSAP"))
     parser.add_argument("--ref", default=os.getenv("GITHUB_REF", "main"))
     parser.add_argument(
+        "--ticket",
+        default=None,
+        help="Ticket/incident ID explícito; sobrescribe la extracción desde la consulta",
+    )
+    parser.add_argument(
+        "--max-results",
+        type=int,
+        default=8,
+        help="Máximo de resultados de evidencia para la consulta consultiva",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Print the complete agent response as JSON",
@@ -25,7 +36,15 @@ def main() -> int:
     args = parser.parse_args()
 
     github = GitHubClient(args.owner, args.repo, token=os.getenv("GITHUB_TOKEN"))
-    response = run_agent(github, args.request, ref=args.ref)
+    if args.max_results < 1:
+        parser.error("--max-results debe ser mayor que cero")
+    response = run_agent(
+        github,
+        args.request,
+        ref=args.ref,
+        ticket_id=args.ticket,
+        max_results=args.max_results,
+    )
 
     if args.json:
         if not is_dataclass(response):
