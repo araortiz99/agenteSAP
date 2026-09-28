@@ -241,12 +241,13 @@ def consult(
     ref: str = "main",
     max_results: int = 8,
     ticket_id: str | None = None,
+    mcp_gateway: McpEvidenceGateway | None = None,
 ) -> ConsultationResult:
     """Retrieve, assess, trace and synthesize a consultative answer."""
     if not request or not request.strip():
         raise ValueError("request must not be empty")
 
-    mcp_gateway = McpEvidenceGateway.from_env()
+    mcp_gateway = mcp_gateway if mcp_gateway is not None else McpEvidenceGateway.from_env()
     retrieval = search_unified(
         client, request, max_results=max_results, ref=ref, mcp_gateway=mcp_gateway
     )
@@ -256,7 +257,7 @@ def consult(
     ticket_context, ticket_relationships = _ticket_context(client, ticket_id, ref)
     context = build_context(retrieval, traceability)
     knowledge_context = build_knowledge_context(
-        client, request, ref=ref, direct_retrieval=retrieval
+        client, request, ref=ref, direct_retrieval=retrieval, mcp_gateway=mcp_gateway
     )
     context += "\n\n" + render_knowledge_context(knowledge_context)
     if ticket_context:
