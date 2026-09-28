@@ -1,3 +1,4 @@
+import json
 from src.sap import runtime_cli
 
 
@@ -58,3 +59,29 @@ def test_runtime_preflight_cli_returns_nonzero_for_invalid_tool(monkeypatch):
     monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
 
     assert runtime_cli.main(["validate-qas"]) == 2
+
+
+def test_qas_readiness_is_disabled_by_default(monkeypatch, capsys):
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_ENABLED", raising=False)
+    assert runtime_cli.main(["readiness-qas"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["runtime_ready"] is False
+    assert report["reason"] == "runtime disabled"
+
+
+def test_qas_readiness_requires_readonly_scope(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "write")
+    assert runtime_cli.main(["readiness-qas"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["reason"] == "scope must be mcp_readonly"
+
+
+def test_qas_readiness_rejects_non_qas_landscape(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "PRD")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    assert runtime_cli.main(["readiness-qas"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["reason"] == "landscape must be QAS"

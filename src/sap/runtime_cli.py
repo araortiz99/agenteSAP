@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 from src.sap.mcp_gateway import McpEvidenceGateway
+from src.sap.qas_runtime import SapQasRuntimeConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,6 +38,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Pretty-print the JSON validation.",
     )
+    readiness = subparsers.add_parser(
+        "readiness-qas",
+        help="Report QAS runtime readiness without executing a SAP tool.",
+    )
+    readiness.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print the JSON readiness report.",
+    )
+
     return parser
 
 
@@ -60,6 +72,74 @@ def main(argv: list[str] | None = None) -> int:
         if not all(bool(item.get("valid")) for item in results):
             return 2
         return 0
+
+    if args.command == "readiness-qas":
+        try:
+            config = SapQasRuntimeConfig.from_env()
+        except ValueError as exc:
+            landscape = os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS").upper()
+            scope = os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+            if landscape != "QAS":
+                reason = "landscape must be QAS"
+            elif scope != "mcp_readonly":
+                reason = "scope must be mcp_readonly"
+            else:
+                reason = str(exc)
+            report = {
+                "enabled": os.getenv("AGENTESAP_SAP_RUNTIME_ENABLED", "false").lower()
+                in {"1", "true", "yes", "on"},
+                "landscape": landscape,
+                "scope": scope,
+                "discovery_only": os.getenv(
+                    "AGENTESAP_SAP_RUNTIME_DISCOVERY", "false"
+                ).lower()
+                in {"1", "true", "yes", "on"},
+                "allowlist_configured": bool(
+                    os.getenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "").strip()
+                ),
+                "command_configured": bool(
+                    os.getenv("AGENTESAP_SAP_MCP_COMMAND", "sap-mcp-server").strip()
+                ),
+                "runtime_ready": False,
+                "reason": reason,
+            }
+            print(
+                json.dumps(
+                    report,
+                    ensure_ascii=False,
+                    indent=2 if args.pretty else None,
+                )
+            )
+            return 2
+
+        report = {
+            "enabled": config.enabled,
+            "landscape": config.landscape,
+            "scope": config.scope,
+            "discovery_only": config.discovery_only,
+            "allowlist_configured": bool(config.allowed_tools),
+            "command_configured": bool(config.command),
+            "runtime_ready": False,
+            "reason": "live MCP catalog not verified",
+        }
+        if config.landscape != "QAS":
+            report["reason"] = "landscape must be QAS"
+        elif config.scope != "mcp_readonly":
+            report["reason"] = "scope must be mcp_readonly"
+        elif not config.enabled:
+            report["reason"] = "runtime disabled"
+        elif not config.allowed_tools and not config.discovery_only:
+            report["reason"] = "explicit allowlist or discovery_only is required"
+        elif not config.command:
+            report["reason"] = "MCP command is not configured"
+        print(
+            json.dumps(
+                report,
+                ensure_ascii=False,
+                indent=2 if args.pretty else None,
+            )
+        )
+        return 0 if report["runtime_ready"] else 2
 
     if args.command == "discover-qas":
         gateway = McpEvidenceGateway.from_qas_runtime_env()
