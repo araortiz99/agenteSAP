@@ -34,7 +34,7 @@ authority: superseded
 version: 0.9
 origin: business_document
 ---
-Regla histórica reemplazada.
+Regla histórica de Inventario Materia Prima reemplazada.
 """,
         }
 
