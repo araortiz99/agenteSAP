@@ -40,6 +40,7 @@ class EvidenceItem:
     knowledge_type: str
     knowledge_scope: str
     certainty: str
+    authority: str
     weight: float
     supports: bool
     reason: str
@@ -69,8 +70,10 @@ class EvidenceAssessment:
 
 def _item(result: UnifiedResult) -> EvidenceItem:
     certainty = result.certainty if result.certainty in CERTAINTY_WEIGHT else "unknown"
-    weight = CERTAINTY_WEIGHT[certainty] * SOURCE_PRIORITY.get(result.source_layer, 1)
-    supports = certainty in {"confirmed", "partial"}
+    authority = result.authority if result.authority in {"candidate", "reference", "authoritative", "superseded"} else "reference"
+    authority_weight = {"authoritative": 1.0, "reference": 0.8, "candidate": 0.6, "superseded": 0.2}[authority]
+    weight = CERTAINTY_WEIGHT[certainty] * SOURCE_PRIORITY.get(result.source_layer, 1) * authority_weight
+    supports = certainty in {"confirmed", "partial"} and authority != "superseded"
     reason = (
         f"{result.source_layer} evidence with certainty={certainty} "
         f"and source_id={result.source_id or 'unknown'}"
@@ -82,6 +85,7 @@ def _item(result: UnifiedResult) -> EvidenceItem:
         knowledge_type=result.knowledge_type,
         knowledge_scope=result.knowledge_scope,
         certainty=certainty,
+        authority=authority,
         weight=weight,
         supports=supports,
         reason=reason,
