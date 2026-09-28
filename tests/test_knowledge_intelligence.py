@@ -70,6 +70,7 @@ def test_resolve_entities_returns_only_canonical_metadata_entities():
     assert result[0].entity_id == "ZMM_IMX_0004"
     assert result[0].entity_type == "SAP_OBJECT"
     assert result[0].certainty == "confirmed"
+    assert all(item.entity_type != "RELATIONSHIP" for item in result)
 
 
 def test_knowledge_context_traverses_explicit_relationships_only():
