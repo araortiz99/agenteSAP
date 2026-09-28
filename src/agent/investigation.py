@@ -83,6 +83,14 @@ def investigate(
 
     plan = decompose_query(query, max_steps=max_steps)
     gateway = mcp_gateway
+    if gateway is None:
+        from src.tools.source_selection import select_evidence_sources
+        requested = select_evidence_sources(query).requested
+        if "runtime" in requested:
+            gateway = McpEvidenceGateway.from_qas_runtime_env()
+        else:
+            gateway = McpEvidenceGateway.from_env()
+
     retrievals = tuple(
         search_unified(
             client,

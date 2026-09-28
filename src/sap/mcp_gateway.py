@@ -116,6 +116,8 @@ class McpEvidenceGateway:
             allowed_tools=("__catalog_only__",),
             metadata={
                 "landscape": "QAS",
+                "query_tool": config.query_tool or "",
+                "query_argument": config.query_argument,
                 **({"system": config.system} if config.system else {}),
             },
         )
@@ -127,6 +129,12 @@ class McpEvidenceGateway:
         config = SapQasRuntimeConfig.from_env()
         if not config.enabled:
             return None
+        if (
+            not config.discovery_only
+            and config.query_tool
+            and config.query_tool not in config.allowed_tools
+        ):
+            raise ValueError("QAS runtime query tool must be explicitly allowlisted")
 
         gateway = cls.__new__(cls)
         gateway.config = McpGatewayConfig(
@@ -142,6 +150,8 @@ class McpEvidenceGateway:
             discovery_only=config.discovery_only,
             metadata={
                 "landscape": config.landscape,
+                "query_tool": config.query_tool or "",
+                "query_argument": config.query_argument,
                 **({"system": config.system} if config.system else {}),
             },
         )
@@ -285,7 +295,16 @@ class McpEvidenceGateway:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
 
-        evidence = _run_async(self._search_resources(query.strip()))
+        if self.target.provider == "sap_mcp_server":
+            if self.target.metadata.get("landscape") != "QAS":
+                raise PermissionError("runtime search is restricted to QAS")
+            tool_name = self.target.metadata.get("query_tool")
+            query_argument = self.target.metadata.get("query_argument", "query")
+            if not tool_name:
+                raise PermissionError("QAS runtime search requires an explicit configured query tool")
+            evidence = self.read_runtime(tool_name, {query_argument: query.strip()})
+        else:
+            evidence = _run_async(self._search_resources(query.strip()))
         if _has_zero_results(evidence.content):
             return ()
 

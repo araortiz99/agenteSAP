@@ -44,6 +44,7 @@ def test_qas_runtime_config_parses_explicit_read_tools(monkeypatch):
         "AGENTESAP_SAP_RUNTIME_READ_TOOLS",
         "verified_table_read, verified_ddic_read",
     )
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_QUERY_TOOL", "verified_table_read")
     monkeypatch.setenv(
         "AGENTESAP_SAP_MCP_ARGS",
         '--profile "qas readonly"',
@@ -61,6 +62,7 @@ def test_qas_runtime_gateway_requires_allowlisted_tool(monkeypatch):
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_table_read")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_QUERY_TOOL", "verified_table_read")
 
     gateway = McpEvidenceGateway.from_qas_runtime_env()
 
