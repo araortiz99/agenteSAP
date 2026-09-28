@@ -63,6 +63,8 @@ Respuesta trazable
 | Bounded multi-hop context | ✅ |
 | Knowledge governance / PR flow | ✅ |
 | Read-only MCP evidence gateway | ✅ (opt-in) |
+| QAS runtime contract / discovery | ✅ (disabled by default) |
+| Live SAP QAS runtime validation | ⏳ |
 
 ## Reglas de seguridad funcional
 
