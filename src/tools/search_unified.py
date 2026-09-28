@@ -31,6 +31,11 @@ class UnifiedSearchResult:
     internal: tuple[UnifiedResult, ...]
 
 
+def _evidence_source_id(metadata: dict[str, str]) -> str | None:
+    """Return the provenance source without confusing it with entity source_id."""
+    return metadata.get("evidence_source_id") or metadata.get("source_id")
+
+
 def _internal_result(result: SearchResult) -> UnifiedResult:
     metadata = _parse_front_matter(result.content)
     return UnifiedResult(
@@ -40,7 +45,7 @@ def _internal_result(result: SearchResult) -> UnifiedResult:
         content=result.content,
         source_layer="internal",
         match_type=result.match_type,
-        source_id=metadata.get("source_id"),
+        source_id=_evidence_source_id(metadata),
         knowledge_type=metadata.get("knowledge_type", "unknown"),
         knowledge_scope=metadata.get("knowledge_scope", "unknown"),
         certainty=metadata.get("certainty", "unknown"),
@@ -56,7 +61,7 @@ def _standard_result(result: SAPStandardResult) -> UnifiedResult:
         content=result.content,
         source_layer="sap_standard",
         match_type="content",
-        source_id=metadata.get("source_id"),
+        source_id=_evidence_source_id(metadata),
         knowledge_type=metadata.get("knowledge_type", "standard"),
         knowledge_scope=metadata.get("knowledge_scope", "global"),
         certainty=metadata.get("certainty", "unknown"),
