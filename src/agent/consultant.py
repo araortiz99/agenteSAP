@@ -245,7 +245,7 @@ def consult(
     if not request or not request.strip():
         raise ValueError("request must not be empty")
 
-    retrieval = search_unified(client, request, max_results=max_results, ref=ref)
+    retrieval = search_unified(\n        client, request, max_results=max_results, ref=ref, mcp_gateway=mcp_gateway\n    )
     evidence = assess_evidence(retrieval)
     reasoning = reason_from_evidence(evidence)
     traceability = build_traceability(reasoning)
