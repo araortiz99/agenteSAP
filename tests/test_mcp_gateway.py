@@ -224,3 +224,24 @@ def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkey
         assert "not allowlisted" in str(exc)
     else:
         raise AssertionError("catalog-only mode must not allow SAP tool calls")
+
+
+def test_qas_catalog_inspection_requires_explicit_enablement(monkeypatch):
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_ENABLED", raising=False)
+    with pytest.raises(PermissionError, match="disabled"):
+        McpEvidenceGateway.for_qas_catalog_inspection()
+
+
+def test_runtime_tool_catalog_rejects_non_qas():
+    gateway = McpEvidenceGateway.__new__(McpEvidenceGateway)
+    gateway.target = type(
+        "Target",
+        (),
+        {
+            "provider": "sap_mcp_server",
+            "metadata": {"landscape": "PRD"},
+        },
+    )()
+
+    with pytest.raises(PermissionError, match="restricted to QAS"):
+        gateway.runtime_tool_catalog()
