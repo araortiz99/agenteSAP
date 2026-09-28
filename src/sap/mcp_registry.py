@@ -45,6 +45,22 @@ PROVIDERS: dict[McpProvider, ProviderProfile] = {
         default_command="sap-devs",
         default_args=("mcp", "serve"),
     ),
+    "sap_developer_public": ProviderProfile(
+        provider="sap_developer_public",
+        purpose="Official public SAP Developer Center knowledge via hosted anonymous MCP.",
+        transport="streamable_http",
+        observation_type="external_source",
+        default_read_tools=(
+            "search_tutorials",
+            "get_tutorial",
+            "list_missions",
+            "get_mission",
+            "kg_shared_concepts",
+            "kg_neighborhood",
+            "kg_search_concepts",
+            "kg_community",
+        ),
+    ),
     "sap_mcp_server": ProviderProfile(
         provider="sap_mcp_server",
         purpose="Read-only runtime access to SAP ABAP/BTP services through a compatible backend.",
