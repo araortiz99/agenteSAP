@@ -93,7 +93,13 @@ function ticketWorkspace(){
   consult();
 }
 function normalizeAnswer(text){
-  return String(text||"").replace(/\\##/g,"##").replace(/\\*\\*/g,"**");
+  let value=String(text||"");
+  value=value.replaceAll(slashStarStar,"");
+  value=value.replaceAll("\\##","##");
+  const marker="**";
+  const count=value.split(marker).length-1;
+  if(count>30){ value=value.replaceAll(marker,""); }
+  return value;
 }
 function extractSection(text,title,nextTitles){
   const normalized=normalizeAnswer(text);
