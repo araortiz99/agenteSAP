@@ -204,6 +204,7 @@ def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkey
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_DISCOVERY", "true")
     monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", raising=False)
 
     gateway = McpEvidenceGateway.for_qas_catalog_inspection()
