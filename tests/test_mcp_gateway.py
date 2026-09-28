@@ -1,3 +1,5 @@
+import pytest
+
 from src.sap.mcp_gateway import McpEvidenceGateway, McpGatewayConfig
 from src.tools.search_unified import UnifiedResult, search_unified
 
@@ -174,6 +176,7 @@ def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
 
 
 def test_runtime_tool_inspection_is_allowlist_bound(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
