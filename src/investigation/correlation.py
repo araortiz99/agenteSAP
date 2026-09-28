@@ -172,10 +172,12 @@ def correlate_evidence(
             stock_left = left_stock is not None
             stock_right = right_stock is not None
             if (movement_left and stock_right) or (movement_right and stock_left):
+                movement = left if movement_left else right
+                stock = right if movement_left else left
                 relations.append(
                     EvidenceRelation(
-                        left.evidence_id,
-                        right.evidence_id,
+                        movement.evidence_id,
+                        stock.evidence_id,
                         "explains",
                         "medium",
                         "Una evidencia identifica movimiento y la otra observa stock para la misma entidad.",
