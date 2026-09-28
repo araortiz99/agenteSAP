@@ -103,6 +103,7 @@ class McpEvidenceGateway:
             allowed_tools=config.allowed_tools,
             metadata={
                 "landscape": config.landscape,
+                "scope": config.scope,
                 **({"system": config.system} if config.system else {}),
             },
         )
