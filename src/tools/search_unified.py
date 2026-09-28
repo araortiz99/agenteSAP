@@ -163,13 +163,21 @@ def search_unified(
         _internal_result(x)
         for x in search_knowledge(client, query, max_results=max_results, ref=ref)
     ]
-    mcp = list(mcp_gateway.search_resources(query) if mcp_gateway else ())
-
     selection = select_evidence_sources(query)
+    mcp = ()
+    if mcp_gateway:
+        supports_source = getattr(mcp_gateway, "supports_source", None)
+        # A gateway without an explicit capability contract is only allowed as
+        # supplemental developer/external context. It must never be queried for
+        # a runtime requirement by accident.
+        if "runtime" not in selection.requested or (
+            callable(supports_source) and supports_source("runtime")
+        ):
+            mcp = mcp_gateway.search_resources(query)
     combined = _merge_evidence_results(
         standard,
         internal,
-        mcp,
+        list(mcp),
         requested=selection.requested,
         max_results=max_results,
     )
