@@ -53,11 +53,67 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify the live MCP tools/list catalog without executing an SAP tool.",
     )
 
+    read = subparsers.add_parser(
+        "read-qas",
+        help="Execute exactly one explicitly allowlisted QAS read-only MCP tool.",
+    )
+    read.add_argument("--tool", required=True, help="Exact allowlisted MCP tool name.")
+    read.add_argument(
+        "--arguments",
+        default="{}",
+        help="JSON object passed to the selected read-only MCP tool.",
+    )
+    read.add_argument("--pretty", action="store_true", help="Pretty-print the evidence.")
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+
+    if args.command == "read-qas":
+        gateway = McpEvidenceGateway.from_qas_runtime_env()
+        if gateway is None:
+            raise PermissionError(
+                "QAS runtime reads are disabled; set AGENTESAP_SAP_RUNTIME_ENABLED=true"
+            )
+        try:
+            arguments = json.loads(args.arguments)
+        except json.JSONDecodeError as exc:
+            raise ValueError("--arguments must be valid JSON") from exc
+        if not isinstance(arguments, dict):
+            raise ValueError("--arguments must be a JSON object")
+        validation = {
+            item["name"]: item
+            for item in gateway.validate_runtime_allowlist()
+        }
+        selected = validation.get(args.tool)
+        if selected is None:
+            raise PermissionError(f"MCP runtime tool '{args.tool}' is not allowlisted")
+        if not selected.get("valid"):
+            raise PermissionError(
+                f"MCP runtime tool '{args.tool}' is not ready: {selected.get('reason')}"
+            )
+        evidence = gateway.read_runtime(args.tool, arguments)
+        print(
+            json.dumps(
+                {
+                    "provider": evidence.provider,
+                    "operation": evidence.operation,
+                    "landscape": evidence.landscape,
+                    "system": evidence.system,
+                    "object_id": evidence.object_id,
+                    "observation_type": evidence.observation_type,
+                    "certainty": evidence.certainty,
+                    "content": evidence.content,
+                    "provenance": dict(evidence.provenance),
+                },
+                ensure_ascii=False,
+                indent=2 if args.pretty else None,
+                default=str,
+            )
+        )
+        return 0
 
     if args.command == "validate-qas":
         gateway = McpEvidenceGateway.from_qas_runtime_env()
