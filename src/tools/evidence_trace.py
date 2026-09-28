@@ -47,6 +47,10 @@ def _evidence_id(item: EvidenceItem) -> str:
             item.knowledge_type,
             item.knowledge_scope,
             item.certainty,
+            *(
+                f"{key}={value}"
+                for key, value in sorted(item.provenance)
+            ),
         )
     )
     return "EVD-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
