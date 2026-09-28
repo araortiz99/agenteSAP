@@ -29,6 +29,7 @@ class UnifiedSearchResult:
     results: tuple[UnifiedResult, ...]
     sap_standard: tuple[UnifiedResult, ...]
     internal: tuple[UnifiedResult, ...]
+    mcp: tuple[UnifiedResult, ...] = ()
 
 
 def _evidence_source_id(metadata: dict[str, str]) -> str | None:
@@ -74,23 +75,31 @@ def search_unified(
     *,
     max_results: int = 10,
     ref: str = "main",
+    mcp_gateway=None,
 ) -> UnifiedSearchResult:
-    """Retrieve from both layers without merging their evidentiary meaning."""
+    """Retrieve standard, internal and optional MCP evidence without merging their meaning."""
     if not query or not query.strip():
         raise ValueError("query must not be empty")
     if max_results < 1:
         raise ValueError("max_results must be greater than zero")
 
-    standard = [_standard_result(x) for x in search_sap_standard(
-        client, query, max_results=max_results, ref=ref
-    )]
-    internal = [_internal_result(x) for x in search_knowledge(
-        client, query, max_results=max_results, ref=ref
-    )]
+    standard = [
+        _standard_result(x)
+        for x in search_sap_standard(client, query, max_results=max_results, ref=ref)
+    ]
+    internal = [
+        _internal_result(x)
+        for x in search_knowledge(client, query, max_results=max_results, ref=ref)
+    ]
+    mcp = list(mcp_gateway.search_resources(query) if mcp_gateway else ())
 
     combined = sorted(
-        standard + internal,
-        key=lambda x: (-x.score, 0 if x.source_layer == "sap_standard" else 1, x.path),
+        standard + internal + mcp,
+        key=lambda x: (
+            -x.score,
+            {"sap_standard": 0, "internal": 1, "mcp": 2}.get(x.source_layer, 3),
+            x.path,
+        ),
     )[:max_results]
 
     return UnifiedSearchResult(
@@ -98,4 +107,5 @@ def search_unified(
         results=tuple(combined),
         sap_standard=tuple(standard),
         internal=tuple(internal),
+        mcp=tuple(mcp),
     )
