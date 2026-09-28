@@ -70,9 +70,15 @@ No se infiere certainty desde texto libre: los indicadores de evidencia utilizan
 
 ### Fase 3 — Evidence
 
-- Evidence Explorer;
-- provenance viewer;
-- retrieval explorer.
+La UI expone la evidencia ya producida por `EvidenceAssessment` y `TraceabilityReport`; no ejecuta un segundo retrieval.
+
+- **Evidence Explorer:** filtra evidencia por texto, source layer y certainty.
+- **Provenance Viewer:** muestra `evidence_id`, source layer, source ID, knowledge type/scope, certainty, weight, role, reason y provenance.
+- **Retrieval Explorer:** muestra la query y los resultados realmente recuperados con score, matched terms, source layer, match type, source ID y certainty.
+- estados vacíos explícitos;
+- selección de evidencia para inspección de provenance.
+
+El contrato `WorkbenchAnalysisResponse.retrieval` expone únicamente metadata de resultados recuperados; no contiene contenido adicional ni permite ejecutar retrieval desde el navegador.
 
 ### Fase 4 — Knowledge Intelligence
 
