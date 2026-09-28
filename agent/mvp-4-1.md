@@ -60,20 +60,27 @@ The consultation result exposes:
   authoritative SAP Standard;
 - no relationship is inferred from co-occurrence.
 
-## Current limitation
+## Validation status
 
-The repository currently contains synthetic ticket fixtures for tests, but no
-official ticket instances under `tickets/<ticket_id>/`.
+MVP 4.1 is validated against the sanitized ticket fixture for ticket 31426 and
+the corresponding explicit relationship fixture used by the automated tests.
 
-Therefore ticket-context behavior is implemented but cannot yet be claimed as
-validated against a real production ticket.
+The repository currently contains the sanitized ticket instance at:
 
-## Next validation gate
+`tickets/31426/ticket.md`
 
-Before MVP 4.1 is considered complete:
+and its explicit relationship data under:
 
-1. add the first real sanitized ticket;
-2. run a consultation referencing that ticket;
-3. verify `TKT-*` references and explicit relationships;
-4. verify all answer citations resolve to `EVD-*`;
-5. verify no unsupported claims are promoted to confirmed.
+`knowledge/relationships/`
+
+Validation covers:
+
+1. retrieval of ticket documents;
+2. deterministic `TKT-*` references;
+3. retrieval of explicit relationships;
+4. validation that every cited `EVD-*` resolves to traceability evidence;
+5. rejection of unsupported citations and invalid answer structure;
+6. preservation of evidence certainty and source-layer boundaries.
+
+The ticket remains a sanitized functional fixture, not a claim of direct access to a
+production ticketing system.
