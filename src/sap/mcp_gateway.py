@@ -92,6 +92,12 @@ class McpEvidenceGateway:
         permission to invoke any discovered tool.
         """
         config = SapQasRuntimeConfig.from_env()
+        if not config.enabled:
+            raise PermissionError("QAS runtime catalog inspection is disabled")
+        if not config.discovery_only:
+            raise PermissionError(
+                "QAS runtime catalog inspection requires discovery_only mode"
+            )
         if config.landscape != "QAS":
             raise ValueError("runtime catalog inspection is restricted to QAS")
         if config.scope != "mcp_readonly":

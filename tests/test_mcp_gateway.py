@@ -198,6 +198,8 @@ def test_runtime_tool_inspection_is_allowlist_bound(monkeypatch):
 
 
 def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_DISCOVERY", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
     monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", raising=False)
@@ -224,3 +226,14 @@ def test_qas_catalog_inspection_is_readonly_and_not_allowlisted_for_calls(monkey
         assert "not allowlisted" in str(exc)
     else:
         raise AssertionError("catalog-only mode must not allow SAP tool calls")
+
+
+def test_qas_catalog_inspection_rejects_disabled_runtime(monkeypatch):
+    monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_ENABLED", raising=False)
+
+    try:
+        McpEvidenceGateway.for_qas_catalog_inspection()
+    except PermissionError as exc:
+        assert "disabled" in str(exc)
+    else:
+        raise AssertionError("catalog inspection must be disabled by default")

@@ -1,7 +1,6 @@
-"""Safe QAS MCP catalog inspection CLI.
+"""CLI for safe QAS MCP tool discovery.
 
-This command calls only MCP tools/list. It never invokes a SAP tool.
-Credentials remain in the local sap-mcp-server configuration.
+Discovery performs only MCP tools/list. It never executes an SAP tool.
 """
 
 from __future__ import annotations
@@ -14,28 +13,53 @@ from src.sap.mcp_gateway import McpEvidenceGateway
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Inspect the allowlisted SAP MCP QAS tool catalog without calling tools."
+        description="Discover the QAS MCP tool catalog without executing SAP tools."
     )
-    parser.add_argument(
-        "--catalog",
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    discover = subparsers.add_parser(
+        "discover-qas",
+        help="List the tools advertised by the QAS MCP server.",
+    )
+    discover.add_argument(
+        "--pretty",
         action="store_true",
-        help="List the QAS MCP server tool catalog; no SAP operation is invoked.",
+        help="Pretty-print the JSON catalog.",
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if not args.catalog:
-        print("Use --catalog to inspect the QAS MCP tool catalog.")
-        return 2
 
-    gateway = McpEvidenceGateway.for_qas_catalog_inspection()
-    catalog = gateway.inspect_runtime_tools()
+    if args.command == "discover-qas":
+        gateway = McpEvidenceGateway.from_qas_runtime_env()
+        if gateway is None:
+            raise PermissionError(
+                "QAS runtime discovery is disabled; set "
+                "AGENTESAP_SAP_RUNTIME_ENABLED=true"
+            )
+        catalog = gateway.discover_qas_tools()
+        print(
+            json.dumps(
+                [
+                    {
+                        "name": item.name,
+                        "description": item.description,
+                        "input_schema": item.input_schema,
+                        "read_only_hint": item.read_only_hint,
+                        "destructive_hint": item.destructive_hint,
+                    }
+                    for item in catalog
+                ],
+                ensure_ascii=False,
+                indent=2 if args.pretty else None,
+                default=str,
+            )
+        )
+        return 0
 
-    # Catalog-only mode exposes metadata from tools/list only; no tool call is made.
-    print(json.dumps(catalog, ensure_ascii=False, indent=2))
-    return 0
+    raise AssertionError(f"Unsupported command: {args.command}")
 
 
 if __name__ == "__main__":
