@@ -92,6 +92,24 @@ class SapMcpClient:
                 f"'{self.target.provider}'"
             )
 
+        descriptors = await self.list_tool_descriptors()
+        descriptor = next(
+            (item for item in descriptors if item.name == tool_name),
+            None,
+        )
+        if descriptor is None:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not advertised by the connected server"
+            )
+        if descriptor.read_only_hint is False:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not marked read-only by the server"
+            )
+        if descriptor.destructive_hint is True:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is marked destructive by the server"
+            )
+
         result = await self._require_connected().call_tool(
             tool_name,
             arguments or {},
