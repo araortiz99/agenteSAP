@@ -149,7 +149,8 @@ async function consult(){
     const data=await r.json();
     if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
-    const answer=normalizeAnswer(result.answer||"");\n    $("answer").textContent=answer||JSON.stringify(result,null,2);
+    const answer=normalizeAnswer(result.answer||"");
+    $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
     $("ticketPanels").style.display=isTicket?"block":"none";
     $("confirmed").textContent=
