@@ -171,3 +171,22 @@ def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
     assert gateway.supports_source("runtime") is False
     assert gateway.provider_plan("runtime").ready is False
     assert gateway.provider_plan("external").ready is True
+
+
+def test_runtime_gateway_catalog_requires_qas():
+    gateway = McpEvidenceGateway.__new__(McpEvidenceGateway)
+    gateway.target = type(
+        "Target",
+        (),
+        {
+            "provider": "sap_mcp_server",
+            "metadata": {"landscape": "PRD"},
+        },
+    )()
+
+    try:
+        gateway.runtime_tool_catalog()
+    except PermissionError as exc:
+        assert "restricted to QAS" in str(exc)
+    else:
+        raise AssertionError("runtime catalog must reject non-QAS targets")
