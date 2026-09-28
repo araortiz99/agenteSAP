@@ -15,7 +15,7 @@ import threading
 from dataclasses import dataclass
 from typing import Coroutine, TypeVar
 
-from src.sap.mcp_client import SapMcpClient
+from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
 from src.sap.mcp_registry import build_target
 from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.sap.mcp_strategy import McpEvidenceLayer, McpProviderPlan, plan_mcp_provider
@@ -84,38 +84,6 @@ class McpEvidenceGateway:
         return self.provider_plan(source).ready
 
     @classmethod
-    def for_qas_catalog_inspection(cls) -> "McpEvidenceGateway":
-        """Create a QAS/read-only target for tools/list only.
-
-        This deliberately uses a non-callable sentinel instead of a wildcard
-        allowlist. It allows discovery of the server catalog without granting
-        permission to invoke any discovered tool.
-        """
-        config = SapQasRuntimeConfig.from_env()
-        if config.landscape != "QAS":
-            raise ValueError("runtime catalog inspection is restricted to QAS")
-        if config.scope != "mcp_readonly":
-            raise ValueError("runtime catalog inspection requires mcp_readonly")
-
-        gateway = cls.__new__(cls)
-        gateway.config = McpGatewayConfig(
-            command=config.command,
-            args=config.args,
-            max_results=5,
-        )
-        gateway.target = build_target(
-            "sap_mcp_server",
-            command=config.command,
-            args=config.args,
-            allowed_tools=("__catalog_only__",),
-            metadata={
-                "landscape": "QAS",
-                **({"system": config.system} if config.system else {}),
-            },
-        )
-        return gateway
-
-    @classmethod
     def from_qas_runtime_env(cls) -> "McpEvidenceGateway | None":
         """Build the opt-in QAS runtime gateway without exposing credentials."""
         config = SapQasRuntimeConfig.from_env()
@@ -133,6 +101,7 @@ class McpEvidenceGateway:
             command=config.command,
             args=config.args,
             allowed_tools=config.allowed_tools,
+            discovery_only=config.discovery_only,
             metadata={
                 "landscape": config.landscape,
                 **({"system": config.system} if config.system else {}),
@@ -140,31 +109,22 @@ class McpEvidenceGateway:
         )
         return gateway
 
-    def inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
-        """Inspect QAS MCP tool metadata without invoking any tool."""
+    def discover_qas_tools(self) -> tuple[McpToolDescriptor, ...]:
+        """Discover the QAS MCP tool catalog without executing a SAP operation."""
         if self.target.provider != "sap_mcp_server":
-            raise PermissionError("runtime inspection requires sap_mcp_server")
+            raise PermissionError("QAS discovery requires sap_mcp_server")
         if self.target.metadata.get("landscape") != "QAS":
-            raise PermissionError("runtime inspection is restricted to QAS")
-        catalog = _run_async(self._inspect_runtime_tools())
-        if self.target.allowed_tools == ("__catalog_only__",):
-            return catalog
-        return tuple(
-            item
-            for item in catalog
-            if item.get("name") in self.target.allowed_tools
-        )
-
-    async def _inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
-        async with SapMcpClient(self.target) as client:
-            catalog = await client.tool_catalog()
-            if self.target.allowed_tools == ("__catalog_only__",):
-                return catalog
-            return tuple(
-                item
-                for item in catalog
-                if item.get("name") in self.target.allowed_tools
+            raise PermissionError("QAS discovery is restricted to QAS")
+        if not self.target.discovery_only:
+            raise PermissionError(
+                "QAS discovery requires AGENTESAP_SAP_RUNTIME_DISCOVERY=true"
             )
+
+        return _run_async(self._discover_tools())
+
+    async def _discover_tools(self) -> tuple[McpToolDescriptor, ...]:
+        async with SapMcpClient(self.target) as client:
+            return await client.list_tool_descriptors()
 
     def read_runtime(
         self,
