@@ -157,6 +157,31 @@ target_type: "SAP_OBJECT"
         return [{"path": p, "type": "blob"} for p in self.files]
 
 
+def test_consult_requires_ticket_reference_in_structured_answer():
+    class TicketAwareLLM(FakeLLM):
+        def generate(self, *, system_prompt, user_prompt):
+            evidence_id = __import__("re").search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
+            ticket_id = __import__("re").search(r"(TKT-[A-Z0-9]+)", user_prompt).group(1)
+            return (
+                "## Resumen\nRespuesta.\n\n"
+                "## Qué está confirmado\nConfirmado [" + evidence_id + "].\n\n"
+                "## Qué corresponde a nuestra implementación\nImplementación [" + evidence_id + "].\n\n"
+                "## Qué no está confirmado\nPendiente.\n\n"
+                "## Evidencias\n[" + evidence_id + "]\n\n"
+                "## Ticket\nContexto [" + ticket_id + "].\n\n"
+                "## Próximos pasos\nValidar."
+            )
+
+    result = consult(
+        TicketFakeClient(),
+        "Consultá el ticket 31426",
+        TicketAwareLLM(),
+        ticket_id="31426",
+    )
+
+    assert result.ticket_context
+    assert result.ticket_context[0].reference_id in result.answer
+
 def test_consult_includes_ticket_context_and_relationships():
     llm = FakeLLM()
     result = consult(
