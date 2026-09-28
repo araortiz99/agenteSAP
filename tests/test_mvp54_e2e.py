@@ -294,7 +294,7 @@ def test_mvp54_rejects_missing_ticket_reference():
                 "## Próximos pasos\nValidar."
             )
 
-    module, original = _with_retrieval_patch()
+    (module, context_module, entity_module), original = _with_retrieval_patch()
     try:
         with pytest.raises(ConsultationFormatError, match="TKT"):
             consult(client, "Consultá el ticket 31426", BadLLM(), ticket_id="31426")
