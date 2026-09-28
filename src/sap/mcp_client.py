@@ -20,6 +20,15 @@ class McpServerInfo:
     version: str
 
 
+@dataclass(frozen=True)
+class McpToolDescriptor:
+    name: str
+    description: str
+    input_schema: object
+    read_only_hint: bool | None = None
+    destructive_hint: bool | None = None
+
+
 class SapMcpClient:
     """Async read-only client for an MCP stdio target."""
 
@@ -58,20 +67,26 @@ class SapMcpClient:
         result = await self._require_connected().list_tools()
         return tuple(tool.name for tool in result.tools)
 
-    async def tool_catalog(self) -> tuple[dict[str, object], ...]:
-        """Return the advertised MCP tool catalog without invoking any tool."""
+    async def list_tool_descriptors(self) -> tuple[McpToolDescriptor, ...]:
+        """Return the provider's tool catalog without executing any tool."""
         result = await self._require_connected().list_tools()
-        catalog: list[dict[str, object]] = []
+        descriptors = []
         for tool in result.tools:
-            catalog.append(
-                {
-                    "name": getattr(tool, "name", ""),
-                    "description": getattr(tool, "description", "") or "",
-                    "input_schema": getattr(tool, "inputSchema", None),
-                    "annotations": getattr(tool, "annotations", None),
-                }
+            annotations = getattr(tool, "annotations", None)
+            descriptors.append(
+                McpToolDescriptor(
+                    name=tool.name,
+                    description=str(getattr(tool, "description", "") or ""),
+                    input_schema=getattr(tool, "inputSchema", {}),
+                    read_only_hint=getattr(annotations, "readOnlyHint", None)
+                    if annotations is not None
+                    else None,
+                    destructive_hint=getattr(annotations, "destructiveHint", None)
+                    if annotations is not None
+                    else None,
+                )
             )
-        return tuple(catalog)
+        return tuple(descriptors)
 
     def server_info(self) -> McpServerInfo | None:
         info = self._require_connected().server_info
