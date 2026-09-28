@@ -227,6 +227,36 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("search_sap_standard",),
         )
 
+    runtime_markers = (
+        "actualmente",
+        "ahora",
+        "en qas",
+        "en prd",
+        "en producción",
+        "en produccion",
+        "estado actual",
+        "valor actual",
+        "qué tiene configurado",
+        "que tiene configurado",
+        "qué está configurado",
+        "que esta configurado",
+        "ejecutar",
+        "ejecución",
+        "ejecucion",
+    )
+    if any(marker in lowered for marker in runtime_markers):
+        return AgentPlan(
+            intent="consult",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+                "build_traceability",
+                "consult_llm",
+            ),
+        )
+
     if "relacion" in lowered or "relacionado" in lowered:
         if not ticket_id:
             raise IntentRoutingError(
