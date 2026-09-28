@@ -47,7 +47,9 @@ def test_standard_retrieval_filters_generic_prose_and_preserves_short_sap_terms(
     assert results[0].match_type == "identifier"
     assert "migo" in results[0].matched_terms
     assert "qué" not in results[0].matched_terms
-\n\ndef test_standard_retrieval_uses_token_boundaries():
+
+
+def test_standard_retrieval_uses_token_boundaries():
     client = FakeClient()
     client.files["knowledge/sap-standard/mm/unrelated.md"] = "# Unrelated\nThis document mentions materialize but not material."
 
