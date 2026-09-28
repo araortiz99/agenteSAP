@@ -36,3 +36,5 @@ def test_reason_blocks_conflicting_metadata():
     )
     reasoning = reason_from_evidence(assessment)
     assert reasoning.conclusion_status == "conflict"
+    assert reasoning.conflicts == assessment.conflicts
+    assert reasoning.conflicts[0].conflict_type == "metadata_conflict"
