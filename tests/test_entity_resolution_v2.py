@@ -21,3 +21,21 @@ def test_exact_match_rank_beats_higher_content_score():
     merged = _merge_candidate(metadata, content)
     assert merged.path == "metadata.md"
     assert merged.match_type == "metadata"
+
+
+
+def test_merge_does_not_downgrade_certainty_on_equal_match_quality():
+    confirmed = ResolvedEntity("MARA", "SAP_OBJECT", "confirmed.md", 0.8, "content", "confirmed", "internal")
+    unknown = ResolvedEntity("mara", "SAP_OBJECT", "unknown.md", 0.8, "content", "unknown", "sap_standard")
+    merged = _merge_candidate(confirmed, unknown)
+    assert merged.path == "confirmed.md"
+    assert merged.certainty == "confirmed"
+    assert merged.provenance_paths == ("confirmed.md", "unknown.md")
+
+
+def test_identifier_match_has_deterministic_priority():
+    identifier = ResolvedEntity("ZMM_IMX_0004", "SAP_OBJECT", "identifier.md", 0.5, "identifier", "partial", "internal")
+    content = ResolvedEntity("zmm_imx_0004", "SAP_OBJECT", "content.md", 0.99, "content", "confirmed", "sap_standard")
+    merged = _merge_candidate(identifier, content)
+    assert merged.match_type == "identifier"
+    assert merged.path == "identifier.md"

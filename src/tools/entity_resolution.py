@@ -83,7 +83,11 @@ def _normalize_id(value: str) -> str:
 
 
 def _match_rank(match_type: str) -> int:
-    return {"exact": 3, "metadata": 3, "content": 2, "path": 1}.get(match_type.lower(), 0)
+    return {"exact": 3, "metadata": 3, "identifier": 3, "content": 2, "path": 1, "relationship": 1}.get(match_type.lower(), 0)
+
+
+def _certainty_rank(certainty: str) -> int:
+    return {"confirmed": 3, "validated": 3, "partial": 2, "external_source": 2, "unknown": 1}.get(certainty.lower(), 0)
 
 
 def _merge_candidate(current: ResolvedEntity | None, candidate: ResolvedEntity) -> ResolvedEntity:
@@ -91,8 +95,8 @@ def _merge_candidate(current: ResolvedEntity | None, candidate: ResolvedEntity) 
         return ResolvedEntity(**{**candidate.__dict__, "provenance_paths": (candidate.path,), "provenance_layers": (candidate.source_layer,)})
     paths = tuple(dict.fromkeys((*current.provenance_paths, current.path, candidate.path)))
     layers = tuple(dict.fromkeys((*current.provenance_layers, current.source_layer, candidate.source_layer)))
-    current_rank = (_match_rank(current.match_type), current.score)
-    candidate_rank = (_match_rank(candidate.match_type), candidate.score)
+    current_rank = (_match_rank(current.match_type), current.score, _certainty_rank(current.certainty))
+    candidate_rank = (_match_rank(candidate.match_type), candidate.score, _certainty_rank(candidate.certainty))
     preferred = candidate if candidate_rank > current_rank else current
     return ResolvedEntity(**{**preferred.__dict__, "entity_id": _normalize_id(preferred.entity_id), "provenance_paths": paths, "provenance_layers": layers})
 
