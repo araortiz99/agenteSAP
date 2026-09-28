@@ -23,6 +23,16 @@ Write-Host "AgenteSAP: local read-only workbench"
 Write-Host "Repository: $env:GITHUB_OWNER/$env:GITHUB_REPO"
 Write-Host "Ref:        $env:GITHUB_REF"
 Write-Host "SAP writes: disabled"
+if ($env:GITHUB_TOKEN) {
+    Write-Host "GitHub auth: configured"
+} else {
+    Write-Host "GitHub auth: NOT configured (public API rate limit applies)"
+}
+if ($env:OPENAI_API_KEY) {
+    Write-Host "OpenAI: configured"
+} else {
+    Write-Host "OpenAI: NOT configured (deterministic flows only)"
+}
 Write-Host ""
 
 & $Python -m src.app
