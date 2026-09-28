@@ -116,13 +116,10 @@ def promote_candidate(
     marker = "> **CANDIDATE — REQUIRES VALIDATION**\n\n"
     if not body.startswith("\n\n# ") and marker not in body:
         raise PromotionError("candidate body is malformed")
-    body = body.replace(marker, "", 1)
-
-    source_text = body
-    if "\n\n" in body:
-        source_text = body.split("\n\n", 1)[1]
-
-    source_text = source_text.rstrip("\n")
+    marker_index = body.find(marker)
+    if marker_index < 0:
+        raise PromotionError("candidate marker is missing")
+    source_text = body[marker_index + len(marker):].rstrip("\n")
     checksum = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
     if checksum != fields["checksum_sha256"]:
         raise PromotionError("candidate checksum does not match its source text")
