@@ -160,7 +160,17 @@ def build_context(
     lines.extend(["", "## Gaps"])
     lines.extend(f"- {gap}" for gap in traceability.gaps)
     lines.extend(["", "## Conflicts"])
-    lines.extend(f"- {conflict}" for conflict in traceability.conflicts)
+    for conflict in traceability.conflicts:
+        lines.extend(
+            [
+                "",
+                f"- Type: {conflict.conflict_type}",
+                f"  Status: {conflict.status}",
+                f"  Description: {conflict.description}",
+                "  Evidence paths:",
+                *[f"    - {path}" for path in conflict.evidence_paths],
+            ]
+        )
     return "\n".join(lines)
 
 
