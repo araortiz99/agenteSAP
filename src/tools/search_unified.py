@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from src.github.client import GitHubClient
 from src.tools.search_knowledge import SearchResult, _parse_front_matter, search_knowledge
 from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
+from src.tools.source_selection import EvidenceSource, select_evidence_sources
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,51 @@ def _standard_result(result: SAPStandardResult) -> UnifiedResult:
     )
 
 
+def _merge_evidence_results(
+    standard: list[UnifiedResult],
+    internal: list[UnifiedResult],
+    mcp: list[UnifiedResult],
+    *,
+    requested: tuple[EvidenceSource, ...],
+    max_results: int,
+) -> list[UnifiedResult]:
+    """Bound retrieval while reserving representation for requested layers."""
+    groups = {
+        "sap_standard": standard,
+        "internal": internal,
+        "runtime": [item for item in mcp if item.knowledge_type == "runtime_observation"],
+        "external": [item for item in mcp if item.knowledge_type != "runtime_observation"],
+    }
+    selected: list[UnifiedResult] = []
+    seen: set[tuple[str, str, str, tuple[tuple[str, str], ...]]] = set()
+
+    def add(item: UnifiedResult) -> None:
+        key = unified_result_key(item)
+        if key not in seen and len(selected) < max_results:
+            selected.append(item)
+            seen.add(key)
+
+    for source in requested:
+        for item in groups[source]:
+            add(item)
+            break
+
+    remaining = sorted(
+        standard + internal + mcp,
+        key=lambda x: (
+            -x.score,
+            0 if x.source_layer == "sap_standard"
+            else 1 if x.source_layer == "internal"
+            else 2,
+            x.path,
+        ),
+    )
+    for item in remaining:
+        add(item)
+
+    return selected
+
+
 def search_unified(
     client: GitHubClient,
     query: str,
@@ -104,14 +150,14 @@ def search_unified(
     ]
     mcp = list(mcp_gateway.search_resources(query) if mcp_gateway else ())
 
-    combined = sorted(
-        standard + internal + mcp,
-        key=lambda x: (
-            -x.score,
-            {"sap_standard": 0, "internal": 1, "mcp": 2}.get(x.source_layer, 3),
-            x.path,
-        ),
-    )[:max_results]
+    selection = select_evidence_sources(query)
+    combined = _merge_evidence_results(
+        standard,
+        internal,
+        mcp,
+        requested=selection.requested,
+        max_results=max_results,
+    )
 
     return UnifiedSearchResult(
         query=query.strip(),
