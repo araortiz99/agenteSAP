@@ -1,4 +1,11 @@
+from dataclasses import dataclass, field
+
 import src.app.server as server
+
+
+@dataclass
+class FakeWorkspace:
+    diagnostics: dict = field(default_factory=dict)
 
 
 def test_github_ref_defaults_to_main(monkeypatch):
@@ -32,9 +39,7 @@ def test_object_workspace_uses_normalized_ref(monkeypatch):
 
     def fake_workspace(client, object_id, *, ref):
         captured["ref"] = ref
-        return type("Workspace", (), {
-            "__dataclass_fields__": {},
-        })()
+        return FakeWorkspace()
 
     monkeypatch.setattr(server, "build_object_workspace", fake_workspace)
     monkeypatch.setenv("GITHUB_REF", "refs/heads/feature/workbench")
@@ -45,10 +50,7 @@ def test_object_workspace_uses_normalized_ref(monkeypatch):
 
     monkeypatch.setattr(server, "_github_client", lambda: FakeClient())
 
-    try:
-        server._object_workspace_payload("ZMM_IMX_0004", started_at=0.0)
-    except TypeError:
-        # The fake workspace intentionally only verifies the ref before payload conversion.
-        pass
+    payload = server._object_workspace_payload("ZMM_IMX_0004", started_at=0.0)
 
     assert captured["ref"] == "feature/workbench"
+    assert payload["diagnostics"]["read_only"] if "read_only" in payload["diagnostics"] else True
