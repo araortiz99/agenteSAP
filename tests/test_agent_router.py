@@ -361,3 +361,46 @@ def test_run_agent_evidence_reasoning_preserves_mcp_layer(monkeypatch):
     )
 
     assert any(item.source_layer == "mcp" for item in response.result.evidence.items)
+
+
+def test_run_agent_consult_passes_mcp_gateway(monkeypatch):
+    class FakeGateway:
+        def search_resources(self, query):
+            from src.tools.search_unified import UnifiedResult
+            return (
+                UnifiedResult(
+                    path="mcp://sap_devs/search_resources",
+                    score=0.9,
+                    matched_terms=("ABAP",),
+                    content="MCP consultant context",
+                    source_layer="mcp",
+                    match_type="mcp",
+                    source_id="sap_devs:search_resources",
+                    knowledge_type="developer_context",
+                    knowledge_scope="external",
+                    certainty="external_source",
+                ),
+            )
+
+    class ConsultLLM(FakeLLM):
+        def generate(self, *, system_prompt, user_prompt):
+            import re
+            evidence_id = re.search(r"(EVD-[A-Z0-9]+)", user_prompt).group(1)
+            return (
+                "## Resumen\\nRespuesta.\\n\\n"
+                "## Qué está confirmado\\nContexto. [" + evidence_id + "]\\n\\n"
+                "## Qué corresponde a nuestra implementación\\nNo consta.\\n\\n"
+                "## Qué no está confirmado\\nPendiente.\\n\\n"
+                "## Evidencias\\n[" + evidence_id + "]\\n\\n"
+                "## Ticket\\nSin ticket.\\n\\n"
+                "## Próximos pasos\\nValidar."
+            )
+
+    monkeypatch.setattr("src.agent.router.McpEvidenceGateway.from_env", lambda: FakeGateway())
+    response = run_agent(
+        AgentFakeGitHubClient(),
+        "Explicame el proceso de inventario",
+        llm=ConsultLLM(),
+    )
+    assert response.plan.intent == "consult"
+    assert response.result.retrieval.mcp
