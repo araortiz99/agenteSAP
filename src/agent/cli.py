@@ -84,7 +84,7 @@ def _run_file_ingestion(argv: list[str]) -> int:
         print(f"Document: {payload['document_id']}")
         print(f"File: {payload['filename']}")
         print(f"Chunks: {payload['chunks']}")
-        print(f"Evidence: {payload['evidence'].__len__()}")
+        print(f"Evidence: {len(payload['evidence'])}")
         print(f"Entities: {len(result.entities)}")
     return 0
 
