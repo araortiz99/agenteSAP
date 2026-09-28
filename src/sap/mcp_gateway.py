@@ -55,7 +55,7 @@ class McpEvidenceGateway:
         return cls(
             McpGatewayConfig(
                 command=os.getenv("AGENTESAP_MCP_COMMAND", "sap-devs"),
-                args=tuple(os.getenv("AGENTESAP_MCP_ARGS", "mcp serve").split()),
+                args=tuple(shlex.split(os.getenv("AGENTESAP_MCP_ARGS", "mcp serve"))),
                 max_results=max_results,
             )
         )
