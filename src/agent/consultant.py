@@ -12,7 +12,7 @@ from src.sap.mcp_gateway import McpEvidenceGateway
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.evidence_trace import TraceabilityReport, build_traceability
 from src.tools.reason import ReasoningResult, reason_from_evidence
-from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
+from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified, unified_result_key
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.knowledge_context import build_knowledge_context, render_knowledge_context
@@ -198,9 +198,17 @@ def build_context(
         "",
         "## Evidence records",
     ]
-    trace_by_path = {item.path: item for item in traceability.evidence}
+    trace_by_key = {
+        (
+            item.source_layer,
+            item.path,
+            item.source_id or "",
+            tuple(sorted(item.provenance)),
+        ): item
+        for item in traceability.evidence
+    }
     for result in retrieval.results:
-        trace = trace_by_path[result.path]
+        trace = trace_by_key[unified_result_key(result)]
         lines.extend(
             [
                 "",
