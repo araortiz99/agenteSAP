@@ -85,9 +85,22 @@ class McpEvidenceGateway:
                 content=rendered,
                 source_layer="mcp",
                 match_type="mcp",
-                source_id=f"{evidence.provider}:{evidence.operation}",
-                knowledge_type="developer_context",
-                knowledge_scope="external",
+                source_id=(
+                    evidence.object_id
+                    or f"{evidence.provider}:{evidence.operation}"
+                ),
+                knowledge_type=(
+                    "runtime_observation"
+                    if evidence.observation_type
+                    in {"runtime_observation", "custom_runtime_observation"}
+                    else "developer_context"
+                ),
+                knowledge_scope=(
+                    "runtime"
+                    if evidence.observation_type
+                    in {"runtime_observation", "custom_runtime_observation"}
+                    else "external"
+                ),
                 certainty=evidence.certainty,
             ),
         )
