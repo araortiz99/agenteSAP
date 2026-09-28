@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from src.investigation.correlation import EvidenceCorrelation
     from src.investigation.evidence_state import EvidenceState
     from src.investigation.hypothesis import Hypothesis
+    from src.investigation.report import InvestigationReport
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,7 @@ class Investigation:
     confidence_reason: str = ""
     provenance: list[dict[str, Any]] = field(default_factory=list)
     correlation: "EvidenceCorrelation | None" = None
+    report: "InvestigationReport | None" = None
     stop_reason: str | None = None
     steps: list[InvestigationStep] = field(default_factory=list)
 
@@ -89,6 +91,7 @@ class Investigation:
             "confidence_reason": self.confidence_reason,
             "provenance": list(self.provenance),
             "correlation": self.correlation.as_dict() if self.correlation is not None else None,
+            "report": self.report.as_dict() if self.report is not None else None,
             "stop_reason": self.stop_reason,
             "steps": [step.__dict__ for step in self.steps],
         }
