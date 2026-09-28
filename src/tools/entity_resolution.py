@@ -28,6 +28,8 @@ class ResolvedEntity:
     match_type: str
     certainty: str
     source_layer: str
+    provenance_paths: tuple[str, ...] = ()
+    provenance_layers: tuple[str, ...] = ()
 
 
 def _entities_from_result(result: SearchResult) -> tuple[ResolvedEntity, ...]:
@@ -40,7 +42,7 @@ def _entities_from_result(result: SearchResult) -> tuple[ResolvedEntity, ...]:
             continue
         entities.append(
             ResolvedEntity(
-                entity_id=entity_id,
+                entity_id=_normalize_id(entity_id),
                 entity_type=entity_type,
                 path=result.path,
                 score=result.score,
@@ -64,7 +66,7 @@ def _standard_entities(
         return ()
     return (
         ResolvedEntity(
-            entity_id=source_id,
+            entity_id=_normalize_id(source_id),
             entity_type="SOURCE",
             path=path,
             score=score,
@@ -74,6 +76,25 @@ def _standard_entities(
         ),
     )
 
+
+
+def _normalize_id(value: str) -> str:
+    return " ".join(value.strip().split()).upper()
+
+
+def _match_rank(match_type: str) -> int:
+    return {"exact": 3, "metadata": 3, "content": 2, "path": 1}.get(match_type.lower(), 0)
+
+
+def _merge_candidate(current: ResolvedEntity | None, candidate: ResolvedEntity) -> ResolvedEntity:
+    if current is None:
+        return ResolvedEntity(**{**candidate.__dict__, "provenance_paths": (candidate.path,), "provenance_layers": (candidate.source_layer,)})
+    paths = tuple(dict.fromkeys((*current.provenance_paths, current.path, candidate.path)))
+    layers = tuple(dict.fromkeys((*current.provenance_layers, current.source_layer, candidate.source_layer)))
+    current_rank = (_match_rank(current.match_type), current.score)
+    candidate_rank = (_match_rank(candidate.match_type), candidate.score)
+    preferred = candidate if candidate_rank > current_rank else current
+    return ResolvedEntity(**{**preferred.__dict__, "entity_id": _normalize_id(preferred.entity_id), "provenance_paths": paths, "provenance_layers": layers})
 
 def resolve_entities(
     client: GitHubClient,
@@ -106,13 +127,8 @@ def resolve_entities(
 
     unique: dict[tuple[str, str], ResolvedEntity] = {}
     for entity in candidates:
-        key = (entity.entity_type, entity.entity_id.lower())
-        current = unique.get(key)
-        if current is None or (entity.score, entity.path) > (
-            current.score,
-            current.path,
-        ):
-            unique[key] = entity
+        key = (entity.entity_type.upper(), _normalize_id(entity.entity_id))
+        unique[key] = _merge_candidate(unique.get(key), entity)
 
     return tuple(
         sorted(
