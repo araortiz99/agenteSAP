@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 
 from src.agent import cli
 
@@ -7,11 +8,13 @@ def test_cli_json_output(monkeypatch, capsys):
     class FakeClient:
         pass
 
+    @dataclass
     class FakeResult:
-        answer = "respuesta"
+        answer: str = "respuesta"
 
+    @dataclass
     class FakeResponse:
-        result = FakeResult()
+        result: FakeResult
 
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     monkeypatch.setattr(
@@ -22,7 +25,7 @@ def test_cli_json_output(monkeypatch, capsys):
     monkeypatch.setattr(
         cli,
         "run_agent",
-        lambda client, request, ref: FakeResponse(),
+        lambda client, request, ref: FakeResponse(FakeResult()),
     )
     monkeypatch.setattr(
         "sys.argv",
