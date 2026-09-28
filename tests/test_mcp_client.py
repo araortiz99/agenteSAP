@@ -255,3 +255,25 @@ def test_runtime_tool_requires_explicit_readonly_hint():
 
     with pytest.raises(PermissionError, match="explicit read-only hint"):
         asyncio.run(client.call_read_tool("read_table"))
+
+
+def test_runtime_evidence_preserves_tool_contract():
+    evidence = SapMcpEvidence(
+        provider="sap_mcp_server",
+        operation="read_table",
+        content=["ok"],
+        source="MCP provider: sap_mcp_server",
+        system="S4QAS",
+        landscape="QAS",
+        certainty="partial",
+        observation_type="runtime_observation",
+        provenance={
+            "transport": "stdio",
+            "tool_description": "Read table",
+            "tool_read_only_hint": True,
+            "tool_destructive_hint": False,
+            "tool_input_schema": {"type": "object"},
+        },
+    )
+    assert dict(evidence.provenance)["tool_read_only_hint"] is True
+    assert dict(evidence.provenance)["tool_destructive_hint"] is False
