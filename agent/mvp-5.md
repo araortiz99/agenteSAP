@@ -1,0 +1,182 @@
+# MVP 5 — Knowledge Intelligence Layer
+
+## Estado
+
+**EN IMPLEMENTACIÓN**
+
+MVP 4.2 queda como contrato estable y no se redefine desde este MVP.
+
+## 1. Objetivo
+
+Convertir el pipeline de consulta validado en MVP 4.2 en un pipeline capaz de construir contexto funcional SAP estructurado a partir de entidades identificables, relaciones explícitamente documentadas, evidencia directa, evidencia relacionada, fuentes, tickets, conflictos y gaps de conocimiento.
+
+El agente continúa siendo read-only respecto de SAP y del repositorio.
+
+## 2. Flujo
+
+USER QUERY → ENTITY RESOLUTION → DIRECT RETRIEVAL → RELATIONSHIP TRAVERSAL → RELATED RETRIEVAL → CONTEXT BUILDING → EVIDENCE / REASONING / TRACEABILITY → MVP 4.2 CONSULTANT → SEMANTIC VALIDATION
+
+## 3. Componentes
+
+### 5.1 Entity Resolution
+
+Identifica únicamente entidades respaldadas por metadata o documentos del repositorio.
+
+Tipos iniciales:
+
+- SAP_OBJECT
+- PROCESS
+- BUSINESS_RULE
+- TICKET
+- SOURCE
+- RELATIONSHIP
+
+Una mención textual sin identificador respaldado no se convierte automáticamente en una entidad canónica.
+
+### 5.2 Relationship Resolution
+
+Utiliza exclusivamente relaciones documentadas en knowledge/relationships/.
+
+Regla: coocurrencia != relación.
+
+Cada relación recuperada conserva path, source_id, source_type, relation_type, target_id, target_type y hop.
+
+### 5.3 Multi-hop Retrieval
+
+El MVP soporta traversal acotado.
+
+Valores por defecto:
+
+- máximo 2 hops;
+- máximo 8 entidades;
+- máximo 16 relaciones;
+- máximo 12 resultados de evidencia.
+
+No se permite traversal ilimitado.
+
+### 5.4 Context Builder
+
+Construye un objeto KnowledgeContext que mantiene separados:
+
+- entidades;
+- relaciones;
+- evidencia directa;
+- evidencia relacionada;
+- gaps;
+- conflictos.
+
+El contexto no reemplaza EvidenceAssessment ni TraceabilityReport.
+
+### 5.5 Relevance
+
+La evidencia directa tiene prioridad sobre la evidencia recuperada por relación.
+
+Orden:
+
+1. direct entity evidence;
+2. direct query evidence;
+3. first-hop related evidence;
+4. second-hop related evidence.
+
+El hop nunca cambia la procedencia original de una evidencia.
+
+## 4. Reglas de integridad
+
+1. No inventar entidades.
+2. No inventar relaciones.
+3. No convertir una mención en relación.
+4. No elevar certainty.
+5. No transformar Standard en Custom ni Custom en Standard.
+6. No resolver conflictos automáticamente.
+7. No utilizar ausencia de evidencia como prueba de inexistencia.
+8. Mantener path y source_id cuando existan.
+9. El contexto debe ser reproducible con el mismo repository ref.
+10. El LLM recibe contexto, pero no controla provenance.
+
+## 5. Integración con MVP 4.2
+
+MVP 5 agrega contexto estructurado al prompt existente.
+
+No modifica:
+
+- contrato de respuesta;
+- Structure Gate;
+- Evidence Gate;
+- Ticket Gate;
+- Conflict Gate;
+- identificadores EVD-*;
+- identificadores TKT-*.
+
+El LLM continúa siendo consumidor del contexto y no fuente de verdad.
+
+## 6. Fuera de alcance
+
+No implementar en MVP 5:
+
+- vector database;
+- embeddings;
+- fine-tuning;
+- ejecución SAP;
+- escritura automática de Knowledge;
+- aprendizaje automático de relaciones;
+- resolución automática de conflictos;
+- memoria conversacional persistente.
+
+## 7. Benchmark
+
+Casos mínimos:
+
+1. resolución de entidad;
+2. relación directa;
+3. multi-hop;
+4. preservación de conflicto;
+5. separación Standard/Custom;
+6. missing knowledge;
+7. deduplicación de evidencia;
+8. límite de traversal.
+
+## 8. Gates
+
+### Entity Gate
+
+Las entidades recuperadas deben estar respaldadas por metadata/documentos.
+
+### Relationship Gate
+
+Toda relación debe existir explícitamente en knowledge/relationships/.
+
+### Hop Gate
+
+El traversal no puede superar el máximo configurado.
+
+### Provenance Gate
+
+Toda evidencia mantiene path, source layer, source_id y certainty.
+
+### Context Gate
+
+El contexto debe contener únicamente elementos derivados del retrieval y relaciones documentadas.
+
+### Regression Gate
+
+MVP 4.2 debe conservar su contrato y sus pruebas.
+
+## 9. Criterio de cierre
+
+MVP 5 podrá cerrarse cuando:
+
+- los tests unitarios del Knowledge Intelligence Layer estén verdes;
+- los casos negativos sean rechazados;
+- el contexto sea reproducible;
+- las relaciones falsas por coocurrencia sean rechazadas;
+- los límites de hop funcionen;
+- la integración con el consultant mantenga los gates de MVP 4.2;
+- exista un benchmark ejecutable documentado.
+
+## 10. Principio
+
+RESOLVE → RETRIEVE → RELATE → TRAVERSE → BUILD CONTEXT → PRESERVE EVIDENCE → CONSULT
+
+Nunca:
+
+INFERIR RELACIONES → PERDER PROVENANCE → INVENTAR CONOCIMIENTO
