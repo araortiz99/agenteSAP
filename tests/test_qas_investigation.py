@@ -79,6 +79,10 @@ def test_runtime_investigation_keeps_runtime_separate_from_standard_and_internal
     assert any(item.source_layer == "sap_standard" for item in result.retrieval.results)
     assert any(item.source_layer == "internal" for item in result.retrieval.results)
     assert result.reasoning.query == "¿Cuál es el estado actual de MARA en QAS?"
+    assert result.conclusion_status in {"UNVERIFIED", "QUALIFIED", "CONFIRMED", "BLOCKED"}
+    assert result.conclusion_reason
+    assert result.report is not None
+    assert result.report.conclusion_status == result.conclusion_status
 
 
 def test_qas_gateway_executes_only_explicit_runtime_query_tool(monkeypatch):

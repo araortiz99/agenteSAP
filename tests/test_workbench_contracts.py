@@ -174,7 +174,34 @@ def test_workbench_response_is_structured_and_traceable():
 def test_workbench_html_has_evidence_and_provenance_explorer():
     from pathlib import Path
     html = Path("src/app/static/index.html").read_text(encoding="utf-8")
-    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer", "kiEntities", "kiGraph", "renderKnowledgeIntelligence"):
+    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer", "kiEntities", "kiGraph", "renderKnowledgeIntelligence", "conclusionStatus", "findingsList"):
         assert marker in html
     assert "source_layer" in html
     assert "provenance" in html
+
+
+def test_workbench_exposes_conclusion_and_report_when_investigation_exists():
+    from types import SimpleNamespace
+    consultation = _consultation()
+    consultation = ConsultationResult(**{
+        **consultation.__dict__,
+        "investigation": SimpleNamespace(
+            hypotheses=(),
+            findings=("finding",),
+            conclusion_status="QUALIFIED",
+            conclusion_reason="missing evidence",
+            evidence_states=(),
+            report=SimpleNamespace(as_dict=lambda: {"case_id": "WB-TEST", "conclusion_status": "QUALIFIED"}),
+        ),
+    })
+    result = build_workbench_analysis(
+        consultation,
+        request_id="REQ-REPORT",
+        intent="consult",
+        diagnostics={},
+        runtime={"mode": "QAS", "writes_exposed": False},
+    )
+    assert result.conclusion_status == "QUALIFIED"
+    assert result.conclusion_reason == "missing evidence"
+    assert result.findings == ("finding",)
+    assert result.investigation_report["case_id"] == "WB-TEST"
