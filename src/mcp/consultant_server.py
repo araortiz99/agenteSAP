@@ -48,7 +48,8 @@ def investigate_sap(request:str,max_steps:int=5,max_results:int=8)->dict[str,obj
     """Run bounded investigation without LLM synthesis; read-only."""
     if not request or not request.strip(): raise ValueError("request must not be empty")
     if max_steps<1 or max_steps>10: raise ValueError("max_steps must be between 1 and 10")
-    result=investigate(_client(),request.strip(),ref=_ref(),max_steps=max_steps,max_results=_limit(max_results))
+    max_results = _limit(max_results)
+    result=investigate(_client(),request.strip(),ref=_ref(),max_steps=max_steps,max_results=max_results)
     return {
         "read_only":True,"query":result.query,"intent":result.plan.intent,
         "conclusion_status":result.conclusion_status,"conclusion":result.conclusion,
