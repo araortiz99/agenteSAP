@@ -49,6 +49,7 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
   <details open><summary>Hechos / implementación</summary><pre id="confirmed">—</pre></details>
   <details><summary>Gaps / próximos pasos</summary><pre id="gaps">—</pre></details>
   <details><summary>Evidencias</summary><pre id="evidence">—</pre></details>
+  <details><summary>Objetos / relaciones</summary><pre id="relations">—</pre></details>
 </div>
 <details><summary>Plan y trazabilidad</summary><pre id="trace">—</pre></details>
 </div>
@@ -112,6 +113,10 @@ async function consult(){
       "\n\n"+section(result.answer||"","## Qué corresponde a nuestra implementación","## Qué no está confirmado");
     $("gaps").textContent=(result.traceability?.gaps||[]).join("\n")||"No hay gaps estructurados disponibles.";
     $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n")||"No hay citas.";
+    const rels=result.ticket_relationships?.relationships||[];
+    $("relations").textContent=rels.length
+      ? rels.map(x=>x.source_id+" --"+x.relation_type+"--> "+x.target_id+" ["+x.certainty+"/"+x.status+"]").join("\n")
+      : "No hay relaciones explícitamente documentadas para este ticket.";
     $("trace").textContent=JSON.stringify({
       intent:result.plan?.intent,
       ticket_id:result.plan?.ticket_id,
@@ -120,7 +125,8 @@ async function consult(){
       uncited_evidence_ids:result.uncited_evidence_ids
     },null,2);
     save({request,ticket_id:body.ticket_id||"",answer:result.answer||"",trace:{
-      plan:result.plan,citations:result.citations,uncited_evidence_ids:result.uncited_evidence_ids
+      plan:result.plan,citations:result.citations,uncited_evidence_ids:result.uncited_evidence_ids,
+      relationships:result.ticket_relationships?.relationships||[]
     }});
   }catch(e){$("answer").textContent="Error: "+e.message}
 }
