@@ -73,7 +73,7 @@ certainty: confirmed
 standard"""})()
     ])
     monkeypatch.setattr(module, "search_knowledge", lambda *args, **kwargs: [
-        type("R", (), {"path": "int.md", "score": 0.90, "matched_terms": ("x",), "content": """---
+        type("R", (), {"path": "int.md", "score": 0.90, "matched_terms": ("x",), "match_type": "content", "content": """---
 knowledge_type: custom
 source_id: INT-1
 certainty: confirmed
