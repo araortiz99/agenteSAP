@@ -53,6 +53,15 @@ def _github_client() -> GitHubClient:
     return _GITHUB_CLIENT
 
 
+def _github_ref() -> str:
+    """Return a GitHub content ref in the form accepted by the repository client."""
+    configured = os.getenv("GITHUB_REF_NAME") or os.getenv("GITHUB_REF") or "main"
+    for prefix in ("refs/heads/", "refs/tags/"):
+        if configured.startswith(prefix):
+            return configured[len(prefix):]
+    return configured
+
+
 def _validated_max_results(value: object) -> int:
     try:
         max_results = int(value)
@@ -61,8 +70,6 @@ def _validated_max_results(value: object) -> int:
     if not 1 <= max_results <= MAX_RESULTS:
         raise ValueError(f"max_results must be between 1 and {MAX_RESULTS}")
     return max_results
-
-
 
 
 def _runtime_payload(status: dict) -> dict:
@@ -145,11 +152,12 @@ def _workbench_payload(
         "workbench": asdict(structured),
     }
 
+
 def _object_workspace_payload(object_id: str, *, started_at: float) -> dict:
     workspace = build_object_workspace(
         _github_client(),
         object_id,
-        ref=os.getenv("GITHUB_REF", "main"),
+        ref=_github_ref(),
     )
     payload = asdict(workspace)
     payload["diagnostics"] = {
@@ -166,7 +174,7 @@ def _status_payload() -> dict:
         "mode": "local-read-only",
         "github_owner": client.owner,
         "github_repo": client.repo,
-        "github_ref": os.getenv("GITHUB_REF", "main"),
+        "github_ref": _github_ref(),
         "github_token_configured": client.authenticated,
         "openai_api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
         "github_cache_files": len(client._file_cache),
@@ -251,7 +259,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             response = run_agent(
                 _github_client(),
                 request,
-                ref=os.getenv("GITHUB_REF", "main"),
+                ref=_github_ref(),
                 ticket_id=body.get("ticket_id"),
                 max_results=_validated_max_results(body.get("max_results", 8)),
             )
