@@ -94,12 +94,26 @@ El contrato `WorkbenchAnalysisResponse.knowledge_intelligence` expone metadata d
 
 El backend conserva la gobernanza existente: una relación explícita puede confirmar la existencia de la relación, pero no eleva la certainty de la entidad o de la evidencia relacionada.
 
-### Fase 5 — SAP Workspaces
+### Fase 5 — SAP Object Workspace
 
-- Ticket Workspace;
-- SAP Object Workspace.
+El Object Workspace se implementa como una capa de presentación/orquestación sobre `KnowledgeContext`, Entity Resolution y evidencia existentes. No crea retrieval ni traversal paralelos.
 
-### Fase 6 — Operational UX
+- endpoint local `GET /api/object/{object_id}`;
+- identidad canónica y estados `resolved`, `ambiguous`, `unresolved`;
+- relaciones explícitas y dependencias documentadas;
+- evidencia con source layer, certainty, hop y provenance;
+- tickets relacionados únicamente cuando existe una relación explícita;
+- estado Runtime QAS separado de Knowledge;
+- gaps y conflictos provenientes del backend;
+- UI de SAP Object Workspace;
+- no se ejecuta QAS automáticamente al abrir un objeto.
+
+### Fase 6 — Ticket / Incident Workspace
+
+- profundización del workspace de tickets e investigación;
+- correlación explícita entre ticket, objetos, evidencia y runtime.
+
+### Fase 7 — Operational UX
 
 - runtime status;
 - loading;
