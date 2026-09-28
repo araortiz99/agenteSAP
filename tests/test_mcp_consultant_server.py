@@ -28,3 +28,9 @@ def test_investigate_sap_validates_bounds():
         investigate_sap("material master", max_steps=11)
     with pytest.raises(ValueError, match="max_results"):
         investigate_sap("material master", max_results=21)
+
+
+def test_health_normalizes_git_ref(monkeypatch):
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/feature/test")
+    from src.mcp.consultant_server import _ref
+    assert _ref() == "feature/test"
