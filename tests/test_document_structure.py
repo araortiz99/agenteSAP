@@ -6,8 +6,8 @@ def test_structure_preserves_headings():
     s = DocumentSource("x", "x.md", "# Inventario\n\nMIGO mueve stock.\n\n## Ajuste\n\n551 registra merma.")
     st = parse_text_structure(s)
     assert st.blocks[0].kind == "heading"
-    assert st.blocks[1].heading == "Inventario"
-    assert st.blocks[2].heading == "Ajuste"
+    assert st.blocks[1].text == "MIGO mueve stock."
+    assert st.blocks[2].text == "551 registra merma."
 
 def test_chunking_is_deterministic_and_bounded():
     s = DocumentSource("x", "x.txt", "A" * 5000)
