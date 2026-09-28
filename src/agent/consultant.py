@@ -265,7 +265,7 @@ def consult(
     if not request or not request.strip():
         raise ValueError("request must not be empty")
 
-    mcp_gateway = mcp_gateway if mcp_gateway is not None else McpEvidenceGateway.from_env()
+    mcp_gateway = mcp_gateway if mcp_gateway is not None else McpEvidenceGateway.for_request(request)
     investigation = investigate(
         client,
         request,

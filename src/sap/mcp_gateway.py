@@ -20,6 +20,7 @@ from src.sap.mcp_registry import build_target
 from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.sap.mcp_strategy import McpEvidenceLayer, McpProviderPlan, plan_mcp_provider
 from src.tools.search_unified import UnifiedResult
+from src.tools.source_selection import select_evidence_sources
 
 
 T = TypeVar("T")
@@ -42,6 +43,21 @@ class McpEvidenceGateway:
             command=self.config.command,
             args=self.config.args,
         )
+
+    @classmethod
+    def for_request(cls, request: str) -> "McpEvidenceGateway | None":
+        """Select the MCP gateway from the request's evidence requirement.
+
+        Runtime requests must use the opt-in QAS gateway; all other requests
+        may use the external developer-context gateway. This keeps the normal
+        Router -> Consultant -> Investigation path aligned with source selection.
+        """
+        if not request or not request.strip():
+            raise ValueError("request must not be empty")
+        requested = select_evidence_sources(request).requested
+        if "runtime" in requested:
+            return cls.from_qas_runtime_env()
+        return cls.from_env()
 
     @classmethod
     def from_env(cls) -> "McpEvidenceGateway | None":
