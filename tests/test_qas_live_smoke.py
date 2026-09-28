@@ -34,7 +34,7 @@ def _qas_target():
 async def _catalog_and_read():
     target = _qas_target()
     query_tool = os.environ["AGENTESAP_SAP_RUNTIME_QUERY_TOOL"]
-    argument = os.getenv("AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT", "query")
+    argument = os.getenv("AGENTESAP_SAP_RUNTIME_QUERY_ARGUMENT", "").strip()
     query = os.getenv("AGENTESAP_QAS_LIVE_QUERY", "MARA")
     async with SapMcpClient(target) as client:
         server = client.server_info()
@@ -43,7 +43,8 @@ async def _catalog_and_read():
         assert descriptor is not None, f"configured QAS tool '{query_tool}' is not advertised"
         assert descriptor.read_only_hint is True
         assert descriptor.destructive_hint is not True
-        evidence = await client.call_read_tool(query_tool, {argument: query})
+        arguments = {argument: query} if argument else {}
+        evidence = await client.call_read_tool(query_tool, arguments)
         return server, descriptor, evidence
 
 def test_real_qas_mcp_catalog_and_read_are_reachable():
