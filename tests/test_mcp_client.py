@@ -164,3 +164,29 @@ def test_call_read_tool_classifies_runtime_observation_as_partial():
     assert evidence.observation_type == "runtime_observation"
     assert evidence.system == "S4QAS"
     assert evidence.landscape == "QAS"
+
+
+def test_call_read_tool_rejects_unadvertised_or_destructive_runtime_tool():
+    safe_target = build_target(
+        "sap_mcp_server",
+        command="sap-mcp-server",
+        allowed_tools=("safe_read",),
+        metadata={"landscape": "QAS"},
+    )
+    client = SapMcpClient(safe_target)
+
+    unsafe = FakeClient()
+    unsafe.tools = [
+        type("Tool", (), {
+            "name": "safe_read",
+            "description": "test",
+            "inputSchema": {"type": "object"},
+            "annotations": type(
+                "Annotations", (), {"readOnlyHint": False, "destructiveHint": True}
+            )(),
+        })()
+    ]
+    client._client = unsafe
+
+    with pytest.raises(PermissionError, match="destructive"):
+        asyncio.run(client.call_read_tool("safe_read"))
