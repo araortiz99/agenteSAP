@@ -88,6 +88,27 @@ class SapMcpClient:
             )
         return tuple(descriptors)
 
+    async def tool_catalog(self) -> tuple[dict[str, object], ...]:
+        """Return raw tool metadata from tools/list without executing tools."""
+        result = await self._require_connected().list_tools()
+        catalog: list[dict[str, object]] = []
+        for tool in result.tools:
+            annotations = getattr(tool, "annotations", None)
+            catalog.append(
+                {
+                    "name": tool.name,
+                    "description": getattr(tool, "description", "") or "",
+                    "input_schema": getattr(tool, "inputSchema", {}),
+                    "read_only_hint": getattr(annotations, "readOnlyHint", None)
+                    if annotations is not None
+                    else None,
+                    "destructive_hint": getattr(annotations, "destructiveHint", None)
+                    if annotations is not None
+                    else None,
+                }
+            )
+        return tuple(catalog)
+
     def server_info(self) -> McpServerInfo | None:
         info = self._require_connected().server_info
         if info is None:
@@ -105,6 +126,24 @@ class SapMcpClient:
             raise PermissionError(
                 f"MCP tool '{tool_name}' is not allowed for provider "
                 f"'{self.target.provider}'"
+            )
+
+        descriptors = await self.list_tool_descriptors()
+        descriptor = next(
+            (item for item in descriptors if item.name == tool_name),
+            None,
+        )
+        if descriptor is None:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not advertised by the connected server"
+            )
+        if descriptor.read_only_hint is False:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not marked read-only by the server"
+            )
+        if descriptor.destructive_hint is True:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is marked destructive by the server"
             )
 
         result = await self._require_connected().call_tool(
