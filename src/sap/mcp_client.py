@@ -9,7 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from mcp import Client, StdioServerParameters
+from mcp import Client, ClientSession, StdioServerParameters
+from mcp.client.streamable_http import streamable_http_client
 
 from src.sap.mcp_contracts import McpTarget, SapMcpEvidence
 
@@ -34,25 +35,38 @@ class SapMcpClient:
 
     def __init__(self, target: McpTarget) -> None:
         target.validate()
-        if target.transport != "stdio":
-            raise ValueError("SapMcpClient currently supports stdio targets only")
-        if not target.command:
+        if target.transport == "stdio" and not target.command:
             raise ValueError("stdio target requires command")
+        if target.transport == "streamable_http" and not target.url:
+            raise ValueError("streamable_http target requires url")
+        if target.transport not in {"stdio", "streamable_http"}:
+            raise ValueError(f"unsupported MCP transport: {target.transport}")
 
         self.target = target
-        self._client: Client | None = None
+        self._client: Client | ClientSession | None = None
         self._context_manager: Any | None = None
 
     async def __aenter__(self) -> "SapMcpClient":
-        server = StdioServerParameters(
-            command=self.target.command,
-            args=list(self.target.args),
-        )
-        self._context_manager = Client(server)
-        self._client = await self._context_manager.__aenter__()
+        if self.target.transport == "stdio":
+            server = StdioServerParameters(
+                command=self.target.command,
+                args=list(self.target.args),
+            )
+            self._context_manager = Client(server)
+            self._client = await self._context_manager.__aenter__()
+            return self
+
+        self._context_manager = streamable_http_client(self.target.url)
+        read_stream, write_stream = await self._context_manager.__aenter__()
+        session = ClientSession(read_stream, write_stream)
+        await session.__aenter__()
+        await session.initialize()
+        self._client = session
         return self
 
     async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        if self.target.transport == "streamable_http" and self._client is not None:
+            await self._client.__aexit__(exc_type, exc, tb)
         if self._context_manager is not None:
             await self._context_manager.__aexit__(exc_type, exc, tb)
         self._client = None
