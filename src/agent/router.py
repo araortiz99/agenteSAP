@@ -15,6 +15,7 @@ from src.tools.search_sap_standard import SAPStandardResult, search_sap_standard
 from src.tools.search_unified import UnifiedSearchResult, search_unified
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.reason import ReasoningResult, reason_from_evidence
+from src.tools.evidence_trace import TraceabilityReport, build_traceability
 
 
 class IntentRoutingError(ValueError):
@@ -96,6 +97,26 @@ def route_intent(request: str) -> AgentPlan:
             intent="generate_document",
             ticket_id=ticket_id,
             capabilities=("generate_document",),
+        )
+
+    if any(
+        phrase in lowered
+        for phrase in (
+            "trazabilidad de evidencia",
+            "trazabilidad de la evidencia",
+            "evidence trace",
+            "evidence traceability",
+        )
+    ):
+        return AgentPlan(
+            intent="evidence_traceability",
+            ticket_id=ticket_id,
+            capabilities=(
+                "search_unified",
+                "assess_evidence",
+                "reason_from_evidence",
+                "build_traceability",
+            ),
         )
 
     if any(
@@ -197,6 +218,11 @@ def run_agent(
         retrieval = search_unified(client, request, ref=ref)
         evidence = assess_evidence(retrieval)
         result = reason_from_evidence(evidence)
+    elif plan.intent == "evidence_traceability":
+        retrieval = search_unified(client, request, ref=ref)
+        evidence = assess_evidence(retrieval)
+        reasoning = reason_from_evidence(evidence)
+        result = build_traceability(reasoning)
     elif plan.intent == "search_knowledge":
         result = search_knowledge(client, request, ref=ref)
     elif plan.intent == "generate_document":
