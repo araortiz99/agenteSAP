@@ -76,6 +76,8 @@ def validate_metadata(metadata: SAPHelpMetadata) -> None:
         raise ValueError("SAP Help metadata must use source_system=SAP_HELP")
     if metadata.metadata_origin not in {"source", "inferred"}:
         raise ValueError("metadata_origin must be source or inferred")
+    if metadata.branch and not metadata.repository:
+        raise ValueError("branch requires repository provenance")
     if metadata.commit_sha and not metadata.repository:
         raise ValueError("commit_sha requires repository provenance")
     if metadata.path and not metadata.repository:
