@@ -21,6 +21,9 @@ CERTAINTY_WEIGHT = {
 SOURCE_PRIORITY = {
     "sap_standard": 4,
     "internal": 3,
+    # MCP developer context is external evidence: useful and traceable,
+    # but intentionally weighted below repository-owned evidence.
+    "mcp": 2,
 }
 
 
