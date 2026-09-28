@@ -236,3 +236,40 @@ def test_call_read_tool_accepts_advertised_read_only_tool():
     asyncio.run(client.call_read_tool("safe_read", {"table": "MARA"}))
 
     assert fake_client.calls == [("safe_read", {"table": "MARA"})]
+
+
+def test_call_read_tool_rejects_missing_read_only_hint(monkeypatch):
+    from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
+
+    target = make_target()
+    client = SapMcpClient(target)
+
+    class FakeClient:
+        async def list_tools(self):
+            class Result:
+                tools = (
+                    type(
+                        "Tool",
+                        (),
+                        {
+                            "name": "read_table",
+                            "description": "read",
+                            "inputSchema": {"type": "object"},
+                            "annotations": None,
+                        },
+                    )(),
+                )
+            return Result()
+
+        async def call_tool(self, name, arguments):
+            raise AssertionError("SAP tool must not execute")
+
+    client._client = FakeClient()
+
+    try:
+        import asyncio
+        asyncio.run(client.call_read_tool("read_table", {}))
+    except PermissionError as exc:
+        assert "readOnlyHint=true" in str(exc)
+    else:
+        raise AssertionError("missing readOnlyHint must fail closed")
