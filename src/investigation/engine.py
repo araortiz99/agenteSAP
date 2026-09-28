@@ -353,7 +353,18 @@ def investigate(
     investigation.conclusion_reason = decision.reason
     investigation.conclusion_evidence_ids = decision.evidence_ids
     investigation.conclusion = decision.statement
-    investigation.report = build_report(\n        case_id=investigation.case_id,\n        intent=investigation.intent,\n        evidence=investigation.evidence_collected,\n        states=investigation.evidence_states,\n        hypotheses=investigation.hypothesis_records,\n        findings=investigation.findings,\n        decision=decision,\n        missing_information=investigation.evidence_missing,\n        provenance=investigation.provenance,\n    )\n
+    investigation.report = build_report(
+        case_id=investigation.case_id,
+        intent=investigation.intent,
+        evidence=investigation.evidence_collected,
+        states=investigation.evidence_states,
+        hypotheses=investigation.hypothesis_records,
+        findings=investigation.findings,
+        decision=decision,
+        missing_information=investigation.evidence_missing,
+        provenance=investigation.provenance,
+    )
+
     investigation.confidence, investigation.confidence_reason = _confidence(
         investigation.evidence_collected,
         investigation.evidence_missing,
