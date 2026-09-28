@@ -114,8 +114,20 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.trace_id == "TRACE-TEST"
     assert result.intent == "consult"
     assert result.evidence[0]["evidence_id"] == "EVD-TEST"
+    assert result.retrieval == ()
     assert result.relationships[0]["target_id"] == "ZMM_TEST"
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
     assert result.gaps == ()
     assert result.runtime["writes_exposed"] is False
+
+
+def test_workbench_retrieval_metadata_is_traceable():
+    result = build_workbench_analysis(
+        _consultation(),
+        request_id="REQ-RETRIEVAL",
+        intent="consult",
+        diagnostics={},
+        runtime={"writes_exposed": False},
+    )
+    assert result.retrieval == ()
