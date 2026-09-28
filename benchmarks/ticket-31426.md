@@ -42,8 +42,8 @@ El benchmark ejecutable `benchmarks/mvp-4-2-semantic-gate.py` valida:
 2. citas EVD-* pertenecientes a la trazabilidad;
 3. tratamiento explícito del conflicto K1/K4;
 4. preservación de `certainty`;
-5. separación SAP Standard vs implementación interna/custom;
-6. explicitación de información faltante;
+5. separación SAP Standard vs implementación interna/custom mediante atribución semántica, no por mera co-ocurrencia;
+6. explicitación de información faltante en las secciones de incertidumbre/próximos pasos;
 7. referencia TKT-*.
 
 Además ejecuta cuatro casos negativos sintéticos que **deben ser rechazados**:
@@ -55,6 +55,12 @@ Además ejecuta cuatro casos negativos sintéticos que **deben ser rechazados**:
 
 Los casos negativos no modifican la evidencia real; son mutaciones en memoria del
 `ConsultationResult` para probar el comportamiento del Gate.
+
+### Robustez de los checks
+
+El check Standard/Custom evalúa atribución: una mención de un objeto custom junto a SAP Standard no es un fallo por sí sola; se rechaza cuando la misma unidad de afirmación atribuye el comportamiento custom al estándar mediante lenguaje afirmativo. Las negaciones explícitas se aceptan como tratamiento correcto de la separación.
+
+El check de información faltante evalúa las secciones `Qué no está confirmado` y `Próximos pasos`, utilizando marcadores de incertidumbre y limitación más amplios. Esto evita depender de una única frase exacta del LLM.
 
 ### Estabilidad
 La ejecución canónica acepta el parámetro `--runs N` para repetir la consulta
@@ -77,8 +83,8 @@ La respuesta canónica debe mantener:
 - `Reasoning status: conflict`;
 - discrepancia K1/K4 como no resuelta;
 - evidencia parcial como parcial;
-- separación de SAP Standard e implementación interna/custom;
-- información faltante explícita;
+- separación de SAP Standard e implementación interna/custom, sin atribuir objetos custom al estándar por co-ocurrencia;
+- información faltante explícita dentro de las secciones de incertidumbre/próximos pasos;
 - referencias EVD-* válidas;
 - referencia TKT-*.
 
