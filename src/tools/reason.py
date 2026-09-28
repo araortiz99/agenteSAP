@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.tools.evidence import EvidenceAssessment
+from src.tools.evidence import ConflictRecord, EvidenceAssessment
 
 
 @dataclass(frozen=True)
@@ -13,15 +13,19 @@ class ReasoningResult:
     conclusion_status: str
     conclusion: str
     evidence: EvidenceAssessment
+    conflicts: tuple[ConflictRecord, ...]
 
 
 def reason_from_evidence(evidence: EvidenceAssessment) -> ReasoningResult:
     """Produce a bounded conclusion status; never invent functional semantics."""
-    if evidence.conflicts:
+    conflicts = evidence.conflicts
+
+    if conflicts:
         conclusion_status = "conflict"
         conclusion = (
-            "The retrieved evidence contains explicit metadata conflicts. "
-            "A functional conclusion must not be produced until the conflict is resolved."
+            "The retrieved evidence contains explicit metadata or documented "
+            "conflicts. A functional conclusion must not be produced until "
+            "the conflict is resolved."
         )
     elif evidence.requires_analysis:
         conclusion_status = "requires_analysis"
@@ -50,4 +54,5 @@ def reason_from_evidence(evidence: EvidenceAssessment) -> ReasoningResult:
         conclusion_status=conclusion_status,
         conclusion=conclusion,
         evidence=evidence,
+        conflicts=conflicts,
     )
