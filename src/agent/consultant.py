@@ -87,6 +87,7 @@ class ConsultationResult:
     uncited_evidence_ids: tuple[str, ...]
     ticket_context: tuple[TicketContextReference, ...]
     ticket_relationships: RelatedKnowledge | None
+    knowledge_context: object | None
 
 
 def _ticket_reference(ticket_id: str, path: str) -> str:
@@ -320,4 +321,5 @@ def consult(
         uncited_evidence_ids=uncited,
         ticket_context=ticket_context,
         ticket_relationships=ticket_relationships,
+        knowledge_context=knowledge_context,
     )
