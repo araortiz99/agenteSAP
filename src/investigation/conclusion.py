@@ -102,7 +102,7 @@ def build_conclusion(
             (
                 "La evidencia disponible permite una conclusión acotada, pero faltan "
                 "datos requeridos para afirmar una causa raíz."
-                if supported or partial
+                if supported_complete or partial
                 else "No existe evidencia suficiente para establecer una conclusión funcional."
             ),
             "Persisten requisitos de evidencia no obtenidos: " + ", ".join(missing),
