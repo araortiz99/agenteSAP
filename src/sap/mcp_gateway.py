@@ -84,6 +84,38 @@ class McpEvidenceGateway:
         return self.provider_plan(source).ready
 
     @classmethod
+    def for_qas_catalog_inspection(cls) -> "McpEvidenceGateway":
+        """Create a QAS/read-only target for tools/list only.
+
+        This deliberately uses a non-callable sentinel instead of a wildcard
+        allowlist. It allows discovery of the server catalog without granting
+        permission to invoke any discovered tool.
+        """
+        config = SapQasRuntimeConfig.from_env()
+        if config.landscape != "QAS":
+            raise ValueError("runtime catalog inspection is restricted to QAS")
+        if config.scope != "mcp_readonly":
+            raise ValueError("runtime catalog inspection requires mcp_readonly")
+
+        gateway = cls.__new__(cls)
+        gateway.config = McpGatewayConfig(
+            command=config.command,
+            args=config.args,
+            max_results=5,
+        )
+        gateway.target = build_target(
+            "sap_mcp_server",
+            command=config.command,
+            args=config.args,
+            allowed_tools=("__catalog_only__",),
+            metadata={
+                "landscape": "QAS",
+                **({"system": config.system} if config.system else {}),
+            },
+        )
+        return gateway
+
+    @classmethod
     def from_qas_runtime_env(cls) -> "McpEvidenceGateway | None":
         """Build the opt-in QAS runtime gateway without exposing credentials."""
         config = SapQasRuntimeConfig.from_env()
