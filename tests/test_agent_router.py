@@ -246,3 +246,29 @@ def test_route_ticket_consult_extracts_ticket_id():
     plan = route_intent("Consultá el ticket 31426 y explicame qué está confirmado")
     assert plan.intent == "consult"
     assert plan.ticket_id == "31426"
+
+def test_route_specialized_evidence_request_before_generic_consult():
+    plan = route_intent(
+        "Explicame qué está confirmado y qué falta según la evidencia sobre material master"
+    )
+    assert plan.intent == "evidence_reasoning"
+
+
+def test_route_specialized_comparison_request_before_generic_consult():
+    plan = route_intent(
+        "Explicame la diferencia entre SAP Standard y nuestra implementación"
+    )
+    assert plan.intent == "search_unified"
+
+
+def test_route_specialized_standard_request_before_generic_consult():
+    plan = route_intent(
+        "Explicame SAP Standard sobre material master"
+    )
+    assert plan.intent == "search_sap_standard"
+
+
+def test_route_generic_explanation_still_uses_consultant():
+    plan = route_intent("Explicame el proceso de inventario")
+    assert plan.intent == "consult"
+    assert "consult_llm" in plan.capabilities
