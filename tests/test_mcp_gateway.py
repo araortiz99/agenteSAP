@@ -127,3 +127,31 @@ def test_gateway_from_env_parses_quoted_args(monkeypatch):
 
     assert gateway is not None
     assert gateway.config.args == ("mcp", "serve", "--profile", "developer context")
+
+
+def test_gateway_maps_runtime_observation_metadata(monkeypatch):
+    from src.sap.mcp_contracts import SapMcpEvidence
+    from src.sap.mcp_gateway import McpEvidenceGateway
+
+    gateway = McpEvidenceGateway(McpGatewayConfig())
+
+    async def fake_search(query):
+        return SapMcpEvidence(
+            provider="sap_mcp_server",
+            operation="read_table",
+            content=['{"rows": 1}'],
+            source="runtime",
+            system="S4QAS",
+            landscape="QAS",
+            object_id="MARA",
+            certainty="partial",
+            observation_type="runtime_observation",
+        )
+
+    monkeypatch.setattr(gateway, "_search_resources", fake_search)
+    results = gateway.search_resources("MARA")
+
+    assert results[0].knowledge_type == "runtime_observation"
+    assert results[0].knowledge_scope == "runtime"
+    assert results[0].source_id == "MARA"
+    assert results[0].certainty == "partial"
