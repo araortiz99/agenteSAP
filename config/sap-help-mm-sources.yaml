@@ -5,12 +5,12 @@ source_type: SAP_STANDARD
 module: MM
 
 sources:
-  - id: s4hana-2023-material-master
+  - id: s4hana-2025-material-master
     product: SAP S/4HANA
     edition: on-premise
-    version: "2023 Latest"
+    version: "2025 FPS01"
     language: en
-    help_url: "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/f7fddfe4caca43dd967ac4c9ce6a70e4/1eab9ca4-c056-42c6-a723-31a89c483118.html"
+    help_url: "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/b724ba53422bb54ce10000000a174cb4.html"
     repository: null
     branch: null
     commit_sha: null
@@ -24,6 +24,32 @@ sources:
     version: "2025 FPS01"
     language: en
     help_url: "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/91b21005dded4984bcccf4a69ae1300c/742e46e570984d9aa74e468838f6e1ff.html"
+    repository: null
+    branch: null
+    commit_sha: null
+    license: null
+    status: candidate
+    metadata_origin: source
+
+  - id: s4hana-2025-inventory-principles
+    product: SAP S/4HANA
+    edition: on-premise
+    version: "2025 FPS01"
+    language: en
+    help_url: "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/9905622a5c1f49ba84e9076fc83a9c2c/269bc7536e8e2a4be10000000a174cb4.html"
+    repository: null
+    branch: null
+    commit_sha: null
+    license: null
+    status: candidate
+    metadata_origin: source
+
+  - id: s4hana-2025-invoice-verification
+    product: SAP S/4HANA
+    edition: on-premise
+    version: "2025 FPS01"
+    language: en
+    help_url: "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/af9ef57f504840d2b81be8667206d485/8d6fb6531de6b64ce10000000a174cb4.html?locale=en-us"
     repository: null
     branch: null
     commit_sha: null
