@@ -54,6 +54,31 @@ def _extract_ticket_id(request: str) -> str | None:
     return None
 
 
+_SAP_OBJECT_PATTERN = re.compile(r"\\b(?:[ZY]\\w{2,}_[A-Z0-9_]+)\\b")
+
+
+def _extract_sap_object_id(request: str) -> str | None:
+    """Extract an explicit Z/Y SAP development identifier from a request."""
+    for match in _SAP_OBJECT_PATTERN.finditer(request):
+        candidate = match.group(0).upper()
+        if candidate.startswith(("Z", "Y")) and "_" in candidate:
+            return candidate
+    return None
+
+
+def _is_object_investigation_request(lowered: str, object_id: str | None) -> bool:
+    """Detect analysis/consultation explicitly scoped to a SAP object."""
+    if not object_id:
+        return False
+    markers = (
+        "analizá", "analiza", "analizar", "análisis", "analisis",
+        "consultá", "consulta", "consultar", "explicame", "explicá", "explica",
+        "revisá", "revisa", "revisar", "qué es", "que es", "qué hace", "que hace",
+        "información", "informacion", "evidencia", "relaciones", "conflictos",
+    )
+    return any(marker in lowered for marker in markers)
+
+
 def _mcp_gateway() -> McpEvidenceGateway | None:
     """Build the optional read-only MCP gateway for deterministic retrieval flows."""
     return McpEvidenceGateway.from_env()
@@ -124,6 +149,7 @@ def route_intent(request: str) -> AgentPlan:
 
     lowered = text.lower()
     ticket_id = _extract_ticket_id(text)
+    sap_object_id = _extract_sap_object_id(text)
 
     # Prefer specialized deterministic intents before the generic LLM consultant.
     # This prevents phrases such as "explicame" or "consulta" from swallowing
@@ -155,6 +181,18 @@ def route_intent(request: str) -> AgentPlan:
         )
 
     if any(term in lowered for term in ("analizá", "analiza", "analizar", "análisis", "analisis")):
+        if not ticket_id and _is_object_investigation_request(lowered, sap_object_id):
+            return AgentPlan(
+                intent="consult",
+                ticket_id=None,
+                capabilities=(
+                    "search_unified",
+                    "assess_evidence",
+                    "reason_from_evidence",
+                    "build_traceability",
+                    "consult_llm",
+                ),
+            )
         if not ticket_id:
             raise IntentRoutingError(
                 "No se pudo identificar ticket_id para la solicitud de análisis."
@@ -287,14 +325,26 @@ def route_intent(request: str) -> AgentPlan:
         )
 
     if "relacion" in lowered or "relacionado" in lowered:
-        if not ticket_id:
-            raise IntentRoutingError(
-                "No se pudo identificar la entidad para consultar relaciones."
+        if ticket_id:
+            return AgentPlan(
+                intent="get_related_knowledge",
+                ticket_id=ticket_id,
+                capabilities=("get_related_knowledge",),
             )
-        return AgentPlan(
-            intent="get_related_knowledge",
-            ticket_id=ticket_id,
-            capabilities=("get_related_knowledge",),
+        if sap_object_id:
+            return AgentPlan(
+                intent="consult",
+                ticket_id=None,
+                capabilities=(
+                    "search_unified",
+                    "assess_evidence",
+                    "reason_from_evidence",
+                    "build_traceability",
+                    "consult_llm",
+                ),
+            )
+        raise IntentRoutingError(
+            "No se pudo identificar la entidad para consultar relaciones."
         )
 
     if _is_consultative_ticket_request(lowered, ticket_id):
