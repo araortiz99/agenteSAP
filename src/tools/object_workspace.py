@@ -210,6 +210,8 @@ def build_object_workspace(
     """Build an auditable SAP object view without introducing new retrieval logic."""
     if not query or not query.strip():
         raise ValueError("object query must not be empty")
+    if len(query.strip()) > 256:
+        raise ValueError("object query must be at most 256 characters")
     if max_results < 1:
         raise ValueError("max_results must be greater than zero")
     if max_hops < 0:
