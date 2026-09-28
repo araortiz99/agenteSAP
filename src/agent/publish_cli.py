@@ -8,7 +8,7 @@ import sys
 
 from src.github.client import GitHubClient
 from src.github.writer import GitHubWriteClient
-from src.tools.knowledge_change import build_change_proposal
+from src.tools.knowledge_change import KnowledgeChangeError, build_change_proposal
 from src.tools.publish_knowledge import publish_knowledge
 
 
@@ -23,11 +23,7 @@ def main() -> int:
     parser.add_argument("--commit-message", default=None)
     parser.add_argument("--pr-title", default=None)
     parser.add_argument("--pr-body", default=None)
-    parser.add_argument(
-        "--publish",
-        action="store_true",
-        help="Actually create branch, commit and Pull Request",
-    )
+    parser.add_argument("--publish", action="store_true")
     parser.add_argument("--owner", default="araortiz99")
     parser.add_argument("--repo", default="agenteSAP")
     args = parser.parse_args()
@@ -46,19 +42,17 @@ def main() -> int:
 
     try:
         proposal = build_change_proposal(
-        path=args.path,
-        content=content,
-        base_ref=args.base_ref,
-        branch=args.branch,
-        ticket_id=args.ticket,
-        existing_content=existing,
+            path=args.path,
+            content=content,
+            base_ref=args.base_ref,
+            branch=args.branch,
+            ticket_id=args.ticket,
+            existing_content=existing,
             change_type=args.change_type,
         )
-    except Exception as exc:
-        if exc.__class__.__name__ == "KnowledgeChangeError":
-            print(f"Knowledge Governance rejected the proposal: {exc}", file=sys.stderr)
-            return 2
-        raise
+    except KnowledgeChangeError as exc:
+        print(f"Knowledge Governance rejected the proposal: {exc}", file=sys.stderr)
+        return 2
 
     print(f"Operation: {proposal.operation}")
     print(f"Path: {proposal.path}")
