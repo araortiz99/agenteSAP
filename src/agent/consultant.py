@@ -251,7 +251,9 @@ def consult(
     traceability = build_traceability(reasoning)
     ticket_context, ticket_relationships = _ticket_context(client, ticket_id, ref)
     context = build_context(retrieval, traceability)
-    knowledge_context = build_knowledge_context(\n        client, request, ref=ref, direct_retrieval=retrieval\n    )\n    context += "\\n\\n" + render_knowledge_context(knowledge_context)\n    if ticket_context:
+    knowledge_context = build_knowledge_context(
+        client, request, ref=ref, direct_retrieval=retrieval
+    )\n    context += "\\n\\n" + render_knowledge_context(knowledge_context)\n    if ticket_context:
         context += "\n\n## Ticket context\n"
         for item in ticket_context:
             context += f"\n### {item.reference_id}\npath: {item.path}\n{item.content.strip()}\n"
