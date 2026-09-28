@@ -240,11 +240,10 @@ La baseline ya contiene el contrato técnico para lecturas QAS opt-in. La ejecuc
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
 
-1. **Cerrar hardening MCP**: contratos, clasificación de evidencia y pruebas de integración opt-in.
-2. **Source / Evidence Selection**: decidir qué capa puede responder cada tipo de afirmación y evitar que una fuente externa se use como confirmación interna.
-3. **MVP 7 — SAP MM Knowledge Foundation**: ampliar conocimiento funcional curado de MM, objetos, procesos, reglas, tablas, movimientos, integración MM-FI e incidentes sanitizados.
-4. **SAP runtime read-only**: habilitar progresivamente `sap-mcp-server` con allowlists y contratos de provenance por sistema/landscape/objeto.
-5. **ABAP custom MCP**: incorporar capacidades específicas sólo cuando exista un caso funcional y un contrato de lectura claramente definido.
+1. **SAP Help Knowledge Foundation (en esta rama)**: metadata, provenance, chunking estructural, source audit y retrieval Standard.
+2. **Validación y benchmark SAP MM**: Material Master, Inventory Management, Goods Movements, Movement Types, Purchasing, GR e Invoice Verification.
+3. **SAP runtime read-only**: habilitar progresivamente `sap-mcp-server` con allowlists y contratos de provenance por sistema/landscape/objeto.
+4. **ABAP custom MCP**: incorporar capacidades específicas sólo cuando exista un caso funcional y un contrato de lectura claramente definido.
 
 Embeddings/vector DB quedan fuera de esta etapa hasta que la cobertura y calidad del conocimiento estructurado justifiquen su incorporación.
 
