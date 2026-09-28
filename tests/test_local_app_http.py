@@ -45,7 +45,12 @@ def test_local_app_http_health_and_consult(monkeypatch):
             method="POST",
         )
         with urllib.request.urlopen(request, timeout=2) as response:
-            assert json.loads(response.read())["result"] == "ok"
+            payload = json.loads(response.read())
+            assert payload["result"]["result"] == "ok"
+            assert payload["request_id"].startswith("REQ-")
+            assert payload["intent"] == "unknown"
+            assert payload["diagnostics"]["trace_id"] is None
+            assert payload["runtime"]["writes_exposed"] is False
 
         oversized_results = json.dumps({"request": "test", "max_results": 21}).encode()
         request = urllib.request.Request(
