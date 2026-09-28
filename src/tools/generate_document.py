@@ -252,12 +252,21 @@ def _build_sections(
     return common[document_type]
 
 
+def _template_headings(template: str) -> tuple[str, ...]:
+    """Return structural Markdown headings declared by the official template."""
+    return tuple(
+        line.strip()
+        for line in template.splitlines()
+        if re.match(r"^##\s+", line.strip())
+    )
+
+
 def _validate_generated(
     document_type: str,
     content: str,
     template: str,
 ) -> None:
-    """Validate the generated structure without requiring semantic inference."""
+    """Validate generated structure against the official template contract."""
     required = {
         "requirement": [
             "## Metadata",
@@ -292,10 +301,23 @@ def _validate_generated(
             f"Generated document is structurally incomplete: {missing}"
         )
 
-    # A real template may be a detailed specification. Its presence is part
-    # of the generation contract even when the MVP uses an equivalent renderer.
     if not template.strip():
         raise DocumentGenerationError("Official template is empty")
+
+    # If the official template declares Markdown section headings, require the
+    # generated document to preserve every declared section. This keeps the
+    # deterministic renderer aligned with template evolution without inventing
+    # semantic content for sections whose evidence is missing.
+    template_headings = _template_headings(template)
+    if template_headings:
+        missing_template_sections = [
+            heading for heading in template_headings if heading not in content
+        ]
+        if missing_template_sections:
+            raise DocumentGenerationError(
+                "Generated document does not preserve official template sections: "
+                f"{missing_template_sections}"
+            )
 
 
 def generate_document(
