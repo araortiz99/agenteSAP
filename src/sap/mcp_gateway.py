@@ -10,11 +10,16 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import threading
 from dataclasses import dataclass
+from typing import Coroutine, TypeVar
 
 from src.sap.mcp_client import SapMcpClient
 from src.sap.mcp_registry import build_target
 from src.tools.search_unified import UnifiedResult
+
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -66,7 +71,7 @@ class McpEvidenceGateway:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
 
-        evidence = asyncio.run(self._search_resources(query.strip()))
+        evidence = _run_async(self._search_resources(query.strip()))
         if _has_zero_results(evidence.content):
             return ()
 
