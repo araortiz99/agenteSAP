@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from src.github.client import GitHubClient
 from src.sap.mcp_gateway import McpEvidenceGateway
 from src.investigation.correlation import EvidenceCorrelation, correlate_evidence
+from src.investigation.conclusion import build_conclusion
 from src.investigation.evidence_state import EvidenceState
 from src.investigation.hypothesis import Hypothesis, build_hypotheses
+from src.investigation.report import InvestigationReport, build_report
 from src.investigation.semantic import unified_to_investigation_evidence
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context
@@ -33,6 +35,11 @@ class InvestigationResult:
     evidence_states: tuple[EvidenceState, ...] = ()
     hypotheses: tuple[Hypothesis, ...] = ()
     correlation: EvidenceCorrelation | None = None
+    findings: tuple[str, ...] = ()
+    conclusion: str = ""
+    conclusion_status: str = "UNVERIFIED"
+    conclusion_reason: str = ""
+    report: InvestigationReport | None = None
 
 
 def _merge_retrievals(
@@ -136,6 +143,28 @@ def investigate(
         for item in semantic_evidence
     )
     hypotheses = build_hypotheses(semantic_evidence, evidence_states, correlation)
+    missing_information = tuple(dict.fromkeys((*evidence.gaps, *knowledge_context.gaps)))
+    findings = []
+    if semantic_evidence:
+        findings.append(f"Se normalizaron {len(semantic_evidence)} evidencias en la investigación.")
+    if correlation.relations:
+        findings.append(f"Se identificaron {len(correlation.relations)} relaciones estructurales entre evidencias.")
+    if correlation.contradictions:
+        findings.append(f"Se detectaron {len(correlation.contradictions)} contradicciones estructurales.")
+    if knowledge_context.relationships:
+        findings.append(f"Knowledge Intelligence resolvió {len(knowledge_context.relationships)} relaciones acotadas.")
+    decision = build_conclusion(hypotheses, evidence_states, missing=missing_information)
+    report = build_report(
+        case_id="WB-" + __import__("hashlib").sha256(query.strip().encode("utf-8")).hexdigest()[:10].upper(),
+        intent=plan.intent,
+        evidence=semantic_evidence,
+        states=evidence_states,
+        hypotheses=hypotheses,
+        findings=findings,
+        decision=decision,
+        missing_information=missing_information,
+        provenance=tuple({"evidence_id": item.evidence_id, "provider": item.provider, "operation": item.operation, "landscape": item.landscape} for item in semantic_evidence),
+    )
 
     return InvestigationResult(
         query=query.strip(),
@@ -147,4 +176,9 @@ def investigate(
         evidence_states=evidence_states,
         hypotheses=hypotheses,
         correlation=correlation,
+        findings=tuple(findings),
+        conclusion=decision.statement,
+        conclusion_status=decision.status,
+        conclusion_reason=decision.reason,
+        report=report,
     )
