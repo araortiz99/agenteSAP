@@ -208,12 +208,14 @@ def assess_evidence(retrieval: UnifiedSearchResult) -> EvidenceAssessment:
     selected = set(selection.requested)
 
     if "sap_standard" in selected and not retrieval.sap_standard:
+        gaps.append("No SAP Standard evidence was retrieved.")
         gaps.append(
-            "The source-selection policy expects SAP Standard evidence, but none was retrieved."
+            "Source-selection policy: SAP Standard evidence is expected for this query."
         )
     if "internal" in selected and not retrieval.internal:
+        gaps.append("No internal evidence was retrieved.")
         gaps.append(
-            "The source-selection policy expects internal implementation evidence, but none was retrieved."
+            "Source-selection policy: internal implementation evidence is expected for this query."
         )
     if "runtime" in selected and not any(
         item.knowledge_type == "runtime_observation" for item in items
