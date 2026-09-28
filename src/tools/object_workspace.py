@@ -105,14 +105,27 @@ def _select_identity(
 
     if len(candidates) == 1:
         entity = candidates[0]
+        if entity.match_type == "identifier":
+            return ObjectIdentity(
+                object_id=entity.entity_id,
+                object_type=entity.entity_type,
+                display_name=entity.entity_id,
+                status="resolved",
+                match_type=entity.match_type,
+                score=entity.score,
+                certainty=entity.certainty,
+                source_layer=entity.source_layer,
+                path=entity.path,
+                candidates=tuple(_candidate_payload(item) for item in candidates),
+            )
         return ObjectIdentity(
-            object_id=entity.entity_id,
-            object_type=entity.entity_type,
-            display_name=entity.entity_id,
-            status="resolved",
+            object_id=query.strip(),
+            object_type=None,
+            display_name=query.strip(),
+            status="unresolved",
             match_type=entity.match_type,
             score=entity.score,
-            certainty=entity.certainty,
+            certainty="unknown",
             source_layer=entity.source_layer,
             path=entity.path,
             candidates=tuple(_candidate_payload(item) for item in candidates),
