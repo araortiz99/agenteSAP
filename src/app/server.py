@@ -138,6 +138,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             if exc.rate_limit.retry_after is not None:
                 payload["github_retry_after_seconds"] = exc.rate_limit.retry_after
             self._send_json(503 if exc.status_code in {403, 429, 500, 502, 503, 504} else 502, payload)
+        except TimeoutError as exc:
+            self._send_json(504, {"error": f"agent_timeout: {exc}"})
         except Exception as exc:  # local shell: expose failure without claiming SAP execution
             self._send_json(500, {"error": f"agent_error: {exc}"})
 
