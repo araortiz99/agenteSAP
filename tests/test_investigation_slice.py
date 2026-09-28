@@ -169,7 +169,7 @@ def test_investigation_honors_runtime_max_steps():
 def test_investigation_accepts_bounded_document_evidence(tmp_path: Path):
     path = tmp_path / "incidente.md"
     path.write_text(
-        "# Incidente MM\\n\\nEl material 100123 presenta una diferencia en el centro 5023.",
+        "# Incidente MM\n\nEl material 100123 presenta una diferencia en el centro 5023.",
         encoding="utf-8",
     )
     source = load_document_file(path)
