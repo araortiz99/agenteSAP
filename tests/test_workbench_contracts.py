@@ -136,6 +136,7 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.retrieval[0]["path"] == "knowledge/sap-standard/mm/material-master.md"
     assert result.retrieval[0]["score"] == 0.91
     assert result.retrieval[0]["source_layer"] == "sap_standard"
+    assert result.retrieval[0]["provenance"] == ()
     assert result.relationships[0]["target_id"] == "ZMM_TEST"
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
