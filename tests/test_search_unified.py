@@ -98,7 +98,7 @@ def test_evidence_does_not_count_truncated_source_as_retrieved():
         "SAP-1", "standard", "global", "confirmed"
     )
     retrieval = UnifiedSearchResult(
-        "¿Qué tiene nuestra implementación?",
+        "¿Cómo funciona el inventario?",
         (internal,),
         (hidden_standard,),
         (internal,),
