@@ -3,7 +3,7 @@ from src.agent.consultant import ConsultationResult, Citation, TicketContextRefe
 from src.tools.evidence import EvidenceAssessment, EvidenceItem
 from src.tools.evidence_trace import TraceabilityReport, EvidenceTrace
 from src.tools.reason import ReasoningResult
-from src.tools.search_unified import UnifiedSearchResult
+from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
 from src.tools.get_related_knowledge import RelatedKnowledge, Relationship
 
 
@@ -74,7 +74,26 @@ def _consultation() -> ConsultationResult:
     )
     return ConsultationResult(
         request="material master",
-        retrieval=UnifiedSearchResult("material master", (), (), (), ()),
+        retrieval=UnifiedSearchResult(
+            "material master",
+            (
+                UnifiedResult(
+                    path=evidence_item.path,
+                    score=0.91,
+                    matched_terms=("material", "master"),
+                    content="documented",
+                    source_layer="sap_standard",
+                    match_type="identifier",
+                    source_id="SAP-HELP-MM",
+                    knowledge_type="standard",
+                    knowledge_scope="global",
+                    certainty="confirmed",
+                ),
+            ),
+            (),
+            (),
+            (),
+        ),
         evidence=assessment,
         reasoning=reasoning,
         traceability=traceability,
@@ -114,7 +133,9 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.trace_id == "TRACE-TEST"
     assert result.intent == "consult"
     assert result.evidence[0]["evidence_id"] == "EVD-TEST"
-    assert result.retrieval == ()
+    assert result.retrieval[0]["path"] == evidence_item.path
+    assert result.retrieval[0]["score"] == 0.91
+    assert result.retrieval[0]["source_layer"] == "sap_standard"
     assert result.relationships[0]["target_id"] == "ZMM_TEST"
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
@@ -122,12 +143,10 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.runtime["writes_exposed"] is False
 
 
-def test_workbench_retrieval_metadata_is_traceable():
-    result = build_workbench_analysis(
-        _consultation(),
-        request_id="REQ-RETRIEVAL",
-        intent="consult",
-        diagnostics={},
-        runtime={"writes_exposed": False},
-    )
-    assert result.retrieval == ()
+def test_workbench_html_has_evidence_and_provenance_explorer():
+    from pathlib import Path
+    html = Path("src/app/static/index.html").read_text(encoding="utf-8")
+    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer"):
+        assert marker in html
+    assert "source_layer" in html
+    assert "provenance" in html
