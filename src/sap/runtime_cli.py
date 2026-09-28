@@ -26,11 +26,40 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Pretty-print the JSON catalog.",
     )
+
+    validate = subparsers.add_parser(
+        "validate-qas",
+        help="Validate the configured QAS read-tool allowlist using only tools/list.",
+    )
+    validate.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print the JSON validation.",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+
+    if args.command == "validate-qas":
+        gateway = McpEvidenceGateway.from_qas_runtime_env()
+        if gateway is None:
+            raise PermissionError(
+                "QAS runtime validation is disabled; set "
+                "AGENTESAP_SAP_RUNTIME_ENABLED=true"
+            )
+        results = gateway.validate_runtime_allowlist()
+        print(
+            json.dumps(
+                list(results),
+                ensure_ascii=False,
+                indent=2 if args.pretty else None,
+            )
+        )
+        if not all(bool(item.get("valid")) for item in results):
+            return 2
+        return 0
 
     if args.command == "discover-qas":
         gateway = McpEvidenceGateway.from_qas_runtime_env()
