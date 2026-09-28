@@ -116,9 +116,9 @@ class SapMcpClient:
             raise PermissionError(
                 f"MCP tool '{tool_name}' is not advertised by the connected server"
             )
-        if descriptor.read_only_hint is False:
+        if descriptor.read_only_hint is not True:
             raise PermissionError(
-                f"MCP tool '{tool_name}' is not marked read-only by the server"
+                f"MCP tool '{tool_name}' does not explicitly advertise readOnlyHint=true"
             )
         if descriptor.destructive_hint is True:
             raise PermissionError(
