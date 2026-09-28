@@ -18,7 +18,11 @@ def _client()->GitHubClient:
     return GitHubClient(os.getenv("GITHUB_OWNER","araortiz99"),os.getenv("GITHUB_REPO","agenteSAP"),token=token)
 
 def _ref()->str:
-    return os.getenv("GITHUB_REF","main")
+    configured = os.getenv("GITHUB_REF_NAME") or os.getenv("GITHUB_REF") or "main"
+    for prefix in ("refs/heads/", "refs/tags/"):
+        if configured.startswith(prefix):
+            return configured[len(prefix):]
+    return configured
 
 def _limit(value:int)->int:
     if value<1 or value>20: raise ValueError("max_results must be between 1 and 20")
