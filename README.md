@@ -301,3 +301,30 @@ available.
 
 The consultant is read-only and must not claim SAP execution, configuration
 changes, code changes or GitHub modifications.
+
+### MVP 5 — Knowledge Intelligence Layer
+
+MVP 5 agrega una capa determinística para construir contexto funcional SAP a partir de entidades, relaciones explícitas y evidencia recuperada.
+
+Componentes principales:
+
+- Entity Resolution;
+- Relationship Resolution;
+- bounded multi-hop retrieval;
+- KnowledgeContext;
+- provenance preservation;
+- conflict preservation.
+
+El traversal está limitado por defecto a 2 hops, 8 entidades, 16 relaciones y 12 evidencias.
+
+La regla fundamental se mantiene:
+
+```
+coocurrencia != relación
+mención != entidad canónica
+hop != certainty
+retrieval != conclusión
+```
+
+El contexto de MVP 5 se incorpora al consultor de MVP 4.2 sin alterar su contrato de respuesta ni sus semantic gates.
+
