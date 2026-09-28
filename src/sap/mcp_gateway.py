@@ -144,6 +144,8 @@ class McpEvidenceGateway:
             discovery_only=config.discovery_only,
             metadata={
                 "landscape": config.landscape,
+                "query_tool": config.query_tool or "",
+                "query_argument": config.query_argument,
                 **({"system": config.system} if config.system else {}),
             },
         )
