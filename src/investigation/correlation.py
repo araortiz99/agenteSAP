@@ -6,7 +6,7 @@ infer root cause, invoke an LLM, or choose which conflicting observation is true
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import json
 from typing import Any
 
@@ -137,10 +137,17 @@ def correlate_evidence(
     gaps: list[str] = []
     unresolved: list[str] = []
 
+    duplicate_ids = sorted({evidence_id for evidence_id in ids if ids.count(evidence_id) > 1})
+    if duplicate_ids:
+        gaps.append("duplicate_evidence_id")
+        unresolved.append("Se detectaron IDs de evidencia duplicados; las relaciones entre esos registros se omiten para preservar la trazabilidad.")
+
     for index, left in enumerate(items):
         left_identity = _identity(left)
         left_observations = _observations(left)
         for right in items[index + 1 :]:
+            if left.evidence_id == right.evidence_id:
+                continue
             right_identity = _identity(right)
             right_observations = _observations(right)
             same_entity, shared = _same_entity(left_identity, right_identity)
