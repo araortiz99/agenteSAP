@@ -23,16 +23,6 @@ class LLMResponseError(LLMError):
 
 
 class LLMClient(Protocol):
-    @classmethod
-    def from_env(cls) -> "OpenAIResponsesClient":
-        api_key = os.getenv("OPENAI_API_KEY")
-        model = os.getenv("OPENAI_MODEL")
-        if not api_key:
-            raise LLMConfigurationError("OPENAI_API_KEY is not configured")
-        if not model:
-            raise LLMConfigurationError("OPENAI_MODEL is not configured")
-        return cls(model=model, api_key=api_key)
-
     def generate(self, *, system_prompt: str, user_prompt: str) -> str:
         """Generate text from the supplied bounded context."""
 
@@ -48,6 +38,16 @@ class OpenAIResponsesClient:
     api_key: str | None = None
     base_url: str = "https://api.openai.com/v1/responses"
     timeout_seconds: float = 60.0
+
+    @classmethod
+    def from_env(cls) -> "OpenAIResponsesClient":
+        api_key = os.getenv("OPENAI_API_KEY")
+        model = os.getenv("OPENAI_MODEL")
+        if not api_key:
+            raise LLMConfigurationError("OPENAI_API_KEY is not configured")
+        if not model:
+            raise LLMConfigurationError("OPENAI_MODEL is not configured")
+        return cls(model=model, api_key=api_key)
 
     def generate(self, *, system_prompt: str, user_prompt: str) -> str:
         api_key = self.api_key or os.getenv("OPENAI_API_KEY")
