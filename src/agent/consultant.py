@@ -18,6 +18,7 @@ from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context, render_knowledge_context
 from src.agent.investigation import InvestigationResult, investigate
+from src.investigation.contracts import InvestigationEvidence
 
 
 SYSTEM_PROMPT = """You are agenteSAP, a consultative SAP functional assistant.
@@ -260,6 +261,7 @@ def consult(
     max_results: int = 8,
     ticket_id: str | None = None,
     mcp_gateway: McpEvidenceGateway | None = None,
+    additional_evidence: tuple["InvestigationEvidence", ...] = (),
 ) -> ConsultationResult:
     """Retrieve, assess, trace and synthesize a consultative answer."""
     if not request or not request.strip():
@@ -272,6 +274,7 @@ def consult(
         ref=ref,
         max_results=max_results,
         mcp_gateway=mcp_gateway,
+        additional_evidence=additional_evidence,
     )
     retrieval = investigation.retrieval
     evidence = investigation.evidence
