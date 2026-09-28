@@ -257,23 +257,30 @@ def test_runtime_tool_requires_explicit_readonly_hint():
         asyncio.run(client.call_read_tool("read_table"))
 
 
+
+
 def test_runtime_evidence_preserves_tool_contract():
-    evidence = SapMcpEvidence(
-        provider="sap_mcp_server",
-        operation="read_table",
-        content=["ok"],
-        source="MCP provider: sap_mcp_server",
-        system="S4QAS",
-        landscape="QAS",
-        certainty="partial",
-        observation_type="runtime_observation",
-        provenance={
-            "transport": "stdio",
-            "tool_description": "Read table",
-            "tool_read_only_hint": True,
-            "tool_destructive_hint": False,
-            "tool_input_schema": {"type": "object"},
-        },
+    fake_tool = FakeTool(
+        "read_table",
+        read_only_hint=True,
+        destructive_hint=False,
     )
-    assert dict(evidence.provenance)["tool_read_only_hint"] is True
-    assert dict(evidence.provenance)["tool_destructive_hint"] is False
+    client = SapMcpClient(
+        build_target(
+            "sap_mcp_server",
+            command="sap-mcp-server",
+            args=(),
+            allowed_tools=("read_table",),
+            metadata={"system": "S4QAS", "landscape": "QAS"},
+        )
+    )
+    client._client = FakeClient([fake_tool])
+
+    evidence = asyncio.run(client.call_read_tool("read_table", {}))
+
+    provenance = dict(evidence.provenance)
+    assert provenance["transport"] == "stdio"
+    assert provenance["tool_description"] == fake_tool.description
+    assert provenance["tool_read_only_hint"] is True
+    assert provenance["tool_destructive_hint"] is False
+    assert provenance["tool_input_schema"] == fake_tool.inputSchema
