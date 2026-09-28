@@ -108,7 +108,7 @@ AgenteSAP should use the read-only boundary for runtime investigation.
 
 The server's `connections.json` is local configuration and must never be committed.
 
-The AgenteSAP adapter contract exists, but a live `sap-mcp-server` runtime connection has not been implemented or validated.
+The AgenteSAP adapter, QAS/read-only runtime contract, discovery-only flow, tool-descriptor validation, and execution boundary are implemented and tested. A live `sap-mcp-server` connection to an actual SAP QAS landscape has not yet been validated.
 
 ### abap-ai/mcp
 
@@ -128,14 +128,18 @@ Current repository implementation provides:
 - normalized evidence provenance and observation classification;
 - an official Python MCP SDK stdio client adapter;
 - local `sap-devs` handshake and read-tool validation;
-- unit tests for provider boundaries and read-tool normalization.
-
-Not yet implemented:
-
+- unit tests for provider boundaries and read-tool normalization;
 - Router/Consultant integration of MCP evidence;
-- automatic promotion of MCP output to Knowledge;
-- live `sap-mcp-server` SAP landscape connection;
-- SAP landscape credentials;
-- live `abap-ai/mcp` endpoint integration.
+- source-aware runtime selection and provenance preservation;
+- QAS-only `mcp_readonly` runtime configuration;
+- discovery-only `tools/list` flow;
+- allowlist + advertised-tool + read-only/destructive-hint execution checks.
 
-Those are intentionally separate steps.
+Not yet validated:
+
+- a live `sap-mcp-server` connection to an actual SAP QAS landscape;
+- the concrete QAS tool catalog and the first approved business read operation;
+- organization-specific SAP landscape credentials;
+- a live `abap-ai/mcp` endpoint.
+
+These are intentionally separate from the repository-side contract and test suite.
