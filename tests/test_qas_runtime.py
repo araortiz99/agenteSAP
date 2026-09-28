@@ -26,6 +26,7 @@ def test_qas_runtime_config_requires_explicit_read_tool_allowlist(monkeypatch):
 def test_qas_runtime_config_rejects_non_qas(monkeypatch):
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "PRD")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
     monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
 
     try:
@@ -81,3 +82,17 @@ def test_qas_runtime_gateway_is_opt_in(monkeypatch):
     monkeypatch.delenv("AGENTESAP_SAP_RUNTIME_ENABLED", raising=False)
 
     assert McpEvidenceGateway.from_qas_runtime_env() is None
+
+
+def test_qas_runtime_config_rejects_non_readonly_scope(monkeypatch):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
+
+    try:
+        SapQasRuntimeConfig.from_env()
+    except ValueError as exc:
+        assert "mcp_readonly scope" in str(exc)
+    else:
+        raise AssertionError("QAS runtime integration must require mcp_readonly")
