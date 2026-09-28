@@ -46,7 +46,7 @@ def test_local_app_http_health_and_consult(monkeypatch):
         )
         with urllib.request.urlopen(request, timeout=2) as response:
             payload = json.loads(response.read())
-            assert payload["result"] == "ok"
+            assert payload["result"]["result"] == "ok"
             assert payload["request_id"].startswith("REQ-")
             assert payload["intent"] == "unknown"
             assert payload["diagnostics"]["trace_id"] is None
