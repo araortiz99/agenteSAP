@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
 from src.github.client import GitHubClient
 from src.github.writer import GitHubWriteClient
@@ -43,15 +44,21 @@ def main() -> int:
         if "HTTP 404" not in str(exc):
             raise
 
-    proposal = build_change_proposal(
+    try:
+        proposal = build_change_proposal(
         path=args.path,
         content=content,
         base_ref=args.base_ref,
         branch=args.branch,
         ticket_id=args.ticket,
         existing_content=existing,
-        change_type=args.change_type,
-    )
+            change_type=args.change_type,
+        )
+    except Exception as exc:
+        if exc.__class__.__name__ == "KnowledgeChangeError":
+            print(f"Knowledge Governance rejected the proposal: {exc}", file=sys.stderr)
+            return 2
+        raise
 
     print(f"Operation: {proposal.operation}")
     print(f"Path: {proposal.path}")
