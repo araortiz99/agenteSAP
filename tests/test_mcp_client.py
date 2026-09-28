@@ -40,6 +40,17 @@ def test_client_rejects_non_stdio_target():
         SapMcpClient(target)
 
 
+def test_sap_devs_default_target_is_usable_by_client():
+    target = build_target("sap_devs")
+    client = SapMcpClient(target)
+
+    assert target.command == "sap-devs"
+    assert target.args == ("mcp", "serve")
+    assert target.read_only is True
+    assert target.observation_type == "developer_context"
+    assert client.target == target
+
+
 def test_client_lifecycle_guard_requires_connection():
     target = build_target(
         "sap_devs",
