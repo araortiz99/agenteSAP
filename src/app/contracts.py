@@ -24,6 +24,7 @@ class WorkbenchAnalysisResponse:
     not_confirmed: tuple[str, ...]
     hypotheses: tuple[str, ...]
     evidence: tuple[dict[str, Any], ...]
+    retrieval: tuple[dict[str, Any], ...]
     relationships: tuple[dict[str, Any], ...]
     conflicts: tuple[dict[str, Any], ...]
     gaps: tuple[str, ...]
@@ -59,6 +60,23 @@ def _items(text: str) -> tuple[str, ...]:
 
 def _evidence(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
     return tuple(asdict(item) for item in result.traceability.evidence)
+
+
+def _retrieval(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "path": item.path,
+            "score": item.score,
+            "matched_terms": item.matched_terms,
+            "source_layer": item.source_layer,
+            "match_type": item.match_type,
+            "source_id": item.source_id,
+            "knowledge_type": item.knowledge_type,
+            "knowledge_scope": item.knowledge_scope,
+            "certainty": item.certainty,
+        }
+        for item in result.retrieval.results
+    )
 
 
 def _relationships(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
@@ -117,6 +135,7 @@ def build_workbench_analysis(
         not_confirmed=_items(not_confirmed) or ((not_confirmed,) if not_confirmed else ()),
         hypotheses=hypotheses,
         evidence=_evidence(result),
+        retrieval=_retrieval(result),
         relationships=_relationships(result),
         conflicts=tuple(asdict(item) for item in result.evidence.conflicts),
         gaps=result.traceability.gaps,
