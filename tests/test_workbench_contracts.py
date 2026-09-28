@@ -118,4 +118,4 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
     assert result.gaps == ()
-    assert result.runtime["writes_exposed"] is None if "writes_exposed" in result.runtime else True
+    assert result.runtime["writes_exposed"] is not True
