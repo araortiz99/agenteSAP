@@ -74,6 +74,7 @@ def _retrieval(result: ConsultationResult) -> tuple[dict[str, Any], ...]:
             "knowledge_type": item.knowledge_type,
             "knowledge_scope": item.knowledge_scope,
             "certainty": item.certainty,
+            "provenance": item.provenance,
         }
         for item in result.retrieval.results
     )
