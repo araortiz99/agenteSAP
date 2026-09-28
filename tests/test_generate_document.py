@@ -149,3 +149,36 @@ def test_generate_document_rejects_empty_request():
         assert "request must not be empty" in str(exc)
     else:
         raise AssertionError("Expected ValueError")
+
+def test_generate_document_rejects_missing_official_template_section():
+    client = FakeGitHubClient(
+        {
+            "templates/functional-specification.md": """# Especificación Funcional
+
+## Metadata
+## 1. Antecedente
+## 2. Motivo
+## 3. Objetivo
+## 4. Alcance
+""",
+            "tickets/31426/ticket.md": """---
+ticket_id: "31426"
+---
+
+# Ticket 31426
+
+- El objeto funcional mencionado es ZMM_IMX_0004.
+""",
+        }
+    )
+
+    with __import__("pytest").raises(
+        DocumentGenerationError,
+        match="does not preserve official template sections",
+    ):
+        generate_document(
+            client,
+            "functional-specification",
+            "Generá una especificación funcional.",
+            "31426",
+        )
