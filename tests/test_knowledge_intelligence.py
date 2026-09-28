@@ -30,6 +30,9 @@ source_type: SAP_OBJECT
 relation_type: implements
 target_id: SNC-K1
 target_type: PROCESS
+certainty: partial
+status: candidate
+evidence_source_id: SRC-TEST-001
 ---
 # Relationship
 ZMM_IMX_0004 implements SNC-K1.
