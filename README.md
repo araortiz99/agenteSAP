@@ -73,7 +73,7 @@ Respuesta trazable
 - Retrieval no equivale a conclusión.
 - Hop no equivale a certainty.
 - El LLM no puede elevar certainty ni inventar evidencia.
-- El agente no ejecuta SAP.
+- El agente no realiza escrituras ni operaciones mutantes en SAP; las lecturas runtime sólo pueden ejecutarse de forma explícita, read-only, sobre QAS y mediante una allowlist validada.
 - MCP es opt-in, read-only y utiliza una allowlist explícita de herramientas.
 - `sap-devs` se trata como contexto externo/developer context; por sí solo no puede establecer una conclusión interna como confirmada.
 - Los proveedores MCP de runtime permanecen deshabilitados hasta validar explícitamente su conexión y contrato de evidencia.
@@ -169,7 +169,7 @@ El MVP actual prioriza:
 
 No se considera todavía parte de esta baseline:
 
-- ejecución contra SAP;
+- ejecución mutante contra SAP;
 - escritura en SAP;
 - retrieval semántico/vectorial;
 - memoria conversacional persistente;
@@ -225,6 +225,10 @@ Con una conexión QAS válida y scope mcp_readonly, se puede ejecutar:
     python -m src.sap.runtime_cli discover-qas --pretty
 
 El resultado debe utilizarse para identificar el nombre y schema exactos de la herramienta de lectura que luego será incorporada a AGENTESAP_SAP_RUNTIME_READ_TOOLS. La configuración sigue deshabilitada por defecto.
+
+## Runtime read-only actual
+
+La baseline ya contiene el contrato técnico para lecturas QAS opt-in. La ejecución efectiva depende de una conexión `sap-mcp-server` disponible, scope `mcp_readonly` y una herramienta concreta anunciada por `tools/list` con `readOnlyHint=true`. Sin esa conexión y catálogo verificable, el estado correcto permanece `pending` y el agente no inventa observaciones.
 
 ## Próximo roadmap
 
