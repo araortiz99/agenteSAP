@@ -101,6 +101,17 @@ def _is_consultative_ticket_request(lowered: str, ticket_id: str | None) -> bool
         "indica",
         "cuál",
         "cual",
+        "separá",
+        "separa",
+        "evidencias",
+        "evidencia",
+        "próximos pasos",
+        "proximos pasos",
+        "gaps",
+        "no está confirmado",
+        "no esta confirmado",
+        "implementación",
+        "implementacion",
     )
     return any(marker in lowered for marker in consultative_markers)
 
@@ -148,6 +159,24 @@ def route_intent(request: str) -> AgentPlan:
             raise IntentRoutingError(
                 "No se pudo identificar ticket_id para la solicitud de análisis."
             )
+
+        # A request can contain the word "analizar" while actually asking for
+        # consultative synthesis. Keep the deterministic AnalysisResult for
+        # direct/structural analysis, but route evidence-oriented questions to
+        # the bounded LLM consultant.
+        if _is_consultative_ticket_request(lowered, ticket_id):
+            return AgentPlan(
+                intent="consult",
+                ticket_id=ticket_id,
+                capabilities=(
+                    "search_unified",
+                    "assess_evidence",
+                    "reason_from_evidence",
+                    "build_traceability",
+                    "consult_llm",
+                ),
+            )
+
         return AgentPlan(
             intent="analyze_ticket",
             ticket_id=ticket_id,
