@@ -107,7 +107,7 @@ def test_workbench_response_is_structured_and_traceable():
         request_id="REQ-TEST",
         intent="consult",
         diagnostics={"total_latency_ms": 1.2},
-        runtime={"mode": "QAS", "status": "disabled", "access": "read-only"},
+        runtime={"mode": "QAS", "status": "disabled", "access": "read-only", "writes_exposed": False},
     )
 
     assert result.request_id == "REQ-TEST"
@@ -118,4 +118,4 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
     assert result.gaps == ()
-    assert result.runtime["writes_exposed"] is not True
+    assert result.runtime["writes_exposed"] is False
