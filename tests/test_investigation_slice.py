@@ -138,3 +138,25 @@ def test_non_readonly_capability_is_not_selected():
         ToolCapability("query", "read stock", {}, None, False, ("stock",), ("read_stock",), "available"),
     )
     assert match_capabilities(("current_stock",), capabilities) == {}
+
+
+def test_investigation_honors_runtime_max_steps():
+    class CountingGateway(FakeGateway):
+        def __init__(self):
+            self.calls = []
+
+        def read_runtime(self, tool_name, arguments):
+            self.calls.append(tool_name)
+            return super().read_runtime(tool_name, arguments)
+
+    gateway = CountingGateway()
+    result = investigate(
+        FakeClient(),
+        "¿Por qué el material 100123 tiene stock diferente al esperado en el centro 5023?",
+        mcp_gateway=gateway,
+        max_steps=2,
+        day=date(2026, 9, 28),
+    )
+
+    assert len(gateway.calls) == 2
+    assert result.stop_reason == "max_steps_reached"
