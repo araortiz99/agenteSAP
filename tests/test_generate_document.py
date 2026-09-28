@@ -156,10 +156,16 @@ def test_generate_document_rejects_missing_official_template_section():
             "templates/functional-specification.md": """# Especificación Funcional
 
 ## Metadata
+
 ## 1. Antecedente
+
 ## 2. Motivo
+
 ## 3. Objetivo
-## 4. Alcance
+
+## 20. Sección adicional
+
+## 19. Documentación relacionada
 """,
             "tickets/31426/ticket.md": """---
 ticket_id: "31426"
