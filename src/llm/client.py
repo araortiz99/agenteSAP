@@ -37,7 +37,7 @@ class OpenAIResponsesClient:
     model: str = "gpt-5.6"
     api_key: str | None = None
     base_url: str = "https://api.openai.com/v1/responses"
-    timeout_seconds: float = 60.0
+    timeout_seconds: float = 30.0
 
     @classmethod
     def from_env(cls) -> "OpenAIResponsesClient":
