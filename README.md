@@ -198,6 +198,12 @@ La selección de evidencia y la selección de proveedor MCP son capas separadas:
 - Una pregunta de runtime sin un proveedor read-only listo debe conservar el gap de runtime en lugar de degradar silenciosamente a contexto externo.
 
 ## QAS Runtime Read-only Contract
+### Runtime preflight
+
+Antes de ejecutar una lectura de negocio, el gateway puede realizar `tools/list` para comprobar que las herramientas configuradas existen realmente en el servidor conectado. Este preflight es descubrimiento del protocolo y no ejecuta una operación SAP. Si falta cualquier herramienta de la allowlist, el proceso se detiene en lugar de intentar una alternativa.
+
+La herramienta concreta de lectura debe verificarse contra el catálogo del binario conectado; el proyecto no asume nombres de herramientas por inferencia.
+
 
 La primera etapa de runtime está deliberadamente limitada a **QAS + mcp_readonly**.
 El proveedor sap_mcp_server sólo puede activarse cuando se cumplen simultáneamente estas condiciones:
