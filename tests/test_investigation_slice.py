@@ -56,10 +56,19 @@ class FakeClient:
 
 class FakeGateway:
     def validate_runtime_allowlist(self):
-        return ({"name": "read_stock", "valid": True},)
+        return tuple({"name": name, "valid": True} for name in (
+            "read_master", "read_stock", "read_movements",
+        ))
 
     def inspect_runtime_tools(self):
         return (
+            {
+                "name": "read_master",
+                "description": "Read material master and plant data",
+                "input_schema": {"properties": {"material": {}, "plant": {}}, "required": ["material", "plant"]},
+                "read_only_hint": True,
+                "destructive_hint": False,
+            },
             {
                 "name": "read_stock",
                 "description": "Read material stock by material and plant",
@@ -67,10 +76,17 @@ class FakeGateway:
                 "read_only_hint": True,
                 "destructive_hint": False,
             },
+            {
+                "name": "read_movements",
+                "description": "Read material movements and material documents by material and plant",
+                "input_schema": {"properties": {"material": {}, "plant": {}}, "required": ["material", "plant"]},
+                "read_only_hint": True,
+                "destructive_hint": False,
+            },
         )
 
     def read_runtime(self, tool_name, arguments):
-        assert tool_name == "read_stock"
+        assert tool_name in {"read_master", "read_stock", "read_movements"}
         assert arguments == {"material": "100123", "plant": "5023"}
         from src.sap.mcp_contracts import SapMcpEvidence
         return SapMcpEvidence(
