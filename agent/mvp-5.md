@@ -229,3 +229,17 @@ Validado:
 Benchmark: `benchmarks/mvp-5-5-operational-consultant.md`
 Tests: `tests/test_mvp55_operational.py`
 CI: Python Tests — 93 passed.
+
+
+### MVP 5.5 — Performance Hardening
+
+La validación E2E real del caso 31426 mostró una demora aproximada de varios minutos. El flujo funcional respondió correctamente, por lo que el siguiente foco de 5.5 es rendimiento operacional sin modificar la semántica de conocimiento.
+
+Implementado:
+- caché de árbol y archivos por ejecución/ref;
+- lectura concurrente acotada de archivos;
+- deduplicación de lecturas;
+- sin memoria persistente;
+- sin cambios de provenance, certainty, relaciones ni gates.
+
+Estado: **HARDENING EN VALIDACIÓN**.
