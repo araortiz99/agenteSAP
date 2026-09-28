@@ -9,21 +9,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-
-McpProvider = Literal["sap_devs", "sap_mcp_server", "abap_ai"]
+McpProvider = Literal["sap_devs", "sap_developer_public", "sap_mcp_server", "abap_ai"]
 McpTransport = Literal["stdio", "streamable_http"]
 McpObservationType = Literal[
-    "developer_context",
-    "runtime_observation",
-    "custom_runtime_observation",
-    "external_source",
+    "developer_context", "runtime_observation", "custom_runtime_observation", "external_source"
 ]
 
 
 @dataclass(frozen=True)
 class McpTarget:
-    """A configured MCP endpoint with an explicit read-tool allowlist."""
-
     provider: McpProvider
     transport: McpTransport
     command: str | None = None
@@ -46,15 +40,11 @@ class McpTarget:
         if self.discovery_only and not self.read_only:
             raise ValueError("discovery-only targets must remain read-only")
         if not self.read_only:
-            raise ValueError(
-                "AgenteSAP currently permits only read-only MCP integration"
-            )
+            raise ValueError("AgenteSAP currently permits only read-only MCP integration")
 
 
 @dataclass(frozen=True)
 class SapMcpEvidence:
-    """Normalized provenance envelope for evidence returned by an MCP provider."""
-
     provider: str
     operation: str
     content: object
