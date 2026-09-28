@@ -92,6 +92,21 @@ function ticketWorkspace(){
   $("request").value="Analizá el ticket "+ticket+" y estructurá el análisis separando: hechos confirmados, evidencia disponible, hipótesis, gaps de información, objetos SAP relacionados y próximos pasos.";
   consult();
 }
+function normalizeAnswer(text){
+  return String(text||"").replace(/\\##/g,"##").replace(/\\*\\*/g,"**");
+}
+function extractSection(text,title,nextTitles){
+  const normalized=normalizeAnswer(text);
+  const start=normalized.indexOf(title);
+  if(start<0)return "";
+  const body=normalized.slice(start+title.length);
+  let end=body.length;
+  for(const next of nextTitles){
+    const i=body.indexOf(next);
+    if(i>=0) end=Math.min(end,i);
+  }
+  return body.slice(0,end).trim();
+}
 function showError(message){
   $("answer").innerHTML="";
   const box=document.createElement("div");box.className="error";box.textContent=message;
@@ -132,22 +147,15 @@ async function consult(){
     const data=await r.json();
     if(!r.ok) throw new Error(explainError(data));
     const result=data.result||data;
-    $("answer").textContent=result.answer||JSON.stringify(result,null,2);
+    const answer=normalizeAnswer(result.answer||"");\n    $("answer").textContent=answer||JSON.stringify(result,null,2);
     const isTicket=Boolean(body.ticket_id||result.plan?.ticket_id);
     $("ticketPanels").style.display=isTicket?"block":"none";
-    function section(text,title,next){
-      const start=text.indexOf(title);
-      if(start<0)return "";
-      const body=text.slice(start+title.length);
-      const end=next?body.indexOf(next):-1;
-      return (end>=0?body.slice(0,end):body).trim();
-    }
     $("confirmed").textContent=
-      section(result.answer||"","## Qué está confirmado","## Qué corresponde a nuestra implementación")+
-      "\n\n"+section(result.answer||"","## Qué corresponde a nuestra implementación","## Qué no está confirmado");
-    $("gaps").textContent=(result.traceability?.gaps||[]).join("\n")||"No hay gaps estructurados disponibles.";
-    $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n")||"No hay citas.";
-    const rels=result.ticket_relationships?.relationships||[];
+      extractSection(answer,"## Qué está confirmado",["## Qué corresponde a nuestra implementación","## Qué no está confirmado"])+
+      "\n\n"+extractSection(answer,"## Qué corresponde a nuestra implementación",["## Qué no está confirmado","## Evidencias"]);
+    $("gaps").textContent=(result.traceability?.gaps||[]).join("\n") || extractSection(answer,"## Qué no está confirmado",["## Evidencias","## Ticket"]) || "No hay gaps estructurados disponibles.";
+    $("evidence").textContent=(result.citations||[]).map(c=>c.citation_id+" → "+c.path+" ["+c.certainty+"]").join("\n") || extractSection(answer,"## Evidencias",["## Ticket","## Próximos pasos"]) || "No hay citas.";
+    const rels=result.ticket_relationships?.relationships||result.relationships?.relationships||[];
     $("relations").textContent=rels.length
       ? rels.map(x=>x.source_id+" --"+x.relation_type+"--> "+x.target_id+" ["+x.certainty+"/"+x.status+"]").join("\n")
       : "No hay relaciones explícitamente documentadas para este ticket.";
