@@ -214,6 +214,25 @@ El contrato de AgenteSAP agrega una barrera adicional: aunque exista una conexi�
 
 Ejemplo no secreto: config/sap-mcp-qas.example.env.
 
+## QAS Runtime Preflight
+
+Antes de ejecutar cualquier lectura SAP, AgenteSAP puede realizar un preflight que únicamente conecta al servidor MCP y consulta `tools/list`. No ejecuta una herramienta SAP.
+
+Con el runtime habilitado, el preflight verifica:
+
+- proveedor `sap_mcp_server`;
+- landscape `QAS`;
+- scope `mcp_readonly`;
+- allowlist explícita;
+- que cada herramienta allowlisted sea realmente anunciada por el servidor conectado;
+- schema de entrada de las herramientas allowlisted.
+
+Ejecutar localmente:
+
+`python -m src.sap.runtime_preflight`
+
+El resultado se puede utilizar para completar la allowlist real sin inventar nombres de herramientas. La conexión real requiere que exista el backend compatible y las credenciales locales correspondientes; el servidor oficial documenta que la comunicación con SAP se realiza a través de un backend y que los secretos de conexión permanecen locales. citeturn2search0turn2search1
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
