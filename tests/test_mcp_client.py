@@ -184,7 +184,7 @@ def test_call_read_tool_rejects_allowlisted_but_unadvertised_tool():
         "sap_mcp_server",
         command="sap-mcp-server",
         args=(),
-        allowed_tools=("read_table",),
+        allowed_tools=("missing_tool",),
         metadata={"landscape": "QAS"},
     )
     client = SapMcpClient(target)
@@ -192,4 +192,4 @@ def test_call_read_tool_rejects_allowlisted_but_unadvertised_tool():
     client._client = fake_client
 
     with pytest.raises(PermissionError, match="not advertised"):
-        asyncio.run(client.call_read_tool("read_table"))
+        asyncio.run(client.call_read_tool("missing_tool"))
