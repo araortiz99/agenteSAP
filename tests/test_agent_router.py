@@ -144,35 +144,33 @@ def test_route_rejects_empty_request():
         route_intent("   ")
 
 
-def test_realistic_multi_step_request_routes_to_analysis_chain():
+def test_realistic_multi_step_request_routes_to_consultant():
     client = AgentFakeGitHubClient()
     request = (
         "Revisá el ticket 31426, buscá qué objetos SAP están relacionados "
         "y preparame un análisis indicando qué está confirmado y qué información falta."
     )
 
-    response = run_agent(client, request)
+    response = run_agent(client, request, llm=FakeLLM())
 
-    assert response.plan.intent == "analyze_ticket"
+    assert response.plan.intent == "consult"
     assert response.plan.ticket_id == "31426"
     assert response.plan.capabilities == (
-        "get_ticket",
-        "get_related_knowledge",
-        "analyze",
+        "search_unified",
+        "assess_evidence",
+        "reason_from_evidence",
+        "build_traceability",
+        "consult_llm",
     )
 
+    from src.agent.consultant import ConsultationResult
+
     result = response.result
-    assert isinstance(result, AnalysisResult)
+    assert isinstance(result, ConsultationResult)
     assert result.ticket_id == "31426"
-    assert result.facts
-    assert result.relationships.relationships
-    assert any(
-        relation.target_id == "ZMM_IMX_0004"
-        for relation in result.relationships.relationships
-    )
-    assert result.hypotheses == ()
-    assert result.missing_information == ()
-    assert "must not be inferred" in result.conclusion
+    assert result.answer.startswith("## Resumen")
+    assert result.traceability.evidence
+    assert result.citations
 
 
 def test_route_sap_standard_search():
