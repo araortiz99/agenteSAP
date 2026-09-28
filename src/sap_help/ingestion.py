@@ -10,18 +10,18 @@ import hashlib
 import re
 from dataclasses import replace
 
-from src.sap_help.model import SAPHelpChunk, SAPHelpDocument, SAPHelpMetadata, validate_metadata
+from src.sap_help.model import SAPHelpChunk, SAPHelpDocument, validate_metadata
 
 
-_HEADING_RE = re.compile(r"^(#{1,6})\\s+(.*)$")
+_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 
 
 def normalize_content(content: str) -> str:
     """Normalize line endings and trailing whitespace without changing meaning."""
     if not isinstance(content, str):
         raise TypeError("content must be a string")
-    lines = [line.rstrip() for line in content.replace("\\r\\n", "\\n").replace("\\r", "\\n").split("\\n")]
-    return "\\n".join(lines).strip()
+    lines = [line.rstrip() for line in content.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    return "\n".join(lines).strip()
 
 
 def content_hash(content: str) -> str:
@@ -71,22 +71,27 @@ def chunk_markdown(document: SAPHelpDocument) -> tuple[SAPHelpChunk, ...]:
     flush()
     chunks: list[SAPHelpChunk] = []
     document_id = document.metadata.document_id or content_hash(text)[:16]
+    document_digest = content_hash(text)
     for index, (path, heading, parent, body) in enumerate(sections, start=1):
-        chunk_content = "\\n".join(body).strip()
+        chunk_content = "\n".join(body).strip()
         if not chunk_content:
             continue
         digest = content_hash(chunk_content)
+        # Include section path and ordinal so repeated prose in different
+        # sections cannot collapse into the same chunk identity.
+        identity_material = f"{document_id}\n{index}\n{'/'.join(path)}\n{digest}"
+        chunk_id = f"{document_id}:{hashlib.sha256(identity_material.encode('utf-8')).hexdigest()[:16]}"
         chunks.append(
             SAPHelpChunk(
                 document_id=document_id,
-                chunk_id=f"{document_id}:{digest[:16]}",
+                chunk_id=chunk_id,
                 section_path=path,
                 heading=heading,
                 parent_heading=parent,
                 source_location=document.metadata.path,
                 content=chunk_content,
                 content_hash=digest,
-                metadata=replace(document.metadata, content_hash=digest),
+                metadata=replace(document.metadata, content_hash=document_digest),
                 entities=document.entities,
             )
         )
