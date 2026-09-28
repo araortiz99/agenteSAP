@@ -163,3 +163,9 @@ def test_gateway_maps_runtime_observation_metadata(monkeypatch):
         "object_id": "MARA",
         "observation_type": "runtime_observation",
     }
+
+
+def test_gateway_capability_does_not_advertise_runtime_for_sap_devs():
+    gateway = McpEvidenceGateway(McpGatewayConfig())
+    assert gateway.supports_source("external") is True
+    assert gateway.supports_source("runtime") is False
