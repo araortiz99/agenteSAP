@@ -76,3 +76,12 @@ def test_qas_readiness_requires_readonly_scope(monkeypatch, capsys):
     assert runtime_cli.main(["readiness-qas"]) == 2
     report = json.loads(capsys.readouterr().out)
     assert report["reason"] == "scope must be mcp_readonly"
+
+
+def test_qas_readiness_rejects_non_qas_landscape(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "PRD")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    assert runtime_cli.main(["readiness-qas"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["reason"] == "landscape must be QAS"
