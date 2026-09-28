@@ -151,6 +151,8 @@ class McpEvidenceGateway:
     async def _inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
         async with SapMcpClient(self.target) as client:
             catalog = await client.tool_catalog()
+            if self.target.allowed_tools == ("__catalog_only__",):
+                return catalog
             return tuple(
                 item
                 for item in catalog
