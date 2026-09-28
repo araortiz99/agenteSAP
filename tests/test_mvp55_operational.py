@@ -39,15 +39,24 @@ class FakeLLM:
         )
 
 
-def test_mvp55_router_keeps_explicit_ticket_in_plan():
-    class Client:
-        pass
+def test_mvp55_router_keeps_explicit_ticket_in_plan(monkeypatch):
+    captured = {}
 
+    def fake_consult(client, request, llm, *, ref, ticket_id, max_results):
+        captured["ticket_id"] = ticket_id
+        captured["max_results"] = max_results
+        return "consulted"
+
+    import src.agent.router as router
+
+    monkeypatch.setattr(router, "consult", fake_consult)
     response = run_agent(
-        Client(),
+        object(),
         "Consultá el ticket 31426",
         ticket_id="99999",
         llm=FakeLLM(),
+        max_results=12,
     )
     assert response.plan.intent == "consult"
     assert response.plan.ticket_id == "99999"
+    assert captured == {"ticket_id": "99999", "max_results": 12}
