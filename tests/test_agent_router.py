@@ -207,3 +207,24 @@ def test_run_agent_evidence_reasoning():
         "insufficient",
         "conflict",
     }
+
+
+def test_route_evidence_traceability():
+    plan = route_intent("Dame la trazabilidad de evidencia sobre material master")
+    assert plan.intent == "evidence_traceability"
+    assert plan.capabilities == (
+        "search_unified",
+        "assess_evidence",
+        "reason_from_evidence",
+        "build_traceability",
+    )
+
+
+def test_run_agent_evidence_traceability():
+    client = AgentFakeGitHubClient()
+    response = run_agent(
+        client,
+        "Dame la trazabilidad de evidencia sobre material master",
+    )
+    assert response.plan.intent == "evidence_traceability"
+    assert response.result.trace_id.startswith("TRACE-")
