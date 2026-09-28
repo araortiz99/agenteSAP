@@ -177,3 +177,19 @@ def test_call_read_tool_classifies_runtime_observation_as_partial():
     assert evidence.observation_type == "runtime_observation"
     assert evidence.system == "S4QAS"
     assert evidence.landscape == "QAS"
+
+
+def test_call_read_tool_rejects_allowlisted_but_unadvertised_tool():
+    target = build_target(
+        "sap_mcp_server",
+        command="sap-mcp-server",
+        args=(),
+        allowed_tools=("read_table",),
+        metadata={"landscape": "QAS"},
+    )
+    client = SapMcpClient(target)
+    fake_client = FakeClient()
+    client._client = fake_client
+
+    with pytest.raises(PermissionError, match="not advertised"):
+        asyncio.run(client.call_read_tool("read_table"))
