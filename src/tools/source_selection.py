@@ -24,7 +24,6 @@ _RUNTIME_MARKERS = (
     "en prd",
     "en producción",
     "en produccion",
-    "en sap",
     "estado actual",
     "valor actual",
     "qué tiene configurado",
