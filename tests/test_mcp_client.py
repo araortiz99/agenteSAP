@@ -181,7 +181,9 @@ def test_call_read_tool_classifies_runtime_observation_as_partial():
         metadata={"system": "S4QAS", "landscape": "QAS"},
     )
     client = SapMcpClient(target)
-    client._client = FakeClient()
+    client._client = FakeClient(
+        [FakeTool("read_table", read_only_hint=True, destructive_hint=False)]
+    )
 
     evidence = asyncio.run(
         client.call_read_tool("read_table", {"table": "MARA"})
@@ -236,3 +238,20 @@ def test_call_read_tool_accepts_advertised_read_only_tool():
     asyncio.run(client.call_read_tool("safe_read", {"table": "MARA"}))
 
     assert fake_client.calls == [("safe_read", {"table": "MARA"})]
+
+
+
+def test_runtime_tool_requires_explicit_readonly_hint():
+    target = build_target(
+        "sap_mcp_server",
+        command="sap-mcp-server",
+        allowed_tools=("read_table",),
+        metadata={"landscape": "QAS"},
+    )
+    client = SapMcpClient(target)
+    client._client = FakeClient(
+        [FakeTool("read_table", read_only_hint=None, destructive_hint=None)]
+    )
+
+    with pytest.raises(PermissionError, match="explicit read-only hint"):
+        asyncio.run(client.call_read_tool("read_table"))
