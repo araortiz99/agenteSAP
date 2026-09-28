@@ -24,9 +24,9 @@ Write-Host "Repository: $env:GITHUB_OWNER/$env:GITHUB_REPO"
 Write-Host "Ref:        $env:GITHUB_REF"
 Write-Host "SAP writes: disabled"
 if ($env:GITHUB_TOKEN) {
-    Write-Host "GitHub auth: configured"
+    Write-Host "GitHub token: configured"
 } else {
-    Write-Host "GitHub auth: NOT configured (public API rate limit applies)"
+    Write-Host "GitHub token: NOT configured (public API rate limit applies)"
 }
 if ($env:OPENAI_API_KEY) {
     Write-Host "OpenAI: configured"
