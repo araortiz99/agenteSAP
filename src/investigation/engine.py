@@ -14,6 +14,7 @@ from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_
 
 from src.investigation.capabilities import discover_capabilities, match_capabilities
 from src.investigation.case_id import build_case_id
+from src.investigation.correlation import correlate_evidence
 from src.investigation.contracts import (
     Investigation,
     InvestigationEntity,
@@ -240,6 +241,8 @@ def investigate(
                 continue
             investigation.evidence_collected.append(_normalize_runtime_evidence(runtime))
             investigation.provenance.append(_provenance(investigation.evidence_collected[-1]))
+
+    investigation.correlation = correlate_evidence(investigation.evidence_collected)
 
     runtime_items = [item for item in investigation.evidence_collected if item.landscape == "QAS"]
     if runtime_items:
