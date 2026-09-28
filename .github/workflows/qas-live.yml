@@ -39,8 +39,14 @@ jobs:
 
       - name: Install official SAP MCP server
         run: |
+          set +e
           curl -fsSL https://github.com/sap-support/sap-mcp-server/releases/latest/download/install-sap-mcp.sh | bash
+          installer_status=$?
+          set -e
+          test -x "$HOME/sap-mcp-server"
+          install -m 0755 "$HOME/sap-mcp-server" /usr/local/bin/sap-mcp-server
           test -x /usr/local/bin/sap-mcp-server
+          echo "installer_exit=$installer_status"
           /usr/local/bin/sap-mcp-server --version || true
 
       - name: Materialize QAS MCP connection config
