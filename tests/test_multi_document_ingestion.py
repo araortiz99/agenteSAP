@@ -20,7 +20,7 @@ def test_ingest_documents_aggregates_distinct_sources_with_provenance():
 
     assert result.document_count == 2
     assert len(result.evidence) == 2
-    assert {item.provenance[0][1] for item in result.evidence} == {
+    assert {dict(item.provenance)["filename"] for item in result.evidence} == {
         "ticket.md",
         "analysis.txt",
     }
