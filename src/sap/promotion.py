@@ -122,6 +122,7 @@ def promote_candidate(
     if "\n\n" in body:
         source_text = body.split("\n\n", 1)[1]
 
+    source_text = source_text.rstrip("\n")
     checksum = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
     if checksum != fields["checksum_sha256"]:
         raise PromotionError("candidate checksum does not match its source text")
