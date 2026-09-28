@@ -74,6 +74,7 @@ def build_target(
     url: str | None = None,
     allowed_tools: tuple[str, ...] | None = None,
     profile: str | None = None,
+    discovery_only: bool = False,
     metadata: dict[str, str] | None = None,
 ) -> McpTarget:
     definition = get_provider(provider)
@@ -96,6 +97,7 @@ def build_target(
         ),
         profile=profile,
         read_only=True,
+        discovery_only=discovery_only,
         observation_type=definition.observation_type,
         metadata=metadata or {},
     )

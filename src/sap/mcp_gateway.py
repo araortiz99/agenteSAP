@@ -15,7 +15,7 @@ import threading
 from dataclasses import dataclass
 from typing import Coroutine, TypeVar
 
-from src.sap.mcp_client import SapMcpClient
+from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
 from src.sap.mcp_registry import build_target
 from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.sap.mcp_strategy import McpEvidenceLayer, McpProviderPlan, plan_mcp_provider
@@ -133,12 +133,29 @@ class McpEvidenceGateway:
             command=config.command,
             args=config.args,
             allowed_tools=config.allowed_tools,
+            discovery_only=config.discovery_only,
             metadata={
                 "landscape": config.landscape,
                 **({"system": config.system} if config.system else {}),
             },
         )
         return gateway
+
+    def discover_qas_tools(self) -> tuple[McpToolDescriptor, ...]:
+        """Discover the QAS MCP tool catalog without executing a SAP operation."""
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("QAS discovery requires sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("QAS discovery is restricted to QAS")
+        if not self.target.discovery_only:
+            raise PermissionError(
+                "QAS discovery requires AGENTESAP_SAP_RUNTIME_DISCOVERY=true"
+            )
+        return _run_async(self._discover_tools())
+
+    async def _discover_tools(self) -> tuple[McpToolDescriptor, ...]:
+        async with SapMcpClient(self.target) as client:
+            return await client.list_tool_descriptors()
 
     def inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
         """Inspect QAS MCP tool metadata without invoking any tool."""
