@@ -21,6 +21,7 @@ from src.github.client import GitHubAPIError, GitHubClient
 
 APP_ROOT = Path(__file__).resolve().parent
 INDEX = APP_ROOT / "static" / "index.html"
+MAX_RESULTS = 20
 
 _GITHUB_CLIENT: GitHubClient | None = None
 _GITHUB_CLIENT_CONFIG: tuple[str, str, str | None] | None = None
@@ -47,6 +48,16 @@ def _github_client() -> GitHubClient:
     return _GITHUB_CLIENT
 
 
+def _validated_max_results(value: object) -> int:
+    try:
+        max_results = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("max_results must be an integer") from exc
+    if not 1 <= max_results <= MAX_RESULTS:
+        raise ValueError(f"max_results must be between 1 and {MAX_RESULTS}")
+    return max_results
+
+
 def _status_payload() -> dict:
     client = _github_client()
     return {
@@ -55,7 +66,7 @@ def _status_payload() -> dict:
         "github_owner": client.owner,
         "github_repo": client.repo,
         "github_ref": os.getenv("GITHUB_REF", "main"),
-        "github_auth_configured": client.authenticated,
+        "github_token_configured": client.authenticated,
         "openai_api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
         "github_cache_files": len(client._file_cache),
         "github_cache_trees": len(client._tree_cache),
@@ -122,7 +133,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 request,
                 ref=os.getenv("GITHUB_REF", "main"),
                 ticket_id=body.get("ticket_id"),
-                max_results=int(body.get("max_results", 8)),
+                max_results=_validated_max_results(body.get("max_results", 8)),
             )
             self._send_json(200, _response_payload(response))
         except (ValueError, json.JSONDecodeError) as exc:
@@ -164,7 +175,7 @@ def main() -> int:
     print(f"AgenteSAP local app: http://{args.host}:{args.port}")
     print("Mode: read-only consultant; SAP writes are not exposed.")
     print(
-        "GitHub authentication: "
+        "GitHub token: "
         + ("configured" if _github_client().authenticated else "not configured")
     )
     print("")
