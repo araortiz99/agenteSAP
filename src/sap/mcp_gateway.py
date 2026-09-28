@@ -91,13 +91,13 @@ class McpEvidenceGateway:
                 ),
                 knowledge_type=(
                     "runtime_observation"
-                    if evidence.observation_type
+                    if getattr(evidence, "observation_type", None)
                     in {"runtime_observation", "custom_runtime_observation"}
                     else "developer_context"
                 ),
                 knowledge_scope=(
                     "runtime"
-                    if evidence.observation_type
+                    if getattr(evidence, "observation_type", None)
                     in {"runtime_observation", "custom_runtime_observation"}
                     else "external"
                 ),
