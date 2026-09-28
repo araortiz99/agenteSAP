@@ -4,7 +4,9 @@ from src.tools.evidence import EvidenceAssessment, EvidenceItem
 from src.tools.evidence_trace import TraceabilityReport, EvidenceTrace
 from src.tools.reason import ReasoningResult
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult
-from src.tools.get_related_knowledge import RelatedKnowledge, Relationship\nfrom src.tools.entity_resolution import ResolvedEntity\nfrom src.tools.knowledge_context import ContextRelationship, ContextEvidence, KnowledgeContext
+from src.tools.get_related_knowledge import RelatedKnowledge, Relationship
+from src.tools.entity_resolution import ResolvedEntity
+from src.tools.knowledge_context import ContextRelationship, KnowledgeContext
 
 
 def _consultation() -> ConsultationResult:
@@ -72,6 +74,24 @@ def _consultation() -> ConsultationResult:
         status="confirmed",
         evidence_source_id="REL-1",
     )
+    entity = ResolvedEntity(
+        entity_id="TICKET-1",
+        entity_type="TICKET",
+        path="knowledge/tickets/test.md",
+        score=1.0,
+        match_type="identifier",
+        certainty="confirmed",
+        source_layer="internal",
+    )
+    knowledge_context = KnowledgeContext(
+        query="material master",
+        entities=(entity,),
+        relationships=(ContextRelationship(relation, 1),),
+        evidence=(),
+        gaps=(),
+        conflicts=(),
+        max_hops=2,
+    )
     return ConsultationResult(
         request="material master",
         retrieval=UnifiedSearchResult(
@@ -117,6 +137,7 @@ def _consultation() -> ConsultationResult:
             entity_id="TICKET-1",
             relationships=(relation,),
         ),
+        knowledge_context=knowledge_context,
     )
 
 
@@ -138,6 +159,9 @@ def test_workbench_response_is_structured_and_traceable():
     assert result.retrieval[0]["source_layer"] == "sap_standard"
     assert result.retrieval[0]["provenance"] == ()
     assert result.relationships[0]["target_id"] == "ZMM_TEST"
+    assert result.knowledge_intelligence["max_hops"] == 2
+    assert result.knowledge_intelligence["entities"][0]["entity_id"] == "TICKET-1"
+    assert result.knowledge_intelligence["relationships"][0]["hop"] == 1
     assert result.confirmed == ("Hecho confirmado.",)
     assert result.implementation == ("Implementación documentada.",)
     assert result.gaps == ()
