@@ -9,8 +9,9 @@ import os
 import sys
 
 from src.agent.router import run_agent
+from src.document.adapters import load_supported_binary_file
 from src.document.file_input import load_document_file
-from src.document.ingestion import ingest_document
+from src.document.ingestion import ingest_document, ingest_documents
 from src.github.client import GitHubClient
 from src.investigation.engine import investigate, render_investigation
 
@@ -36,17 +37,45 @@ def _run_investigation(argv: list[str]) -> int:
     parser.add_argument("--max-steps", type=int, default=5)
     parser.add_argument("--file", action="append", default=[], help="Local TXT/MD/CSV evidence file; repeatable")
     parser.add_argument("--max-file-bytes", type=int, default=2_000_000)
+    parser.add_argument("--max-files", type=int, default=16)
+    parser.add_argument("--max-total-file-bytes", type=int, default=1_000_000)
+    parser.add_argument("--max-total-evidence", type=int, default=512)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if args.max_steps < 1:
         parser.error("--max-steps debe ser mayor que cero")
     if args.max_file_bytes < 1:
         parser.error("--max-file-bytes debe ser mayor que cero")
+    if args.max_files < 1:
+        parser.error("--max-files debe ser mayor que cero")
+    if args.max_total_file_bytes < 1:
+        parser.error("--max-total-file-bytes debe ser mayor que cero")
+    if args.max_total_evidence < 1:
+        parser.error("--max-total-evidence debe ser mayor que cero")
+    if len(args.file) > args.max_files:
+        parser.error(f"--file excede max-files={args.max_files}")
 
-    document_evidence = []
+    sources = []
+    total_bytes = 0
     for path in args.file:
-        source = load_document_file(path, max_bytes=args.max_file_bytes)
-        document_evidence.extend(ingest_document(source).evidence)
+        suffix = os.path.splitext(path)[1].lower()
+        if suffix in {".pdf", ".docx", ".xlsx"}:
+            source = load_supported_binary_file(path, max_bytes=args.max_file_bytes)
+        else:
+            source = load_document_file(path, max_bytes=args.max_file_bytes)
+        total_bytes += source.size
+        if total_bytes > args.max_total_file_bytes:
+            parser.error(
+                f"documentos exceden max-total-file-bytes={args.max_total_file_bytes}"
+            )
+        sources.append(source)
+
+    document_evidence = ingest_documents(
+        sources,
+        max_documents=args.max_files,
+        max_total_content_chars=args.max_total_file_bytes,
+        max_total_evidence=args.max_total_evidence,
+    ).evidence
 
     client = GitHubClient(args.owner, args.repo, token=os.getenv("GITHUB_TOKEN"))
     result = investigate(
