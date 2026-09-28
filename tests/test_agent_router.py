@@ -189,7 +189,8 @@ def test_realistic_multi_step_request_routes_to_consultant():
 
     result = response.result
     assert isinstance(result, ConsultationResult)
-    assert result.ticket_id == "31426"
+    assert result.ticket_context
+    assert result.ticket_context[0].ticket_id == "31426"
     assert result.answer.startswith("## Resumen")
     assert result.traceability.evidence
     assert result.citations
