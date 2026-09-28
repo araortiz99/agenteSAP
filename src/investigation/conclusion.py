@@ -56,6 +56,11 @@ def build_conclusion(
         )
 
     supported = tuple(item for item in hypotheses if item.status == "SUPPORTED")
+    supported_complete = tuple(
+        item for item in supported
+        if item.evidence_ids and all(state_map.get(evidence_id) == "AVAILABLE" for evidence_id in item.evidence_ids)
+    )
+    supported_unresolved = tuple(item for item in supported if item not in supported_complete)
     partial = tuple(item for item in hypotheses if item.status == "PARTIALLY_SUPPORTED")
     contradicted = tuple(item for item in hypotheses if item.status == "CONTRADICTED")
 
@@ -72,27 +77,40 @@ def build_conclusion(
             ids,
         )
 
+    if supported_unresolved and not missing:
+        ids = tuple(dict.fromkeys(
+            evidence_id
+            for item in supported_unresolved
+            for evidence_id in item.evidence_ids
+        ))
+        return ConclusionDecision(
+            "QUALIFIED",
+            "La hipótesis está marcada como soportada, pero no todas sus evidencias tienen un estado AVAILABLE explícito; se requiere validación adicional.",
+            "El gate de evidencia impide elevar una hipótesis a CONFIRMED sin estados AVAILABLE para todas sus evidencias.",
+            ids,
+        )
+
     if missing:
         ids = tuple(dict.fromkeys(
             evidence_id
-            for item in (*supported, *partial)
+            for item in (*supported_complete, *partial)
             for evidence_id in item.evidence_ids
             if state_map.get(evidence_id) == "AVAILABLE"
         ))
         return ConclusionDecision(
-            "QUALIFIED" if supported or partial else "UNVERIFIED",
+            "QUALIFIED" if supported_complete or partial else "UNVERIFIED",
             (
                 "La evidencia disponible permite una conclusión acotada, pero faltan "
                 "datos requeridos para afirmar una causa raíz."
-                if supported or partial
+                if supported_complete or partial
                 else "No existe evidencia suficiente para establecer una conclusión funcional."
             ),
             "Persisten requisitos de evidencia no obtenidos: " + ", ".join(missing),
             ids,
         )
 
-    if supported:
-        item = supported[0]
+    if supported_complete:
+        item = supported_complete[0]
         return ConclusionDecision(
             "CONFIRMED",
             (
