@@ -93,6 +93,7 @@ def build_knowledge_context(
     max_entities: int = 8,
     max_relationships: int = 16,
     max_evidence: int = 12,
+    max_expansions: int = 24,
     ref: str = "main",
     direct_retrieval: UnifiedSearchResult | None = None,
     mcp_gateway=None,
@@ -102,7 +103,7 @@ def build_knowledge_context(
         raise ValueError("query must not be empty")
     if max_hops < 0:
         raise ValueError("max_hops must be >= 0")
-    if max_entities < 1 or max_relationships < 1 or max_evidence < 1:
+    if max_entities < 1 or max_relationships < 1 or max_evidence < 1 or max_expansions < 1:
         raise ValueError("context limits must be greater than zero")
 
     entities = resolve_entities(
@@ -134,6 +135,7 @@ def build_knowledge_context(
     }
     frontier = list(entities)
     gaps: list[str] = []
+    expansions = 0
 
     for hop in range(1, max_hops + 1):
         if not frontier:
@@ -142,6 +144,10 @@ def build_knowledge_context(
         next_frontier: list[ResolvedEntity] = []
 
         for entity in frontier:
+            if expansions >= max_expansions:
+                gaps.append(f"Relationship traversal stopped at max_expansions={max_expansions}.")
+                break
+            expansions += 1
             related = get_related_knowledge(
                 client,
                 entity.entity_type,
@@ -216,7 +222,7 @@ def build_knowledge_context(
                 if len(relations) >= max_relationships:
                     break
 
-            if len(relations) >= max_relationships:
+            if len(relations) >= max_relationships or expansions >= max_expansions:
                 break
 
         frontier = next_frontier
