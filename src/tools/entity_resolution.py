@@ -89,12 +89,12 @@ def _match_rank(match_type: str) -> int:
 def _merge_candidate(current: ResolvedEntity | None, candidate: ResolvedEntity) -> ResolvedEntity:
     if current is None:
         return ResolvedEntity(**{**candidate.__dict__, "provenance_paths": (candidate.path,), "provenance_layers": (candidate.source_layer,)})
-    paths = tuple(dict.fromkeys((*current.provenance_paths, candidate.path)))
-    layers = tuple(dict.fromkeys((*current.provenance_layers, candidate.source_layer)))
+    paths = tuple(dict.fromkeys((*current.provenance_paths, current.path, candidate.path)))
+    layers = tuple(dict.fromkeys((*current.provenance_layers, current.source_layer, candidate.source_layer)))
     current_rank = (_match_rank(current.match_type), current.score)
     candidate_rank = (_match_rank(candidate.match_type), candidate.score)
     preferred = candidate if candidate_rank > current_rank else current
-    return ResolvedEntity(**{**preferred.__dict__, "provenance_paths": paths, "provenance_layers": layers})
+    return ResolvedEntity(**{**preferred.__dict__, "entity_id": _normalize_id(preferred.entity_id), "provenance_paths": paths, "provenance_layers": layers})
 
 def resolve_entities(
     client: GitHubClient,
