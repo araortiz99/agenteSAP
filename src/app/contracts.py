@@ -24,6 +24,9 @@ class WorkbenchAnalysisResponse:
     not_confirmed: tuple[str, ...]
     hypotheses: tuple[dict[str, Any], ...]
     findings: tuple[str, ...]
+    conclusion_status: str
+    conclusion_reason: str
+    investigation_report: dict[str, Any] | None
     evidence_states: tuple[dict[str, Any], ...]
     evidence: tuple[dict[str, Any], ...]
     retrieval: tuple[dict[str, Any], ...]
@@ -173,6 +176,9 @@ def build_workbench_analysis(
         for item in (result.investigation.hypotheses if result.investigation else ())
     )
     findings = tuple(result.investigation.findings if result.investigation else ())
+    conclusion_status = result.investigation.conclusion_status if result.investigation else "UNVERIFIED"
+    conclusion_reason = result.investigation.conclusion_reason if result.investigation else "No investigation was executed."
+    investigation_report = result.investigation.report.as_dict() if result.investigation and result.investigation.report else None
     evidence_states = tuple(
         {
             "evidence_id": item.evidence_id,
@@ -201,6 +207,9 @@ def build_workbench_analysis(
         not_confirmed=_items(not_confirmed) or ((not_confirmed,) if not_confirmed else ()),
         hypotheses=hypotheses,
         findings=findings,
+        conclusion_status=conclusion_status,
+        conclusion_reason=conclusion_reason,
+        investigation_report=investigation_report,
         evidence_states=evidence_states,
         evidence=_evidence(result),
         retrieval=_retrieval(result),
