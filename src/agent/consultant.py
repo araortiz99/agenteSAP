@@ -13,6 +13,7 @@ from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.evidence_trace import TraceabilityReport, build_traceability
 from src.tools.reason import ReasoningResult, reason_from_evidence
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified, unified_result_key
+from src.tools.source_selection import select_evidence_sources
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.knowledge_context import build_knowledge_context, render_knowledge_context
@@ -194,6 +195,11 @@ def build_context(
         "## Evidence assessment",
         f"Query: {retrieval.query}",
         f"Conclusion status: {traceability.conclusion_status}",
+        "",
+        "## Source selection requirement",
+        "Requested evidence layers: " + ", ".join(select_evidence_sources(retrieval.query).requested),
+        "Rationale: " + " | ".join(select_evidence_sources(retrieval.query).rationale),
+        "This is a retrieval requirement, not evidence or a conclusion.",
         f"Bounded conclusion: {traceability.conclusion}",
         "",
         "## Evidence records",
