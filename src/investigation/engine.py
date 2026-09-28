@@ -19,6 +19,8 @@ from src.investigation.capabilities import (
 )
 from src.investigation.case_id import build_case_id
 from src.investigation.correlation import correlate_evidence
+from src.investigation.evidence_state import EvidenceState
+from src.investigation.hypothesis import build_hypotheses
 from src.investigation.contracts import (
     Investigation,
     InvestigationEntity,
@@ -269,6 +271,45 @@ def investigate(
                 investigation.provenance.append(_provenance(normalized_runtime))
 
     investigation.correlation = correlate_evidence(investigation.evidence_collected)
+
+    contradiction_ids = {
+        evidence_id
+        for pair in investigation.correlation.contradictions
+        for evidence_id in pair
+    }
+    investigation.evidence_states = [
+        EvidenceState(
+            item.evidence_id,
+            "CONFLICTING" if item.evidence_id in contradiction_ids else "AVAILABLE",
+            (
+                "La evidencia participa en una contradicción estructural."
+                if item.evidence_id in contradiction_ids
+                else "La evidencia fue recolectada y normalizada correctamente."
+            ),
+        )
+        for item in investigation.evidence_collected
+    ]
+    for missing in investigation.evidence_missing:
+        if missing.startswith("capability:") or missing.startswith("runtime_call:"):
+            investigation.evidence_states.append(
+                EvidenceState(
+                    None,
+                    "MISSING",
+                    f"No se obtuvo evidencia requerida: {missing}",
+                )
+            )
+
+    investigation.hypothesis_records = list(
+        build_hypotheses(
+            investigation.evidence_collected,
+            investigation.evidence_states,
+            investigation.correlation,
+        )
+    )
+    investigation.hypotheses = [
+        f"{item.statement} [{item.status}]"
+        for item in investigation.hypothesis_records
+    ]
 
     runtime_items = [item for item in investigation.evidence_collected if item.landscape == "QAS"]
     if runtime_items:
