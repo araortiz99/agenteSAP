@@ -241,7 +241,11 @@ def test_call_read_tool_accepts_advertised_read_only_tool():
 def test_call_read_tool_rejects_missing_read_only_hint(monkeypatch):
     from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
 
-    target = make_target()
+    target = build_target(
+        "sap_mcp_server",
+        allowed_tools=("read_table",),
+        metadata={"landscape": "QAS"},
+    )
     client = SapMcpClient(target)
 
     class FakeClient:
