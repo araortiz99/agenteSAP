@@ -94,3 +94,18 @@ def test_search_returns_no_results_for_unknown_term():
     results = search_knowledge(client, "ABC_XYZ_999999")
 
     assert results == []
+
+
+def test_search_filters_prose_stopwords_from_query_terms():
+    client = FakeGitHubClient(FIXTURES)
+
+    results = search_knowledge(
+        client,
+        "Analizá el ticket 31426 y separá claramente qué está confirmado",
+    )
+
+    assert results
+    assert results[0].path == "knowledge/test-fixtures/ticket-31426.md"
+    assert results[0].match_type == "identifier"
+    assert "31426" in results[0].matched_terms
+    assert all(term not in {"el", "y", "qué", "está", "separá"} for term in results[0].matched_terms)
