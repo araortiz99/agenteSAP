@@ -73,6 +73,8 @@ details{margin-top:12px}.pill{display:inline-block;padding:3px 8px;border-radius
 <div id="analysisPanels" style="display:none">
   <div class="analysis-grid">
     <section class="analysis-card wide"><h4>Resumen</h4><p id="summary">—</p></section>
+    <section class="analysis-card"><h4>Estado de conclusión</h4><p id="conclusionStatus">—</p><div id="conclusionReason" class="meta">—</div></section>
+    <section class="analysis-card wide"><h4>Findings</h4><div id="findingsList">—</div></section>
     <section class="analysis-card"><h4>Qué está confirmado</h4><div id="confirmedList">—</div></section>
     <section class="analysis-card"><h4>Qué corresponde a nuestra implementación</h4><div id="implementationList">—</div></section>
     <section class="analysis-card"><h4>Qué no está confirmado</h4><div id="notConfirmedList">—</div></section>
@@ -217,6 +219,9 @@ function renderConflictsGaps(conflicts,gaps){
 function renderAnalysis(workbench){
   const w=workbench||{};
   $("summary").textContent=w.summary||"No hay resumen estructurado disponible.";
+  $("conclusionStatus").textContent=w.conclusion_status||"UNVERIFIED";
+  $("conclusionReason").textContent=w.conclusion_reason||"No hay razón de conclusión disponible.";
+  renderList("findingsList",w.findings,"No hay findings estructurados disponibles.");
   renderList("confirmedList",w.confirmed,"No hay hechos confirmados en el contrato.");
   renderList("implementationList",w.implementation,"No hay implementación documentada en el contrato.");
   renderList("notConfirmedList",w.not_confirmed,"No hay elementos adicionales marcados como no confirmados.");
