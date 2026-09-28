@@ -17,6 +17,7 @@ from src.tools.source_selection import select_evidence_sources
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
 from src.tools.knowledge_context import KnowledgeContext, build_knowledge_context, render_knowledge_context
+from src.agent.investigation import InvestigationResult, investigate
 
 
 SYSTEM_PROMPT = """You are agenteSAP, a consultative SAP functional assistant.
@@ -88,6 +89,7 @@ class ConsultationResult:
     ticket_context: tuple[TicketContextReference, ...]
     ticket_relationships: RelatedKnowledge | None
     knowledge_context: KnowledgeContext | None = None
+    investigation: InvestigationResult | None = None
 
 
 def _ticket_reference(ticket_id: str, path: str) -> str:
@@ -264,17 +266,25 @@ def consult(
         raise ValueError("request must not be empty")
 
     mcp_gateway = mcp_gateway if mcp_gateway is not None else McpEvidenceGateway.from_env()
-    retrieval = search_unified(
-        client, request, max_results=max_results, ref=ref, mcp_gateway=mcp_gateway
+    investigation = investigate(
+        client,
+        request,
+        ref=ref,
+        max_results=max_results,
+        mcp_gateway=mcp_gateway,
     )
-    evidence = assess_evidence(retrieval)
-    reasoning = reason_from_evidence(evidence)
+    retrieval = investigation.retrieval
+    evidence = investigation.evidence
+    reasoning = investigation.reasoning
     traceability = build_traceability(reasoning)
     ticket_context, ticket_relationships = _ticket_context(client, ticket_id, ref)
     context = build_context(retrieval, traceability)
-    knowledge_context = build_knowledge_context(
-        client, request, ref=ref, direct_retrieval=retrieval, mcp_gateway=mcp_gateway
-    )
+    context += "\n\n## Query plan\n"
+    context += f"Intent: {investigation.plan.intent}\n"
+    context += f"Max steps: {investigation.plan.max_steps}\n"
+    context += "Subqueries (retrieval hypotheses only):\n"
+    context += "\n".join(f"- {item}" for item in investigation.plan.subqueries)
+    knowledge_context = investigation.knowledge_context
     context += "\n\n" + render_knowledge_context(knowledge_context)
     if ticket_context:
         context += "\n\n## Ticket context\n"
@@ -322,4 +332,5 @@ def consult(
         ticket_context=ticket_context,
         ticket_relationships=ticket_relationships,
         knowledge_context=knowledge_context,
+        investigation=investigation,
     )
