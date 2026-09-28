@@ -41,7 +41,7 @@ class _TextParser(HTMLParser):
 def parse_html(html: str) -> tuple[str, str]:
     parser = _TextParser()
     parser.feed(html)
-    text = re.sub(r"[ \\t]+", " ", "".join(parser.parts))
+    text = re.sub(r"[ \t]+", " ", "".join(parser.parts))
     text = re.sub(r"\n[ \t]+", "\n", text)
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     title = " ".join("".join(parser.title_parts).split())
