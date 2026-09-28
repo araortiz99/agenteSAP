@@ -58,6 +58,9 @@ class Investigation:
     evidence_states: list["EvidenceState"] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
     conclusion: str = ""
+    conclusion_status: str = "UNVERIFIED"
+    conclusion_reason: str = ""
+    conclusion_evidence_ids: tuple[str, ...] = ()
     confidence: str = "LOW"
     confidence_reason: str = ""
     provenance: list[dict[str, Any]] = field(default_factory=list)
@@ -79,6 +82,9 @@ class Investigation:
             "evidence_states": [item.__dict__ for item in self.evidence_states],
             "findings": list(self.findings),
             "conclusion": self.conclusion,
+            "conclusion_status": self.conclusion_status,
+            "conclusion_reason": self.conclusion_reason,
+            "conclusion_evidence_ids": list(self.conclusion_evidence_ids),
             "confidence": self.confidence,
             "confidence_reason": self.confidence_reason,
             "provenance": list(self.provenance),
