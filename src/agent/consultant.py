@@ -14,6 +14,7 @@ from src.tools.reason import ReasoningResult, reason_from_evidence
 from src.tools.search_unified import UnifiedResult, UnifiedSearchResult, search_unified
 from src.tools.get_ticket import TicketContext, get_ticket
 from src.tools.get_related_knowledge import RelatedKnowledge, get_related_knowledge
+from src.tools.knowledge_context import build_knowledge_context, render_knowledge_context
 
 
 SYSTEM_PROMPT = """You are agenteSAP, a consultative SAP functional assistant.
@@ -250,7 +251,7 @@ def consult(
     traceability = build_traceability(reasoning)
     ticket_context, ticket_relationships = _ticket_context(client, ticket_id, ref)
     context = build_context(retrieval, traceability)
-    if ticket_context:
+    knowledge_context = build_knowledge_context(\n        client, request, ref=ref, direct_retrieval=retrieval\n    )\n    context += "\\n\\n" + render_knowledge_context(knowledge_context)\n    if ticket_context:
         context += "\n\n## Ticket context\n"
         for item in ticket_context:
             context += f"\n### {item.reference_id}\npath: {item.path}\n{item.content.strip()}\n"
