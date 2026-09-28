@@ -222,7 +222,7 @@ def run_agent(
 
     if plan.intent == "consult":
         llm_client = llm or OpenAIResponsesClient.from_env()
-        result = consult(client, request, llm_client, ref=ref)
+        result = consult(client, request, llm_client, ref=ref, ticket_id=plan.ticket_id)
     elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
     elif plan.intent == "get_ticket":
