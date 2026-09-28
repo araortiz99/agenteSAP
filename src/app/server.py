@@ -117,9 +117,6 @@ def _workbench_payload(
         "request_id": request_id,
         "trace_id": response.traceability.trace_id,
         "intent": intent,
-        "sources_requested": tuple(
-            sorted({item.source_layer for item in response.traceability.evidence})
-        ),
         "sources_retrieved": tuple(
             sorted({item.source_layer for item in response.traceability.evidence})
         ),
@@ -224,7 +221,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 ticket_id=body.get("ticket_id"),
                 max_results=_validated_max_results(body.get("max_results", 8)),
             )
-            self._send_json(200, _workbench_payload(response, request_id=request_id, intent=response.plan.intent, started_at=started_at))
+            self._send_json(200, _workbench_payload(response, request_id=request_id, intent=getattr(getattr(response, "plan", None), "intent", "unknown"), started_at=started_at))
         except (ValueError, json.JSONDecodeError) as exc:
             self._send_json(400, {"error": str(exc)})
         except GitHubAPIError as exc:
