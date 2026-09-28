@@ -15,7 +15,7 @@ import threading
 from dataclasses import dataclass
 from typing import Coroutine, TypeVar
 
-from src.sap.mcp_client import SapMcpClient
+from src.sap.mcp_client import McpToolDescriptor, SapMcpClient
 from src.sap.mcp_registry import build_target
 from src.sap.qas_runtime import SapQasRuntimeConfig
 from src.sap.mcp_strategy import McpEvidenceLayer, McpProviderPlan, plan_mcp_provider
@@ -107,6 +107,19 @@ class McpEvidenceGateway:
             },
         )
         return gateway
+
+    def runtime_tool_catalog(self) -> tuple[McpToolDescriptor, ...]:
+        """Discover the connected runtime catalog without executing SAP tools."""
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("runtime catalog requires sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("runtime catalog is restricted to QAS")
+
+        return _run_async(self._list_runtime_tools())
+
+    async def _list_runtime_tools(self) -> tuple[McpToolDescriptor, ...]:
+        async with SapMcpClient(self.target) as client:
+            return await client.list_tool_descriptors()
 
     def read_runtime(
         self,
