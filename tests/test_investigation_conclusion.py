@@ -55,3 +55,21 @@ def test_no_hypothesis_is_unverified():
         (),
     )
     assert result.status == "UNVERIFIED"
+
+
+
+def test_supported_hypothesis_requires_explicit_available_state_for_every_evidence():
+    result = build_conclusion(
+        (Hypothesis("H1", "Relación funcional observada.", "SUPPORTED", ("E1", "E2"), "evidence supports relation"),),
+        (EvidenceState("E1", "AVAILABLE", "observed"), EvidenceState("E2", "MISSING", "not retrieved")),
+    )
+    assert result.status == "QUALIFIED"
+    assert "AVAILABLE" in result.reason
+
+
+def test_supported_hypothesis_with_unknown_state_is_not_confirmed():
+    result = build_conclusion(
+        (hyp(),),
+        (),
+    )
+    assert result.status == "QUALIFIED"
