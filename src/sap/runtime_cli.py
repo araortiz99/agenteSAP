@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Pretty-print the JSON readiness report.",
     )
+    readiness.add_argument(
+        "--verify-catalog",
+        action="store_true",
+        help="Verify the live MCP tools/list catalog without executing an SAP tool.",
+    )
 
     return parser
 
@@ -119,6 +124,8 @@ def main(argv: list[str] | None = None) -> int:
             "discovery_only": config.discovery_only,
             "allowlist_configured": bool(config.allowed_tools),
             "command_configured": bool(config.command),
+            "catalog_verified": False,
+            "allowlist_validated": False,
             "runtime_ready": False,
             "reason": "live MCP catalog not verified",
         }
@@ -132,6 +139,32 @@ def main(argv: list[str] | None = None) -> int:
             report["reason"] = "explicit allowlist or discovery_only is required"
         elif not config.command:
             report["reason"] = "MCP command is not configured"
+        elif config.discovery_only:
+            report["reason"] = "discovery-only mode does not authorize runtime reads"
+        elif args.verify_catalog:
+            try:
+                gateway = McpEvidenceGateway.from_qas_runtime_env()
+                if gateway is None:
+                    report["reason"] = "runtime disabled"
+                else:
+                    results = gateway.validate_runtime_allowlist()
+                    report["catalog_verified"] = True
+                    report["allowlist_validated"] = all(
+                        bool(item.get("valid")) for item in results
+                    )
+                    if report["allowlist_validated"]:
+                        report["runtime_ready"] = True
+                        report["reason"] = "live MCP catalog verified and allowlist is read-only"
+                    else:
+                        invalid = next(
+                            item for item in results if not bool(item.get("valid"))
+                        )
+                        report["reason"] = (
+                            f"configured tool '{invalid.get('name')}' is not ready: "
+                            f"{invalid.get('reason')}"
+                        )
+            except (OSError, PermissionError, RuntimeError, ValueError) as exc:
+                report["reason"] = f"catalog verification failed: {exc}"
         print(
             json.dumps(
                 report,

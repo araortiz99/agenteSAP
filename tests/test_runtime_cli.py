@@ -85,3 +85,81 @@ def test_qas_readiness_rejects_non_qas_landscape(monkeypatch, capsys):
     assert runtime_cli.main(["readiness-qas"]) == 2
     report = json.loads(capsys.readouterr().out)
     assert report["reason"] == "landscape must be QAS"
+
+
+def test_qas_readiness_can_verify_a_readonly_catalog(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
+
+    class FakeGateway:
+        @classmethod
+        def from_qas_runtime_env(cls):
+            return cls()
+
+        def validate_runtime_allowlist(self):
+            return (
+                {
+                    "name": "verified_read_tool",
+                    "valid": True,
+                    "reason": "advertised and explicitly read-only",
+                },
+            )
+
+    monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
+
+    assert runtime_cli.main(["readiness-qas", "--verify-catalog"]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["catalog_verified"] is True
+    assert report["allowlist_validated"] is True
+    assert report["runtime_ready"] is True
+
+
+def test_qas_readiness_reports_catalog_validation_failure(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "unsafe_tool")
+
+    class FakeGateway:
+        @classmethod
+        def from_qas_runtime_env(cls):
+            return cls()
+
+        def validate_runtime_allowlist(self):
+            return (
+                {
+                    "name": "unsafe_tool",
+                    "valid": False,
+                    "reason": "destructive_hint=true",
+                },
+            )
+
+    monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
+
+    assert runtime_cli.main(["readiness-qas", "--verify-catalog"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["catalog_verified"] is True
+    assert report["allowlist_validated"] is False
+    assert report["runtime_ready"] is False
+    assert "destructive_hint=true" in report["reason"]
+
+
+def test_qas_readiness_does_not_verify_catalog_without_explicit_probe(monkeypatch, capsys):
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+    monkeypatch.setenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "verified_read_tool")
+
+    class FakeGateway:
+        @classmethod
+        def from_qas_runtime_env(cls):
+            raise AssertionError("catalog must not be contacted without --verify-catalog")
+
+    monkeypatch.setattr(runtime_cli, "McpEvidenceGateway", FakeGateway)
+
+    assert runtime_cli.main(["readiness-qas"]) == 2
+    report = json.loads(capsys.readouterr().out)
+    assert report["catalog_verified"] is False
+    assert report["runtime_ready"] is False
