@@ -146,7 +146,14 @@ class McpEvidenceGateway:
             raise PermissionError("runtime inspection requires sap_mcp_server")
         if self.target.metadata.get("landscape") != "QAS":
             raise PermissionError("runtime inspection is restricted to QAS")
-        return _run_async(self._inspect_runtime_tools())
+        catalog = _run_async(self._inspect_runtime_tools())
+        if self.target.allowed_tools == ("__catalog_only__",):
+            return catalog
+        return tuple(
+            item
+            for item in catalog
+            if item.get("name") in self.target.allowed_tools
+        )
 
     async def _inspect_runtime_tools(self) -> tuple[dict[str, object], ...]:
         async with SapMcpClient(self.target) as client:
