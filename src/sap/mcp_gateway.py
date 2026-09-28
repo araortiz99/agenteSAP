@@ -108,6 +108,33 @@ class McpEvidenceGateway:
         )
         return gateway
 
+    def preflight_runtime_tools(self) -> tuple[str, ...]:
+        """Connect to the QAS MCP server and verify the explicit tool allowlist.
+
+        tools/list is protocol discovery only; it does not execute a SAP
+        operation. The result is still treated as configuration metadata,
+        never as business evidence.
+        """
+        if self.target.provider != "sap_mcp_server":
+            raise PermissionError("runtime preflight requires sap_mcp_server")
+        if self.target.metadata.get("landscape") != "QAS":
+            raise PermissionError("runtime preflight is restricted to QAS")
+
+        available = _run_async(self._list_runtime_tools())
+        missing = tuple(
+            tool for tool in self.target.allowed_tools if tool not in available
+        )
+        if missing:
+            raise ValueError(
+                "Configured QAS runtime tools are not exposed by the server: "
+                + ", ".join(missing)
+            )
+        return available
+
+    async def _list_runtime_tools(self) -> tuple[str, ...]:
+        async with SapMcpClient(self.target) as client:
+            return await client.list_tools()
+
     def read_runtime(
         self,
         tool_name: str,
