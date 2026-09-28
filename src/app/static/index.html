@@ -94,9 +94,6 @@ function ticketWorkspace(){
 }
 function normalizeAnswer(text){
   let value=String(text||"");
-  const marker="**";
-  const count=value.split(marker).length-1;
-  if(count>30){ value=value.replaceAll(marker,""); }
   value=value.replaceAll("\\##","##");
   const marker="**";
   const count=value.split(marker).length-1;
