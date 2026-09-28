@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 
-McpProvider = Literal["sap_devs", "sap_mcp_server", "abap_ai"]
+McpProvider = Literal["sap_devs", "sap_developer_public", "sap_mcp_server", "abap_ai"]
 McpTransport = Literal["stdio", "streamable_http"]
 McpObservationType = Literal[
     "developer_context",
