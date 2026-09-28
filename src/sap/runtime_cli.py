@@ -77,11 +77,19 @@ def main(argv: list[str] | None = None) -> int:
         try:
             config = SapQasRuntimeConfig.from_env()
         except ValueError as exc:
+            landscape = os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS").upper()
+            scope = os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly")
+            if landscape != "QAS":
+                reason = "landscape must be QAS"
+            elif scope != "mcp_readonly":
+                reason = "scope must be mcp_readonly"
+            else:
+                reason = str(exc)
             report = {
                 "enabled": os.getenv("AGENTESAP_SAP_RUNTIME_ENABLED", "false").lower()
                 in {"1", "true", "yes", "on"},
-                "landscape": os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS"),
-                "scope": os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
+                "landscape": landscape,
+                "scope": scope,
                 "discovery_only": os.getenv(
                     "AGENTESAP_SAP_RUNTIME_DISCOVERY", "false"
                 ).lower()
@@ -93,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
                     os.getenv("AGENTESAP_SAP_MCP_COMMAND", "sap-mcp-server").strip()
                 ),
                 "runtime_ready": False,
-                "reason": str(exc),
+                "reason": reason,
             }
             print(
                 json.dumps(
