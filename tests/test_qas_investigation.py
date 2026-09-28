@@ -14,7 +14,7 @@ knowledge_scope: global
 certainty: confirmed
 ---
 # SAP Standard
-Movement type semantics are standard SAP knowledge.
+MARA and movement type semantics are standard SAP knowledge.
 """,
             "knowledge/internal/runtime-case.md": """---
 source_id: INT-MM-RUNTIME-CASE
