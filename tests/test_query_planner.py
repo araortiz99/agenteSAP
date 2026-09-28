@@ -14,9 +14,9 @@ def test_troubleshooting_query_is_bounded():
     assert any("Standard" in item for item in plan.subqueries)
 
 
-def test_comparison_query_separates_standard_and_internal():
+def test_standard_vs_custom_query_separates_standard_and_internal():
     plan = decompose_query("Diferencia entre comportamiento estándar y nuestra implementación")
-    assert plan.intent == "comparison"
+    assert plan.intent == "standard_vs_custom"
     assert any("SAP Standard" in item for item in plan.subqueries)
     assert any("implementación interna" in item for item in plan.subqueries)
 
