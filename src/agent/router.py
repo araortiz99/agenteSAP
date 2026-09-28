@@ -19,6 +19,7 @@ from src.tools.search_unified import UnifiedSearchResult, search_unified
 from src.tools.evidence import EvidenceAssessment, assess_evidence
 from src.tools.reason import ReasoningResult, reason_from_evidence
 from src.tools.evidence_trace import TraceabilityReport, build_traceability
+from src.tools.source_selection import select_evidence_sources
 
 
 class IntentRoutingError(ValueError):
