@@ -174,7 +174,7 @@ def test_workbench_response_is_structured_and_traceable():
 def test_workbench_html_has_evidence_and_provenance_explorer():
     from pathlib import Path
     html = Path("src/app/static/index.html").read_text(encoding="utf-8")
-    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer", "kiEntities", "kiGraph", "renderKnowledgeIntelligence"):
+    for marker in ("evidenceList", "provenanceViewer", "retrievalExplorer", "renderEvidenceExplorer", "renderRetrievalExplorer", "kiEntities", "kiGraph", "renderKnowledgeIntelligence", "conclusionStatus", "findingsList"):
         assert marker in html
     assert "source_layer" in html
     assert "provenance" in html
