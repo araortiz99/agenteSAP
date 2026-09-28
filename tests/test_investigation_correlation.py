@@ -71,3 +71,21 @@ def test_duplicate_evidence_ids_create_gap_without_self_relation():
     assert "duplicate_evidence_id" in result.gaps
     assert result.unresolved_relationships
     assert result.relations == ()
+
+def test_stock_from_different_plants_is_not_compared():
+    items = [
+        InvestigationEvidence("EV-101","fixture","read","QAS","QAS","STOCK","100123","stock",'{"material":"100123","plant":"5023","stock":120}',"high"),
+        InvestigationEvidence("EV-102","fixture","read","QAS","QAS","STOCK","100123","stock",'{"material":"100123","plant":"6208","stock":80}',"high"),
+    ]
+    result = correlate_evidence(items)
+    assert result.contradictions == ()
+    assert result.relations == ()
+
+
+def test_same_object_id_with_different_object_types_is_not_correlated():
+    items = [
+        InvestigationEvidence("EV-103","fixture","read","QAS","QAS","STOCK","100123","stock",'{"material":"100123","plant":"5023","stock":120}',"high"),
+        InvestigationEvidence("EV-104","fixture","read","QAS","QAS","MATERIAL","100123","master",'{"description":"Material"}',"high"),
+    ]
+    result = correlate_evidence(items)
+    assert result.relations == ()
