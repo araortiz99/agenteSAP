@@ -217,7 +217,7 @@ def test_call_read_tool_rejects_non_read_only_annotation():
         [FakeTool("unsafe_read", read_only_hint=False, destructive_hint=True)]
     )
 
-    with pytest.raises(PermissionError, match="destructive"):
+    with pytest.raises(PermissionError, match="not marked read-only"):
         asyncio.run(client.call_read_tool("unsafe_read"))
 
 
