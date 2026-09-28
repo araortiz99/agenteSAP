@@ -21,6 +21,7 @@ class EvidenceTrace:
     weight: float
     role: str
     reason: str
+    provenance: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,7 @@ def build_traceability(reasoning: ReasoningResult) -> TraceabilityReport:
             weight=item.weight,
             role=_role(item),
             reason=item.reason,
+            provenance=item.provenance,
         )
         for item in reasoning.evidence.items
     )
@@ -124,6 +126,7 @@ def render_traceability(report: TraceabilityReport) -> str:
                 f"- Weight: {item.weight}",
                 f"- Role: {item.role}",
                 f"- Reason: {item.reason}",
+                f"- Provenance: {dict(item.provenance)}",
             ]
         )
 
