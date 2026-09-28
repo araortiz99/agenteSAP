@@ -92,6 +92,12 @@ class SapMcpClient:
                 f"'{self.target.provider}'"
             )
 
+        advertised_tools = await self.list_tools()
+        if tool_name not in advertised_tools:
+            raise PermissionError(
+                f"MCP tool '{tool_name}' is not advertised by the connected server"
+            )
+
         result = await self._require_connected().call_tool(
             tool_name,
             arguments or {},
