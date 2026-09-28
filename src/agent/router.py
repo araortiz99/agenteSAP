@@ -220,13 +220,6 @@ def route_intent(request: str) -> AgentPlan:
             capabilities=("search_unified",),
         )
 
-    if any(term in lowered for term in ("sap standard", "sap estándar", "sap standard knowledge", "help portal")):
-        return AgentPlan(
-            intent="search_sap_standard",
-            ticket_id=ticket_id,
-            capabilities=("search_sap_standard",),
-        )
-
     runtime_markers = (
         "actualmente",
         "ahora",
@@ -255,6 +248,13 @@ def route_intent(request: str) -> AgentPlan:
                 "build_traceability",
                 "consult_llm",
             ),
+        )
+
+    if any(term in lowered for term in ("sap standard", "sap estándar", "sap standard knowledge", "help portal")):
+        return AgentPlan(
+            intent="search_sap_standard",
+            ticket_id=ticket_id,
+            capabilities=("search_sap_standard",),
         )
 
     if "relacion" in lowered or "relacionado" in lowered:
