@@ -31,6 +31,7 @@ def test_investigate_sap_validates_bounds():
 
 
 def test_health_normalizes_git_ref(monkeypatch):
-    monkeypatch.setenv("GITHUB_REF", "refs/heads/feature/test")
+    monkeypatch.setenv("GITHUB_REF_NAME", "feature/test")
+    monkeypatch.setenv("GITHUB_REF", "refs/pull/123/merge")
     from src.mcp.consultant_server import _ref
     assert _ref() == "feature/test"
