@@ -2,7 +2,7 @@
 
 ## Estado
 
-**EN IMPLEMENTACIÓN**
+**MVP 5 EN IMPLEMENTACIÓN — 5.1–5.5 OPERACIONALES**
 
 MVP 4.2 queda como contrato estable y no se redefine desde este MVP.
 
@@ -242,4 +242,18 @@ Implementado:
 - sin memoria persistente;
 - sin cambios de provenance, certainty, relaciones ni gates.
 
-Estado: **HARDENING EN VALIDACIÓN**.
+Estado: **CLOSED / APPROVED**.
+
+
+### MVP 5.5 — Performance Hardening: CLOSED / APPROVED
+
+La optimización operacional fue validada con el caso canónico 31426.
+
+Resultado observado en ejecución local:
+- baseline: ~5 minutos;
+- después del hardening: ~20 segundos;
+- reducción observada: ~93 %.
+
+CI: Python Tests — 96 passed.
+
+La medición de tiempo es una referencia de ejecución local y no un SLA productivo.
