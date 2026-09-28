@@ -21,6 +21,7 @@ from src.llm.client import LLMConfigurationError
 from src.github.client import GitHubAPIError, GitHubClient
 from src.agent.consultant import ConsultationResult
 from src.app.contracts import build_workbench_analysis
+from src.tools.object_workspace import build_object_workspace
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -144,6 +145,20 @@ def _workbench_payload(
         "workbench": asdict(structured),
     }
 
+def _object_workspace_payload(object_id: str, *, started_at: float) -> dict:
+    workspace = build_object_workspace(
+        _github_client(),
+        object_id,
+        ref=os.getenv("GITHUB_REF", "main"),
+    )
+    payload = asdict(workspace)
+    payload["diagnostics"] = {
+        **payload["diagnostics"],
+        "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 2),
+    }
+    return payload
+
+
 def _status_payload() -> dict:
     client = _github_client()
     return {
@@ -197,6 +212,23 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/status":
             self._send_json(200, _status_payload())
+            return
+        object_prefix = "/api/object/"
+        if path.startswith(object_prefix):
+            object_id = path[len(object_prefix):].strip()
+            if not object_id:
+                self._send_json(400, {"error": "object_id is required"})
+                return
+            started_at = time.perf_counter()
+            try:
+                self._send_json(
+                    200,
+                    _object_workspace_payload(object_id, started_at=started_at),
+                )
+            except ValueError as exc:
+                self._send_json(400, {"error": str(exc)})
+            except GitHubAPIError as exc:
+                self._send_json(503, {"error": str(exc), "error_type": "github_api", "status_code": exc.status_code})
             return
         self._send_json(404, {"error": "not_found"})
 
