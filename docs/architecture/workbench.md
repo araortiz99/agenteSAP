@@ -54,11 +54,19 @@ No implementar todo Workbench 2.0 en un único cambio.
 
 ### Fase 2 — Analysis UX
 
+La UI consume el contrato `workbench` como fuente primaria para la lectura semántica del análisis. La respuesta Markdown continúa visible como representación completa y de compatibilidad.
+
 - consulta;
-- resultado estructurado;
-- certainty;
-- conflicts;
-- gaps.
+- resumen estructurado;
+- hechos confirmados;
+- implementación documentada;
+- elementos no confirmados;
+- hipótesis, cuando el backend las provea;
+- conflictos y gaps;
+- evidencia y relaciones desde el contrato estructurado;
+- estados vacíos explícitos cuando un bloque no tiene datos.
+
+No se infiere certainty desde texto libre: los indicadores de evidencia utilizan la `certainty` entregada por el backend. La ausencia de hipótesis estructuradas se presenta como ausencia de datos, no como hipótesis inventada.
 
 ### Fase 3 — Evidence
 

@@ -79,6 +79,17 @@ def test_workbench_html_has_no_duplicate_result_declaration():
     assert html.count("const result=data.result||data;") == 1
 
 
-def test_workbench_html_has_no_duplicate_result_declaration():
+def test_workbench_html_renders_structured_analysis_sections():
     html = Path("src/app/static/index.html").read_text(encoding="utf-8")
-    assert html.count("const result=data.result||data;") == 1
+    for marker in (
+        'id="summary"',
+        'id="confirmedList"',
+        'id="implementationList"',
+        'id="notConfirmedList"',
+        'id="hypothesesList"',
+        'id="conflictsGaps"',
+    ):
+        assert marker in html
+    assert 'renderAnalysis(data?.workbench||{});' in html
+    assert 'renderList("confirmedList",w.confirmed' in html
+    assert 'renderList("notConfirmedList",w.not_confirmed' in html
