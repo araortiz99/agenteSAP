@@ -111,7 +111,36 @@ def check_certainty_preservation(result: ConsultationResult) -> tuple[bool, str]
     return True, "No se detectó promoción explícita de certainty."
 
 
+def _answer_sentences(answer: str) -> tuple[str, ...]:
+    """Split answer into small attribution units for deterministic checks."""
+    import re
+
+    return tuple(
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\\s+|\\n+", answer.lower())
+        if sentence.strip()
+    )
+
+
+def _custom_terms(result: ConsultationResult) -> tuple[str, ...]:
+    """Derive likely custom identifiers from internal evidence paths/content."""
+    import re
+
+    terms: set[str] = set()
+    for item in result.traceability.evidence:
+        if item.source_layer != "internal":
+            continue
+        path = item.path.lower()
+        stem = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        if stem:
+            terms.add(stem.replace("-", "_"))
+        if "zmm" in stem:
+            terms.add(stem.replace("-", "_"))
+    return tuple(sorted(terms, key=len, reverse=True))
+
+
 def check_standard_custom(result: ConsultationResult) -> tuple[bool, str]:
+    """Check attribution, not mere co-occurrence of Standard and custom terms."""
     answer = result.answer.lower()
     has_standard = any(
         item.source_layer == "sap_standard"
@@ -127,43 +156,98 @@ def check_standard_custom(result: ConsultationResult) -> tuple[bool, str]:
         if not any(x in answer for x in ("implementación", "intern", "custom", "propia")):
             return False, "No se distingue la implementación interna/custom."
 
-        internal_ids = {
-            item.evidence_id
-            for item in result.traceability.evidence
-            if item.source_layer == "internal"
-        }
-        for line in result.answer.lower().splitlines():
-            if "standard" not in line and "estándar" not in line:
+        custom_terms = _custom_terms(result)
+        affirmative = (
+            "confirma",
+            "confirman",
+            "documenta",
+            "documentan",
+            "define",
+            "definen",
+            "establece",
+            "establecen",
+            "soporta",
+            "soportan",
+            "pertenece",
+            "corresponde",
+            "es parte de",
+            "genera",
+        )
+        negations = (
+            "no confirma",
+            "no confirman",
+            "no documenta",
+            "no documentan",
+            "no define",
+            "no definen",
+            "no establece",
+            "no establecen",
+            "no soporta",
+            "no soportan",
+            "no permite afirmar",
+            "no permite confirmar",
+            "no corresponde a sap",
+            "no es standard",
+            "no es estándar",
+        )
+        for sentence in _answer_sentences(result.answer):
+            if not any(x in sentence for x in ("standard", "estándar", "sap")):
                 continue
-            if any(evidence_id.lower() in line for evidence_id in internal_ids):
+            if custom_terms and not any(term in sentence for term in custom_terms):
+                continue
+            if any(marker in sentence for marker in negations):
+                continue
+            if any(marker in sentence for marker in affirmative):
                 return (
                     False,
-                    "Una evidencia interna/custom fue presentada en la misma "
-                    "afirmación como SAP Standard.",
-                )
-            if "zmm_" in line or "snc k1" in line:
-                return (
-                    False,
-                    "Un objeto/proceso custom fue presentado como SAP Standard.",
+                    "Un objeto/proceso custom fue atribuido a SAP Standard.",
                 )
     return True, "Separación Standard/Custom presente o no aplicable."
 
 
+def _section_body(answer: str, header: str) -> str:
+    """Return the body of a required Markdown section."""
+    lower = answer.lower()
+    start = lower.find(header.lower())
+    if start < 0:
+        return ""
+    body = lower[start + len(header):]
+    next_header = body.find("\n## ")
+    return body[:next_header] if next_header >= 0 else body
+
+
 def check_missing_information(result: ConsultationResult) -> tuple[bool, str]:
-    answer = result.answer.lower()
     if not result.traceability.gaps:
         return True, "No existen gaps determinísticos."
+
+    answer = result.answer.lower()
+    unknown_section = _section_body(answer, "## qué no está confirmado")
+    next_steps = _section_body(answer, "## próximos pasos")
+    scope = unknown_section + "\n" + next_steps
     markers = (
-        "no confirmado",
+        "no está confirmado",
+        "no están confirmados",
+        "no se ha confirmado",
+        "no permite confirmar",
+        "no permite determinar",
+        "no se puede confirmar",
+        "no se puede determinar",
+        "no hay evidencia",
+        "sin evidencia",
         "información faltante",
         "pendiente",
         "falta",
+        "faltan",
         "no se dispone",
         "requiere validación",
         "requiere análisis",
+        "limitación",
+        "insuficiente",
+        "no permite emitir",
+        "conclusión definitiva",
     )
-    if not any(marker in answer for marker in markers):
-        return False, "La respuesta no explicita la información faltante."
+    if not any(marker in scope for marker in markers):
+        return False, "La respuesta no explicita la información faltante en las secciones de incertidumbre."
     return True, "La información faltante/gaps fue explicitada."
 
 
