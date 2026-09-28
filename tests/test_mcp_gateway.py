@@ -237,3 +237,46 @@ def test_qas_catalog_inspection_rejects_disabled_runtime(monkeypatch):
         assert "disabled" in str(exc)
     else:
         raise AssertionError("catalog inspection must be disabled by default")
+
+
+def test_runtime_inspection_uses_descriptor_contract(monkeypatch):
+    from src.sap.mcp_client import McpToolDescriptor
+
+    gateway = McpEvidenceGateway.__new__(McpEvidenceGateway)
+    gateway.target = type(
+        "Target",
+        (),
+        {
+            "provider": "sap_mcp_server",
+            "metadata": {"landscape": "QAS"},
+            "allowed_tools": ("read_table",),
+        },
+    )()
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return None
+
+        async def list_tool_descriptors(self):
+            return (
+                McpToolDescriptor(
+                    name="read_table",
+                    description="Read table",
+                    input_schema={"type": "object"},
+                    read_only_hint=True,
+                    destructive_hint=False,
+                ),
+            )
+
+    monkeypatch.setattr(
+        "src.sap.mcp_gateway.SapMcpClient",
+        lambda target: FakeClient(),
+    )
+
+    catalog = gateway.inspect_runtime_tools()
+
+    assert catalog[0]["name"] == "read_table"
+    assert catalog[0]["read_only_hint"] is True
