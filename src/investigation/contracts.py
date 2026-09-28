@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.investigation.correlation import EvidenceCorrelation
+
 
 @dataclass(frozen=True)
 class InvestigationEntity:
@@ -54,6 +56,7 @@ class Investigation:
     confidence: str = "LOW"
     confidence_reason: str = ""
     provenance: list[dict[str, Any]] = field(default_factory=list)
+    correlation: EvidenceCorrelation = field(default_factory=EvidenceCorrelation)
     stop_reason: str | None = None
     steps: list[InvestigationStep] = field(default_factory=list)
 
@@ -72,6 +75,7 @@ class Investigation:
             "confidence": self.confidence,
             "confidence_reason": self.confidence_reason,
             "provenance": list(self.provenance),
+            "correlation": self.correlation.as_dict(),
             "stop_reason": self.stop_reason,
             "steps": [step.__dict__ for step in self.steps],
         }
