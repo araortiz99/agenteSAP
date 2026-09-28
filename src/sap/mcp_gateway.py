@@ -57,6 +57,9 @@ class McpEvidenceGateway:
         requested = select_evidence_sources(request).requested
         if "runtime" in requested:
             return cls.from_qas_runtime_env()
+        public = cls.from_public_sap_env()
+        if public is not None:
+            return public
         return cls.from_env()
 
     @classmethod
@@ -419,7 +422,11 @@ class McpEvidenceGateway:
                     "runtime_observation"
                     if getattr(evidence, "observation_type", None)
                     in {"runtime_observation", "custom_runtime_observation"}
-                    else "developer_context"
+                    else (
+                        "external_source"
+                        if getattr(evidence, "observation_type", None) == "external_source"
+                        else "developer_context"
+                    )
                 ),
                 knowledge_scope=(
                     "runtime"
