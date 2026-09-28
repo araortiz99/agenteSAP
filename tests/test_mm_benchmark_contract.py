@@ -15,8 +15,6 @@ def test_mm_standard_and_custom_evidence_layers_remain_distinct():
         InvestigationFixtureClient(),
         "Compará SAP Standard con la implementación ZMM_IM_0002.",
         max_steps=4,
-        max_results=8,
-        max_hops=2,
     )
 
     standard = [
@@ -44,8 +42,6 @@ def test_mm_query_plan_is_not_promoted_to_evidence():
         InvestigationFixtureClient(),
         "¿Qué significa el movimiento 551?",
         max_steps=4,
-        max_results=8,
-        max_hops=2,
     )
 
     evidence_text = "\n".join(item.content for item in result.evidence_collected)
@@ -63,8 +59,6 @@ def test_mm_missing_runtime_evidence_remains_explicit():
         InvestigationFixtureClient(),
         "¿Por qué falla actualmente en QAS el proceso de inventario?",
         max_steps=4,
-        max_results=8,
-        max_hops=2,
     )
 
     assert any("runtime" in gap.lower() for gap in result.evidence_missing)
@@ -78,8 +72,6 @@ def test_mm_multihop_relationships_remain_bounded():
         InvestigationFixtureClient(),
         "¿Cómo se relacionan purchase order, goods receipt, material document y accounting document?",
         max_steps=4,
-        max_results=8,
-        max_hops=2,
     )
 
     assert result.knowledge_context.relationships
