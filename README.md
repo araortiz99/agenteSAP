@@ -328,3 +328,30 @@ retrieval != conclusión
 
 El contexto de MVP 5 se incorpora al consultor de MVP 4.2 sin alterar su contrato de respuesta ni sus semantic gates.
 
+
+
+### MVP 6 — Knowledge Governance
+
+MVP 6 agrega una frontera explícita entre el consultor read-only y la persistencia controlada de Knowledge.
+
+Flujo:
+
+```
+CONSULT → PROPOSE → VALIDATE → BRANCH → COMMIT → PULL REQUEST → HUMAN REVIEW → MERGE
+```
+
+La publicación está limitada inicialmente a `knowledge/`.
+
+Gates:
+- scope;
+- metadata;
+- security;
+- version;
+- branch;
+- duplicate;
+- Pull Request;
+- human review.
+
+El agente no modifica SAP, no escribe directamente en `main`, no hace merge y no se autoaprueba.
+
+La CLI de publicación funciona en dry-run por defecto. La escritura real requiere `--publish` y un token de GitHub con permisos de escritura adecuados.
