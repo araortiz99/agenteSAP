@@ -101,16 +101,20 @@ def _title_match(content: str, terms: list[str]) -> tuple[bool, tuple[str, ...]]
         (line[2:].strip() for line in content.splitlines() if line.startswith("# ")),
         "",
     )
-    normalized = _normalize(title)
-    matched = tuple(term for term in terms if term in normalized)
+    tokens = _tokenize(title)
+    matched = tuple(term for term in terms if term in tokens)
     return bool(matched), matched
 
 
+def _tokenize(value: str) -> set[str]:
+    return set(_normalize(value).split())
+
+
 def _score(content: str, terms: list[str]) -> tuple[float, tuple[str, ...]]:
-    normalized = _normalize(content)
-    matched = tuple(term for term in terms if term in normalized)
     if not terms:
         return 0.0, ()
+    tokens = _tokenize(content)
+    matched = tuple(term for term in terms if term in tokens)
     return len(matched) / len(terms), matched
 
 
