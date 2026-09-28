@@ -20,14 +20,60 @@ class SAPStandardResult:
     score: float
     matched_terms: tuple[str, ...]
     content: str
+    match_type: str = "content"
 
+
+STANDARD_STOPWORDS = frozenset({
+    "a", "al", "ante", "con", "como", "de", "del", "el", "en", "es",
+    "esta", "está", "este", "la", "las", "lo", "los", "para", "por",
+    "que", "qué", "se", "su", "sus", "un", "una", "y",
+    "busca", "buscá", "buscar", "explica", "explicá", "explicar",
+})
+
+IDENTIFIER_FIELDS = (
+    "source_id", "knowledge_id", "document_id", "transaction",
+    "table", "cds_view", "movement_type", "app", "object_id",
+)
 
 def _terms(query: str) -> list[str]:
     return [
         x
-        for x in re.sub(r"[^a-z0-9áéíóúüñ-]+", " ", query.lower()).split()
-        if len(x) >= 2
+        for x in re.sub(r"[^a-z0-9áéíóúüñ_-]+", " ", query.lower()).split()
+        if len(x) >= 2 and x not in STANDARD_STOPWORDS
     ]
+
+def _metadata(content: str) -> dict[str, str]:
+    if not content.startswith("---"):
+        return {}
+    metadata: dict[str, str] = {}
+    for line in content.splitlines()[1:]:
+        if line.strip() == "---":
+            break
+        if ":" in line:
+            key, value = line.split(":", 1)
+            metadata[key.strip()] = value.strip().strip('"').strip("'")
+    return metadata
+
+def _rank(content: str, terms: list[str], lexical_score: float):
+    metadata = _metadata(content)
+    identifiers = {
+        value.lower().strip()
+        for field in IDENTIFIER_FIELDS
+        if (value := metadata.get(field))
+    }
+    identifier_matches = tuple(term for term in terms if term in identifiers)
+    if identifier_matches:
+        return 1.0, identifier_matches, "identifier"
+
+    title = next(
+        (line[2:].strip().lower() for line in content.splitlines() if line.startswith("# ")),
+        "",
+    )
+    title_matches = tuple(term for term in terms if term in title)
+    if title_matches:
+        return lexical_score, title_matches, "title"
+
+    return lexical_score, tuple(term for term in terms if term in content.lower()), "content"
 
 
 def _load_contents(client: GitHubClient, paths: list[str], ref: str) -> dict[str, str]:
@@ -70,14 +116,24 @@ def search_sap_standard(
         if not matched:
             continue
 
+        lexical_score = len(matched) / len(terms)
+        score, ranked_terms, match_type = _rank(content, terms, lexical_score)
         results.append(
             SAPStandardResult(
                 path=path,
-                score=len(matched) / len(terms),
-                matched_terms=matched,
+                score=score,
+                matched_terms=ranked_terms,
                 content=content,
+                match_type=match_type,
             )
         )
 
-    results.sort(key=lambda x: (-x.score, x.path))
+    results.sort(
+        key=lambda x: (
+            {"identifier": 3, "title": 2, "content": 1}[x.match_type],
+            x.score,
+            x.path,
+        ),
+        reverse=True,
+    )
     return results[:max_results]
