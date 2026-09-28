@@ -83,14 +83,14 @@ def main(argv: list[str] | None = None) -> int:
                 "landscape": os.getenv("AGENTESAP_SAP_RUNTIME_LANDSCAPE", "QAS"),
                 "scope": os.getenv("AGENTESAP_SAP_RUNTIME_SCOPE", "mcp_readonly"),
                 "discovery_only": os.getenv(
-                    "AGENTESAP_SAP_RUNTIME_DISCOVERY_ONLY", "false"
+                    "AGENTESAP_SAP_RUNTIME_DISCOVERY", "false"
                 ).lower()
                 in {"1", "true", "yes", "on"},
                 "allowlist_configured": bool(
                     os.getenv("AGENTESAP_SAP_RUNTIME_READ_TOOLS", "").strip()
                 ),
                 "command_configured": bool(
-                    os.getenv("AGENTESAP_SAP_RUNTIME_COMMAND", "sap-mcp-server").strip()
+                    os.getenv("AGENTESAP_SAP_MCP_COMMAND", "sap-mcp-server").strip()
                 ),
                 "runtime_ready": False,
                 "reason": str(exc),
