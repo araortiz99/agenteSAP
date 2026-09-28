@@ -418,7 +418,7 @@ def run_agent(
             ref=ref,
             ticket_id=plan.ticket_id,
             max_results=max_results,
-            mcp_gateway=_mcp_gateway(),
+            mcp_gateway=_mcp_gateway(request),
         )
     elif plan.intent == "analyze_ticket":
         result = analyze(client, request, plan.ticket_id or "", ref=ref)
