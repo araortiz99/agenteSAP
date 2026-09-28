@@ -116,6 +116,8 @@ class McpEvidenceGateway:
             allowed_tools=("__catalog_only__",),
             metadata={
                 "landscape": "QAS",
+                "query_tool": config.query_tool or "",
+                "query_argument": config.query_argument,
                 **({"system": config.system} if config.system else {}),
             },
         )
@@ -285,7 +287,16 @@ class McpEvidenceGateway:
         if not query or not query.strip():
             raise ValueError("query must not be empty")
 
-        evidence = _run_async(self._search_resources(query.strip()))
+        if self.target.provider == "sap_mcp_server":
+            if self.target.metadata.get("landscape") != "QAS":
+                raise PermissionError("runtime search is restricted to QAS")
+            tool_name = self.target.metadata.get("query_tool")
+            query_argument = self.target.metadata.get("query_argument", "query")
+            if not tool_name:
+                raise PermissionError("QAS runtime search requires an explicit configured query tool")
+            evidence = self.read_runtime(tool_name, {query_argument: query.strip()})
+        else:
+            evidence = _run_async(self._search_resources(query.strip()))
         if _has_zero_results(evidence.content):
             return ()
 
