@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from src.agent.router import run_agent
+from src.llm.client import LLMConfigurationError
 from src.github.client import GitHubAPIError, GitHubClient
 
 
@@ -55,6 +56,7 @@ def _status_payload() -> dict:
         "github_repo": client.repo,
         "github_ref": os.getenv("GITHUB_REF", "main"),
         "github_auth_configured": client.authenticated,
+        "openai_api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
         "github_cache_files": len(client._file_cache),
         "github_cache_trees": len(client._tree_cache),
         "qas_runtime_enabled": os.getenv(
@@ -138,6 +140,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             if exc.rate_limit.retry_after is not None:
                 payload["github_retry_after_seconds"] = exc.rate_limit.retry_after
             self._send_json(503 if exc.status_code in {403, 429, 500, 502, 503, 504} else 502, payload)
+        except LLMConfigurationError as exc:
+            self._send_json(503, {"error": str(exc), "error_type": "llm_configuration"})
         except TimeoutError as exc:
             self._send_json(504, {"error": f"agent_timeout: {exc}"})
         except Exception as exc:  # local shell: expose failure without claiming SAP execution
