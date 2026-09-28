@@ -81,6 +81,8 @@ def test_knowledge_context_traverses_explicit_relationships_only():
     assert context.entities
     assert any(
         item.relationship.target_id == "SNC-K1"
+        and item.relationship.certainty == "partial"
+        and item.relationship.status == "candidate"
         for item in context.relationships
     )
     assert any(
@@ -110,3 +112,28 @@ def test_render_preserves_provenance_and_hop():
     assert "certainty:" in rendered
     assert "hop=" in rendered
     assert "### Conflicts" in rendered
+
+
+def test_unknown_query_does_not_fabricate_entity():
+    context = build_knowledge_context(FakeClient(), "ENTIDAD_INEXISTENTE_999")
+    assert context.entities == ()
+    assert any("No canonical repository entity" in gap for gap in context.gaps)
+
+
+def test_related_entity_does_not_escalate_certainty():
+    context = build_knowledge_context(FakeClient(), "ZMM_IMX_0004")
+    related = [e for e in context.entities if e.entity_id == "SNC-K1"]
+    assert related == [] or all(e.certainty != "confirmed" for e in related)
+
+
+def test_relationship_limit_is_enforced():
+    context = build_knowledge_context(
+        FakeClient(), "ZMM_IMX_0004", max_relationships=1
+    )
+    assert len(context.relationships) <= 1
+
+
+def test_second_hop_cannot_be_exceeded():
+    context = build_knowledge_context(FakeClient(), "ZMM_IMX_0004", max_hops=1)
+    assert all(item.hop <= 1 for item in context.relationships)
+    assert all(item.hop <= 1 for item in context.evidence)
