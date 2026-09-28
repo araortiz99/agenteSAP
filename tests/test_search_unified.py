@@ -106,3 +106,23 @@ def test_evidence_does_not_count_truncated_source_as_retrieved():
     assessment = assess_evidence(retrieval)
     assert "sap_standard" not in {item.source_layer for item in assessment.items}
     assert "No SAP Standard evidence was retrieved." in assessment.gaps
+
+
+def test_unified_search_excludes_external_mcp_for_runtime_queries():
+    from src.tools.search_unified import UnifiedResult, _merge_evidence_results
+
+    runtime = UnifiedResult(
+        "runtime://qas", 0.9, ("actual",), "runtime", "mcp", "mcp",
+        "QAS-1", "runtime_observation", "runtime", "partial"
+    )
+    external = UnifiedResult(
+        "mcp://sap-devs/search", 0.99, ("actual",), "developer context", "mcp", "mcp",
+        "DEV-1", "developer_context", "external", "external_source"
+    )
+
+    selected = _merge_evidence_results(
+        [], [], [runtime, external],
+        requested=("runtime",), max_results=2,
+    )
+
+    assert selected == [runtime]
