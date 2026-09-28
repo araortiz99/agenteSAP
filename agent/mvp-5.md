@@ -180,3 +180,32 @@ RESOLVE → RETRIEVE → RELATE → TRAVERSE → BUILD CONTEXT → PRESERVE EVID
 Nunca:
 
 INFERIR RELACIONES → PERDER PROVENANCE → INVENTAR CONOCIMIENTO
+
+
+MVP 5.4 — End-to-End Knowledge Consultant: CLOSED / APPROVED
+
+Validado con el caso canónico 31426.
+
+Flujo validado:
+QUERY → ENTITY RESOLUTION → RELATIONSHIPS → MULTI-HOP → KNOWLEDGE CONTEXT → EVIDENCE → LLM → VALIDATED RESPONSE
+
+Garantías verificadas:
+- ticket context y TKT-*;
+- resolución de ZMM_IMX_0004 por nombre técnico;
+- relaciones explícitas;
+- preservación de partial/candidate;
+- conflicto K1/K4;
+- separación Standard/Custom;
+- evidencia EVD-*;
+- estructura MVP 4.2;
+- información pendiente sin elevar a confirmada;
+- comportamiento read-only.
+
+Hallazgo de implementación:
+- los objetos SAP custom pueden tener un identificador interno (object_id) distinto del nombre técnico (object_name);
+- las relaciones del grafo pueden utilizar el nombre técnico;
+- entity resolution reconoce ambos sin tratar la relación como entidad.
+
+Benchmark: benchmarks/mvp-5-4-end-to-end.md
+Test: tests/test_mvp54_e2e.py
+CI: Python Tests — 89 passed.
