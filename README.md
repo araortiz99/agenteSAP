@@ -214,6 +214,16 @@ El contrato de AgenteSAP agrega una barrera adicional: aunque exista una conexi�
 
 Ejemplo no secreto: config/sap-mcp-qas.example.env.
 
+### Descubrimiento seguro del catálogo QAS
+
+Antes de autorizar una herramienta runtime concreta, AgenteSAP permite un modo discovery_only que sólo ejecuta la operación de protocolo MCP para listar las herramientas disponibles. No ejecuta ninguna herramienta SAP y no preautoriza ninguna herramienta runtime.
+
+Con una conexión QAS válida y scope mcp_readonly, se puede ejecutar:
+
+    python -m src.sap.runtime_cli discover-qas --pretty
+
+El resultado debe utilizarse para identificar el nombre y schema exactos de la herramienta de lectura que luego será incorporada a AGENTESAP_SAP_RUNTIME_READ_TOOLS. La configuración sigue deshabilitada por defecto.
+
 ## Próximo roadmap
 
 La secuencia de avance queda definida por calidad de evidencia antes que por complejidad de infraestructura:
