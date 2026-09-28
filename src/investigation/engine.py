@@ -222,7 +222,9 @@ def investigate(
             if len(investigation.steps) > max_steps:
                 investigation.stop_reason = "max_steps_reached"
                 break
-            capability = selected[evidence_type]
+            capability = selected.get(evidence_type)
+            if capability is None:
+                continue
             arguments = _query_arguments(capability, entities)
             if arguments is None:
                 investigation.evidence_missing.append(
