@@ -1,0 +1,49 @@
+name: AgenteSAP Consultation
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: "Pregunta para el consultor SAP"
+        required: true
+        type: string
+      ticket_id:
+        description: "Ticket opcional"
+        required: false
+        type: string
+      max_results:
+        description: "Máximo de evidencias/resultados (1-20)"
+        required: false
+        default: "8"
+        type: string
+permissions:
+  contents: read
+jobs:
+  consult:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Consult AgenteSAP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          GITHUB_REF: ${{ github.ref_name }}
+        run: python -m src.agent.cli "${{ inputs.request }}" --ticket "${{ inputs.ticket_id }}" --max-results "${{ inputs.max_results }}" --json > agentesap-response.json
+      - name: Build report
+        env:
+          REQUEST: ${{ inputs.request }}
+        run: |
+          python -c 'import json,os; d=json.load(open("agentesap-response.json")); r=d.get("result",{}); a=r.get("answer","") if isinstance(r,dict) else ""; t=r.get("traceability",{}) if isinstance(r,dict) else {}; open("agentesap-consultation.md","w",encoding="utf-8").write("# AgenteSAP Consulta\\n\\n## Pregunta\\n\\n"+os.environ["REQUEST"]+"\\n\\n## Respuesta\\n\\n"+a+"\\n\\n## Trazabilidad\\n\\n"+json.dumps(t,ensure_ascii=False,indent=2)+"\\n")'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agentesap-consultation
+          path: |
+            agentesap-response.json
+            agentesap-consultation.md
