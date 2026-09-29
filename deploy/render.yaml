@@ -5,6 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     autoDeploy: true
+    healthCheckPath: /healthz
     envVars:
       - key: AGENTESAP_MCP_SERVER_TRANSPORT
         value: streamable-http
@@ -14,6 +15,12 @@ services:
         value: 8000
       - key: AGENTESAP_MCP_SERVER_PATH
         value: /mcp
+      - key: AGENTESAP_MCP_AUTH_REQUIRED
+        value: "true"
+      - key: AGENTESAP_MCP_BEARER_TOKEN
+        sync: false
+      - key: AGENTESAP_MCP_ALLOWED_HOSTS
+        value: "agentesap-consultant-mcp.onrender.com:*"
       - key: AGENTESAP_SAP_RUNTIME_ENABLED
         value: "false"
       - key: AGENTESAP_SAP_PUBLIC_MCP_ENABLED
