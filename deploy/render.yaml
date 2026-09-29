@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: agentesap-consultant-mcp
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: AGENTESAP_MCP_SERVER_TRANSPORT
+        value: streamable-http
+      - key: AGENTESAP_MCP_SERVER_HOST
+        value: 0.0.0.0
+      - key: AGENTESAP_MCP_SERVER_PORT
+        value: 8000
+      - key: AGENTESAP_MCP_SERVER_PATH
+        value: /mcp
+      - key: AGENTESAP_SAP_RUNTIME_ENABLED
+        value: "false"
+      - key: AGENTESAP_SAP_PUBLIC_MCP_ENABLED
+        value: "true"
+      - key: GITHUB_OWNER
+        value: araortiz99
+      - key: GITHUB_REPO
+        value: agenteSAP
+      - key: GITHUB_REF_NAME
+        value: main
+      - key: GITHUB_TOKEN
+        sync: false
