@@ -1,0 +1,42 @@
+name: AgenteSAP Issue Consultation
+on:
+  issues:
+    types: [opened, labeled]
+permissions:
+  contents: read
+  issues: write
+jobs:
+  consult:
+    if: github.event.action == 'opened' || github.event.label.name == 'agentesap'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Consult AgenteSAP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          GITHUB_REF: ${{ github.event.repository.default_branch }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          REQUEST="Analiza la siguiente consulta SAP. Título: ${ISSUE_TITLE}. Detalle: ${ISSUE_BODY}"
+          python -m src.agent.cli "$REQUEST" --json > agentesap-response.json
+      - name: Publish response
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python -c 'import json; d=json.load(open("agentesap-response.json")); r=d.get("result",{}); a=r.get("answer","") if isinstance(r,dict) else str(r); open("comment.md","w",encoding="utf-8").write("## AgenteSAP — Análisis\\n\\n"+a)'
+          gh issue comment "$ISSUE_NUMBER" --body-file comment.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agentesap-issue-consultation-${{ github.event.issue.number }}
+          path: agentesap-response.json
