@@ -1,0 +1,50 @@
+name: AgenteSAP Consultation
+
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: "Pregunta para el consultor SAP"
+        required: true
+        type: string
+      ticket_id:
+        description: "Ticket opcional"
+        required: false
+        type: string
+      max_results:
+        description: "Máximo de evidencias/resultados"
+        required: false
+        default: "8"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  consult:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout AgenteSAP
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run AgenteSAP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          python -m src.cli --help
