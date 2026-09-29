@@ -1,13 +1,16 @@
 name: AgenteSAP Issue Consultation
+
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
+
 permissions:
   contents: read
   issues: write
+
 jobs:
   consult:
-    if: github.event.action == 'opened' || github.event.label.name == 'agentesap'
+    if: github.event.label.name == 'agentesap'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,8 +30,8 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          REQUEST="Analiza la siguiente consulta SAP. Título: ${ISSUE_TITLE}. Detalle: ${ISSUE_BODY}"
-          python -m src.agent.cli "$REQUEST" --json > agentesap-response.json
+          python -m src.agent.cli "${ISSUE_TITLE}
+${ISSUE_BODY}" --json > agentesap-response.json
       - name: Publish response
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,3 +43,4 @@ jobs:
         with:
           name: agentesap-issue-consultation-${{ github.event.issue.number }}
           path: agentesap-response.json
+          retention-days: 7
